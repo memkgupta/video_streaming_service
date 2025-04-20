@@ -19,23 +19,33 @@ public class TokenService {
     }
 
     public String refreshToken(String token){
+        System.out.println(token);
        Token t= tokenRepository.findByToken(token);
+        System.out.println(t.getToken());
+        System.out.println(t.getExpires()+" "+t.getExpires().before(new Date(Instant.now().toEpochMilli())));
        if(t==null){
            throw new RuntimeException("Token not found");
        }
        if(t.getExpires().before(new Date(Instant.now().toEpochMilli()))){
            throw new RuntimeException("Token is expired");
        }
-       String accessToken = jwtService.generateToken(t.getUser().getEmail());
-       return accessToken;
+       try {
+           return jwtService.generateToken(t.getUser().getEmail());
+       }
+     catch (Exception e){
+           e.printStackTrace();
+           throw new RuntimeException("Some error occured");
+     }
     }
 
     public String generateToken(User user) {
+        String token = jwtService.generateToken(user.getEmail());
         Token t= new Token();
         t.setUser(user);
+        t.setToken(token);
         t.setExpires(new Timestamp(System.currentTimeMillis()+1000*60*60*24));
         t.setCreated(new Timestamp(System.currentTimeMillis()));
         t.setUser(user);
-        return jwtService.generateToken(t.getUser().getEmail());
+        return tokenRepository.save(t).getToken();
     }
 }

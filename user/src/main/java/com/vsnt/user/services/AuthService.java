@@ -68,6 +68,19 @@ public class AuthService {
         }
     }
 
+    public boolean authenticate(String token)
+    {
+        try{
+            String email = jwtService.extractUserName(token);
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+            return false;
+            }
+            return jwtService.isTokenValid(token,new UserDetailsImpl(user));
 
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

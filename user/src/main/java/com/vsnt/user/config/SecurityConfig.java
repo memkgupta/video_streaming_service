@@ -42,10 +42,10 @@ private final JWTFilter jwtFilter;
         http.cors(h->{
                 h.configurationSource(corsConfigurationSource());
                 })
-                .csrf(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize->
                         authorize.
-                                requestMatchers("/healthcheck","/api/login","/api/signup","/api/refresh-token").permitAll()
+                                requestMatchers("/healthcheck","/api/login","/api/register","/api/refresh-token").permitAll()
                                 .anyRequest().authenticated()
                         )
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
