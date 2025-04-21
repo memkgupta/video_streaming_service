@@ -22,13 +22,13 @@ public class S3Service {
     }
 
     public String startMultiPartUpload(String key) {
-        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest("springbootdemo", key);
+        System.out.println(s3.getS3AccountOwner());
+        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest("springbucketdemovideo", key);
         InitiateMultipartUploadResult result = s3.initiateMultipartUpload(request);
         return result.getUploadId();
     }
-
     public String getPreSignedURLForMultipartUploadChunk(String uploadId,int chunkNumber,String key) {
-        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest("springbootdemo", key)
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest("springbucketdemovideo", key)
                 .withMethod(HttpMethod.PUT)
                 .withContentType("application/octet-stream")
 
@@ -43,7 +43,7 @@ public class S3Service {
         try{
             CompleteMultipartUploadRequest request  = new CompleteMultipartUploadRequest();
             request.setUploadId(uploadId);
-            request.setBucketName("springbootdemo");
+            request.setBucketName("springbucketdemovideo");
             request.setKey(key);
             List<PartETag> partETags = new ArrayList<>();
             for(Map.Entry<Integer,String> etag : etagMap.entrySet())
@@ -51,7 +51,8 @@ public class S3Service {
                 partETags.add(new PartETag(etag.getKey(), etag.getValue()));
             }
             request.setPartETags(partETags);
-            s3.completeMultipartUpload(request);
+         s3.completeMultipartUpload(request);
+
         }
         catch (Exception e){
             return false;

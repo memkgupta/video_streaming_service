@@ -1,8 +1,10 @@
 package com.vsnt.user.payload.auth;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class UserDTO {
 
     private String userId;
