@@ -68,16 +68,26 @@ public class AuthService {
         }
     }
 
-    public boolean authenticate(String token)
+    public UserDTO authenticate(String token)
     {
         try{
             String email = jwtService.extractUserName(token);
             User user = userRepository.findByEmail(email);
             if (user == null) {
-            return false;
+            throw new RuntimeException("User not found");
             }
-            return jwtService.isTokenValid(token,new UserDetailsImpl(user));
+           if(jwtService.isTokenValid(token,new UserDetailsImpl(user)))
+           {
+               UserDTO userDTO = new UserDTO();
+               userDTO.setEmail(user.getEmail());
+               userDTO.setName(user.getName());
+               userDTO.setUserId(user.getId());
 
+               return userDTO;
+           }
+else{
+    throw new RuntimeException("Invalid token");
+           }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

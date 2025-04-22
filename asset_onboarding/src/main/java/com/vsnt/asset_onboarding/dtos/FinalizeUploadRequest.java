@@ -9,6 +9,18 @@ public class FinalizeUploadRequest {
     private String uploadId;
     private String key;
     private Map<Integer,String> etagMap;
+    private long assetId;
+
+    public FinalizeUploadRequest() {
+    }
+
+    public long getAssetId() {
+        return assetId;
+    }
+
+    public void setAssetId(long assetId) {
+        this.assetId = assetId;
+    }
 
     public String getUploadId() {
         return uploadId;

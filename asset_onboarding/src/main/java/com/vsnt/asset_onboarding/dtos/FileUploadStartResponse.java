@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 
 public class FileUploadStartResponse {
+    public FileUploadStartResponse() {}
     public FileUploadStartResponse(String key, String uploadId) {
         this.key = key;
         this.uploadId = uploadId;
@@ -14,7 +15,7 @@ public class FileUploadStartResponse {
 
     private String key;
     private String uploadId;
-
+    private String assetId;
     public String getKey() {
         return key;
     }

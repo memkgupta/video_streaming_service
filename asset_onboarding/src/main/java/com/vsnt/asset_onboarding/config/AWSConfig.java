@@ -1,5 +1,7 @@
 package com.vsnt.asset_onboarding.config;
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -20,9 +22,12 @@ public class AWSConfig {
  @Bean
     public AmazonS3 getS3Client() {
         AWSCredentials credentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
+     ClientConfiguration config = new ClientConfiguration();
+     config.setProtocol(Protocol.HTTP);
         AmazonS3 s3 = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .withRegion(Regions.US_EAST_1).build();
+                .withClientConfiguration(config)
+                .withRegion(Regions.AP_SOUTH_1).build();
         return s3;
     }
 }

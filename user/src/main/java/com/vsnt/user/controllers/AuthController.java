@@ -27,7 +27,7 @@ public class AuthController {
         return authService.register(userDTO);
     }
     @GetMapping("/authenticate")
-    public Boolean authenticate(HttpServletRequest request){
+    public UserDTO authenticate(HttpServletRequest request){
         String token = request.getHeader("Authorization").split(" ")[1];
         return authService.authenticate(token);
     }

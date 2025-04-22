@@ -1,5 +1,6 @@
 package com.vsnt.asset_onboarding.config;
 
+import com.vsnt.asset_onboarding.dtos.AuthDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,18 +20,18 @@ public class AuthenticateRequest {
         this.restTemplate = restTemplate;
     }
 
-    public boolean isAuthenticated(String token)
+    public AuthDTO isAuthenticated(String token)
     {
-        Boolean isAuthenticated = false;
+        AuthDTO isAuthenticated = null;
         Map<String,String> headers = new HashMap<String, String>();
         headers.put("Authorization", "Bearer " + token);
         try {
             String url = "http://localhost:8080/api/authenticate";
-            isAuthenticated =  restTemplate.getForObject(url,Boolean.class,headers);
+            isAuthenticated =  restTemplate.getForObject(url,AuthDTO.class,headers);
         }
         catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
         assert isAuthenticated != null;
         return isAuthenticated;
