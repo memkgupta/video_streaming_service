@@ -3,6 +3,7 @@ package com.vsnt.asset_onboarding.services;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import com.vsnt.asset_onboarding.dtos.TranscodingJob;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,27 +24,27 @@ public class S3Service {
 
     public String startMultiPartUpload(String key) {
         System.out.println(s3.getS3AccountOwner());
-        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest("springbucketdemovideo", key);
+        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest("CHAMPAK_THEATER_GROUP", key);
         InitiateMultipartUploadResult result = s3.initiateMultipartUpload(request);
         return result.getUploadId();
     }
     public String getPreSignedURLForMultipartUploadChunk(String uploadId,int chunkNumber,String key) {
-        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest("springbucketdemovideo", key)
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest("CHAMPAK_THEATER_GROUP", key)
                 .withMethod(HttpMethod.PUT)
-                .withContentType("application/octet-stream")
+                .withContentType("application/octet-stream");
 
-                .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10));
+
         request.addRequestParameter("uploadId", uploadId);
         request.addRequestParameter("partNumber", String.valueOf(chunkNumber));
         URL url = s3.generatePresignedUrl(request);
         return url.toString();
     }
-    public boolean completeMultipartUpload(String uploadId, Map<Integer,String> etagMap,String key)
+    public TranscodingJob completeMultipartUpload(String uploadId, Map<Integer,String> etagMap, String key)
     {
         try{
             CompleteMultipartUploadRequest request  = new CompleteMultipartUploadRequest();
             request.setUploadId(uploadId);
-            request.setBucketName("springbucketdemovideo");
+            request.setBucketName("CHAMPAK_THEATER_GROUP");
             request.setKey(key);
             List<PartETag> partETags = new ArrayList<>();
             for(Map.Entry<Integer,String> etag : etagMap.entrySet())
@@ -51,12 +52,17 @@ public class S3Service {
                 partETags.add(new PartETag(etag.getKey(), etag.getValue()));
             }
             request.setPartETags(partETags);
-         s3.completeMultipartUpload(request);
+        var e = s3.completeMultipartUpload(request);
 
+            TranscodingJob job = new TranscodingJob();
+            job.setKey(e.getKey());
+            return job;
         }
         catch (Exception e){
-            return false;
+            e.printStackTrace();
+            return null;
         }
-       return true;
+
+
     }
 }

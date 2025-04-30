@@ -16,6 +16,15 @@ public class FileUploadStartResponse {
     private String key;
     private String uploadId;
     private String assetId;
+
+    public String getAssetId() {
+        return assetId;
+    }
+
+    public void setAssetId(String assetId) {
+        this.assetId = assetId;
+    }
+
     public String getKey() {
         return key;
     }

@@ -1,7 +1,11 @@
 package com.vsnt.asset_onboarding.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.FileMetaData;
 import com.vsnt.asset_onboarding.dtos.FileUploadStartResponse;
+import com.vsnt.asset_onboarding.dtos.TranscodingJob;
 import com.vsnt.asset_onboarding.entities.Upload;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 
@@ -10,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -19,18 +24,20 @@ public class UploadService {
     private final S3Service s3Service;
     private final UploadRepository uploadRepository;
     private final AssetService assetService;
-
-    public UploadService(S3Service s3Service, UploadRepository uploadRepository, AssetService assetService) {
+    private final TranscodingJobMessageProducer messageProducer;
+    public UploadService(S3Service s3Service, UploadRepository uploadRepository, AssetService assetService, TranscodingJobMessageProducer messageProducer) {
         this.s3Service = s3Service;
         this.uploadRepository = uploadRepository;
         this.assetService = assetService;
+        this.messageProducer = messageProducer;
     }
 
     public FileUploadStartResponse startUpload(FileMetaData obj,String userId)
     {
         String fileName = obj.getFileName();
         String fileUploadId = UUID.randomUUID().toString();
-        String key = "uploads/"+fileName+"/"+fileUploadId;
+        String key = "uploads/"+fileName.split("\\.")[0]+"/"+fileUploadId+".mp4";
+        System.out.println(key);
         String uploadId = s3Service.startMultiPartUpload(key);
         Upload upload = new Upload();
         upload.setFileUploadId(fileUploadId);
@@ -51,27 +58,35 @@ public class UploadService {
 return res;
     }
     public String uploadChunk(String uploadId,Long assetId,int partNumber,String key,String userId)
-    {   Upload upload = assetService.getAssetById(assetId);
-        if(upload==null || !upload.getUserId().equals(userId)){
-            throw new RuntimeException("Bad request , upload doesn't exist");
-        }
-        if(!upload.getUploadStatus().equals(UploadStatus.INITIATED) || !upload.getUploadStatus().equals(UploadStatus.UPLOADING)){
-            throw new RuntimeException("Bad request");
-        }
-        return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
-    }
-    public boolean finishUpload(String uploadId, Long assetId,String key, Map<Integer,String> etagMap)
     {
+        System.out.println(assetId);
         Upload upload = assetService.getAssetById(assetId);
         if(upload==null){
             throw new RuntimeException("Bad request , upload doesn't exist");
         }
-       s3Service.completeMultipartUpload(uploadId,etagMap,key);
+        System.out.println(upload);
+        if(!upload.getUploadStatus().equals(UploadStatus.INITIATED) ){
+            throw new RuntimeException("Bad request");
+        }
+        return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
+    }
+    public boolean finishUpload(String uploadId, Long assetId,String key, Map<Integer,String> etagMap) throws JsonProcessingException {
+        Upload upload = assetService.getAssetById(assetId);
+//        if(upload==null){
+//            throw new RuntimeException("Bad request , upload doesn't exist");
+//        }
+       TranscodingJob job = s3Service.completeMultipartUpload(uploadId,etagMap,key);
         upload.setUploadStatus(UploadStatus.COMPLETED);
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
         upload.setChunksUploaded(etagMap.size());
+        job.setJobId(upload.getId().toString());
 
-        uploadRepository.save(upload);return true;
+        job.setSize(upload.getFileSize());
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        uploadRepository.save(upload);
+        messageProducer.sendMessage(job);
+        return true;
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)
     {

@@ -14,7 +14,7 @@ public class AssetService {
     }
     // to be cached
     public Upload getAssetById(long id) {
-        return uploadRepository.findById(id).orElse(null);
+        return uploadRepository.findById(id);
     }
     public boolean removeAssetById(long id) {
         try{

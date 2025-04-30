@@ -24,6 +24,27 @@ public class Upload {
     private String uploadId;
     private String userId;
     private String key;
+
+    @Override
+    public String toString() {
+        return "Upload{" +
+                "id=" + id +
+                ", fileName='" + fileName + '\'' +
+                ", fileType='" + fileType + '\'' +
+                ", fileSize=" + fileSize +
+                ", fileUrl='" + fileUrl + '\'' +
+                ", fileUploadId='" + fileUploadId + '\'' +
+                ", uploadStatus=" + uploadStatus +
+                ", chunksUploaded=" + chunksUploaded +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", uploadId='" + uploadId + '\'' +
+                ", userId='" + userId + '\'' +
+                ", key='" + key + '\'' +
+                ", etagMap=" + etagMap +
+                '}';
+    }
+
     @ElementCollection(fetch = FetchType.EAGER)
 
     private Map<Integer,String> etagMap;
