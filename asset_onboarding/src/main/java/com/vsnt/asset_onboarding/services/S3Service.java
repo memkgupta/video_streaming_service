@@ -3,6 +3,7 @@ package com.vsnt.asset_onboarding.services;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import com.vsnt.asset_onboarding.config.Secrets;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,12 +25,12 @@ public class S3Service {
 
     public String startMultiPartUpload(String key) {
         System.out.println(s3.getS3AccountOwner());
-        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest("CHAMPAK_THEATER_GROUP", key);
+        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(Secrets.AWS_BUCKET_NAME, key);
         InitiateMultipartUploadResult result = s3.initiateMultipartUpload(request);
         return result.getUploadId();
     }
     public String getPreSignedURLForMultipartUploadChunk(String uploadId,int chunkNumber,String key) {
-        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest("CHAMPAK_THEATER_GROUP", key)
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(Secrets.AWS_BUCKET_NAME, key)
                 .withMethod(HttpMethod.PUT)
                 .withContentType("application/octet-stream");
 
@@ -44,7 +45,7 @@ public class S3Service {
         try{
             CompleteMultipartUploadRequest request  = new CompleteMultipartUploadRequest();
             request.setUploadId(uploadId);
-            request.setBucketName("CHAMPAK_THEATER_GROUP");
+            request.setBucketName(Secrets.AWS_BUCKET_NAME);
             request.setKey(key);
             List<PartETag> partETags = new ArrayList<>();
             for(Map.Entry<Integer,String> etag : etagMap.entrySet())
