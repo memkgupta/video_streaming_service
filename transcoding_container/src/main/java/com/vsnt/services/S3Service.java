@@ -19,7 +19,7 @@ public class S3Service {
     {
         S3Config s3Config = new S3Config();
         AmazonS3 s3Client = s3Config.getS3Client();
-
+        System.out.println(bucket+","+key);
         S3Object object = s3Client.getObject(bucket,key);
         S3ObjectInputStream s3is = object.getObjectContent();
         Path outputPath = Paths.get(downloadPath,key);

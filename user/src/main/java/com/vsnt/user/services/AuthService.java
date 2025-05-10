@@ -56,6 +56,7 @@ public class AuthService {
                 throw new RuntimeException("User not found");
             }
             if (!bCryptPasswordEncoder.matches(password, user.getPassword())) {
+                System.out.println("Wrong password");
                 throw new BadCredentialsException("Bad credentials");
             }
             String accessToken = jwtService.generateToken(email);

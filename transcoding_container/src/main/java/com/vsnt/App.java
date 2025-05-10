@@ -27,6 +27,7 @@ public class App
             System.out.println("Missing environment variables");
             System.exit(1);
         }
+
         Path filePath = s3Service.fetchVideo(file_key,bucket_name,"original/");
         VideoTranscoder transcoder = new VideoTranscoder();
         transcoder.transcodeVideo(filePath.toAbsolutePath().toString(), "transcoded");

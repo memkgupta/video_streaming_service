@@ -11,8 +11,8 @@ import java.util.List;
 
 @Service
 public class DockerUtils {
-    private String ACCESS_KEY = Secrets.AWS_SECRET_KEY;
-    private String SECRET_KEY=Secrets.AWS_ACCESS_KEY_ID;
+    private String ACCESS_KEY = Secrets.AWS_ACCESS_KEY_ID;
+    private String SECRET_KEY=Secrets.AWS_SECRET_KEY;
     private DockerClient dockerClient = DockerClientSingleton.getDockerClient();
     public void runContainer(String fileKey,String uploadId)
     {
@@ -29,7 +29,7 @@ public class DockerUtils {
                                 "FILE_KEY="+fileKey,
                                 "UPLOAD_ID="+uploadId,
                                 "CLOUDFRONT_URL="+Secrets.CLOUD_FRONT_URL,
-                                "UPDATE_API_URL=http://host.docker.internal:8085/api/update"
+                                "UPDATE_API_URL=http://host.docker.internal:8001/api/transcoder/update"
                         )
                 )
 

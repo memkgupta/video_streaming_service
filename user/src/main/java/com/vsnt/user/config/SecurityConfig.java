@@ -28,24 +28,24 @@ import java.util.Arrays;
 public class SecurityConfig {
 private final UserDetailsService userDetailsService;
 private final JWTFilter jwtFilter;
-    @Bean
-    UrlBasedCorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","OPTIONS"));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+//    @Bean
+//    UrlBasedCorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+//        configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","OPTIONS"));
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors(h->{
-                h.configurationSource(corsConfigurationSource());
+                h.disable();
                 })
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize->
                         authorize.
-                                requestMatchers("/healthcheck","/api/login","/api/register","/api/refresh-token").permitAll()
+                                requestMatchers("/healthcheck","/auth/login","/auth/register","/auth/refresh-token","/auth/authenticate").permitAll()
                                 .anyRequest().authenticated()
                         )
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

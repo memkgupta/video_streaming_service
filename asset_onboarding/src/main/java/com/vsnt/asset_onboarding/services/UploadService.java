@@ -37,7 +37,7 @@ public class UploadService {
         String fileName = obj.getFileName();
         String fileUploadId = UUID.randomUUID().toString();
         String key = "uploads/"+fileName.split("\\.")[0]+"/"+fileUploadId+".mp4";
-        System.out.println(key);
+
         String uploadId = s3Service.startMultiPartUpload(key);
         Upload upload = new Upload();
         upload.setFileUploadId(fileUploadId);
@@ -64,17 +64,22 @@ return res;
         if(upload==null){
             throw new RuntimeException("Bad request , upload doesn't exist");
         }
-        System.out.println(upload);
+       if(!upload.getUserId().equals(userId)){
+           throw new RuntimeException("Bad request , upload doesn't exist");
+       }
         if(!upload.getUploadStatus().equals(UploadStatus.INITIATED) ){
             throw new RuntimeException("Bad request");
         }
         return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
     }
-    public boolean finishUpload(String uploadId, Long assetId,String key, Map<Integer,String> etagMap) throws JsonProcessingException {
+    public boolean finishUpload(String uploadId, Long assetId,String key, Map<Integer,String> etagMap,String userId) throws JsonProcessingException {
         Upload upload = assetService.getAssetById(assetId);
-//        if(upload==null){
-//            throw new RuntimeException("Bad request , upload doesn't exist");
-//        }
+        if(upload==null){
+            throw new RuntimeException("Bad request , upload doesn't exist");
+        }
+        if(!upload.getUserId().equals(userId)){
+            throw new RuntimeException("Bad request , upload doesn't exist");
+        }
        TranscodingJob job = s3Service.completeMultipartUpload(uploadId,etagMap,key);
         upload.setUploadStatus(UploadStatus.COMPLETED);
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
@@ -96,6 +101,7 @@ return res;
             {
                 throw new RuntimeException("Bad request , upload doesn't exist");
             }
+
             if(!upload.getUploadStatus().equals(UploadStatus.UPLOADING)){
                 throw new RuntimeException("Bad request");
             }
