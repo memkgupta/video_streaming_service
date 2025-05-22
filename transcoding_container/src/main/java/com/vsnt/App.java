@@ -18,7 +18,7 @@ public class App
     {
         S3Service s3Service = new S3Service();
         String file_key = System.getenv("FILE_KEY");
-        String uploadId = System.getenv("UPLOAD_ID");
+        String videoId = System.getenv("VIDEO_ID");
         String bucket_name = System.getenv("BUCKET_NAME");
         String transcoded_bucket_name = System.getenv("TRANSCODED_BUCKET_NAME");
         String transcoderAPIURL = System.getenv("UPDATE_API_URL");
@@ -36,7 +36,7 @@ public class App
             s3Service.uploadObject(transcoded_bucket_name,file_key, Paths.get("/app/transcoded"));
             // send api request to the transcoder for updating status
             UpdateRequestDTO dto = new UpdateRequestDTO();
-            dto.setUploadId(uploadId);
+            dto.setVideoId(videoId);
             dto.setTimestamp(new Timestamp(System.currentTimeMillis()));
             dto.setStatus("SUCCESS");
             dto.setUrl(cloudFrontURL+"/"+file_key+"/index.m3u8");

@@ -36,6 +36,7 @@ public class FileUploadController {
     public ResponseEntity<Map<String, String>> uploadChunk(@RequestBody ChunkUploadRequest chunkUploadRequest, HttpServletRequest request) {
 
         String userId = request.getHeader("X-USER-ID");
+
         String url = uploadService.uploadChunk(chunkUploadRequest.getUploadId(),chunkUploadRequest.getAssetId(),chunkUploadRequest.getPartNumber(),chunkUploadRequest.getKey(), userId);
 
         return ResponseEntity.ok(   Map.of("url", url));
@@ -43,7 +44,7 @@ public class FileUploadController {
     @PostMapping("/complete-upload")
     public Boolean completeUpload(@RequestBody FinalizeUploadRequest finalizeUploadRequest, HttpServletRequest request) throws JsonProcessingException {
         String userId = request.getHeader("X-USER-ID");
-        return uploadService.finishUpload(finalizeUploadRequest.getUploadId(),finalizeUploadRequest.getAssetId(),finalizeUploadRequest.getKey(),finalizeUploadRequest.getEtagMap(),userId);
+        return uploadService.finishUpload(finalizeUploadRequest.getVideoId(),finalizeUploadRequest.getAssetId(),finalizeUploadRequest.getKey(),finalizeUploadRequest.getEtagMap(),userId);
     }
     @PostMapping("/pause-upload")
     public Boolean pauseUpload(@RequestBody UploadPauseToggleRequest uploadPauseToggleRequest, HttpServletRequest request) {

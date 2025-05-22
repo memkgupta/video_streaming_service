@@ -16,24 +16,15 @@ spring:
       discovery:
         locator:
           enabled: true
-      globalcors:
-       cors-configurations:
-        '[/**]':
-          allowedOrigins: "*"
-          allowedMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
-          allowedHeaders: "*"
-          allowCredentials: true
+
       routes:
         - id: user
           uri: lb://user
           filters:
             - AuthenticationFilter
+            - ApiResponseTransformFilter
             - RewritePath=/api/user/(?<segment>.*), /$\{segment}
+
           predicates:
             - Path=/api/user/**
 
@@ -50,7 +41,7 @@ spring:
           filters:
             - RewritePath=/api/transcoder/(?<segment>.*),/$\{segment}
           predicates:
-            - Path=/api/transcoder
+            - Path=/api/transcoder/**
 
 server:
   port: 8001

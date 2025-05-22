@@ -10,6 +10,15 @@ public class FileMetaData {
     private String fileUrl;
     private String uploadStatus;
     private String errorMessage;
+    private String videoId;
+
+    public String getVideoId() {
+        return videoId;
+    }
+
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
+    }
 
     public String getErrorMessage() {
         return errorMessage;
@@ -57,5 +66,17 @@ public class FileMetaData {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    @Override
+    public String toString() {
+        return "FileMetaData{" +
+                "fileName='" + fileName + '\'' +
+                ", fileType='" + fileType + '\'' +
+                ", fileSize=" + fileSize +
+                ", fileUrl='" + fileUrl + '\'' +
+                ", uploadStatus='" + uploadStatus + '\'' +
+                ", errorMessage='" + errorMessage + '\'' +
+                '}';
     }
 }

@@ -7,7 +7,7 @@ import com.vsnt.transcoder.config.TimestampDeserializer;
 import java.sql.Timestamp;
 
 public class UpdateRequestDTO {
-    private String uploadId;
+    private String videoId;
     private String url;
 
     private String timestamp;
@@ -16,19 +16,19 @@ public class UpdateRequestDTO {
     @Override
     public String toString() {
         return "UpdateRequestDTO{" +
-                "uploadId='" + uploadId + '\'' +
+                "videoId='" + videoId + '\'' +
                 ", url='" + url + '\'' +
                 ", timestamp='" + timestamp + '\'' +
                 ", status='" + status + '\'' +
                 '}';
     }
 
-    public String getUploadId() {
-        return uploadId;
+    public String getVideoId() {
+        return videoId;
     }
 
-    public void setUploadId(String uploadId) {
-        this.uploadId = uploadId;
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
     }
 
     public String getUrl() {

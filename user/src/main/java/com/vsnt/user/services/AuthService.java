@@ -3,7 +3,11 @@ package com.vsnt.user.services;
 import com.vsnt.user.config.UserDetailsImpl;
 import com.vsnt.user.entities.Token;
 import com.vsnt.user.entities.User;
+import com.vsnt.user.exceptions.UserAlreadyExistsException;
+import com.vsnt.user.payload.Token.TokenResponse;
 import com.vsnt.user.payload.auth.LoginResponse;
+import com.vsnt.user.payload.auth.RegisterRequest;
+import com.vsnt.user.payload.auth.RegisterResponse;
 import com.vsnt.user.payload.auth.UserDTO;
 import com.vsnt.user.repositories.TokenRepository;
 import com.vsnt.user.repositories.UserRepository;
@@ -28,27 +32,41 @@ public class AuthService {
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
 
-    public String register(UserDTO userDTO) {
+    public RegisterResponse register(RegisterRequest userDTO) {
 
-        try{
+
             User userAlreadyExists = userRepository.findByEmail(userDTO.getEmail());
             if (userAlreadyExists != null) {
-                throw new RuntimeException("User already exists");
+                throw new UserAlreadyExistsException(userDTO.getEmail());
             }
             User user = new User();
             user.setPassword(bCryptPasswordEncoder.encode(userDTO.getPassword()));
             user.setEmail(userDTO.getEmail());
-            user.setName(userDTO.getName());
+            user.setUsername(userDTO.getUsername());
             userRepository.save(user);
+            UserDTO resUserDTO = new UserDTO();
+            resUserDTO.setEmail(userDTO.getEmail());
+            resUserDTO.setUsername(userDTO.getUsername());
+            resUserDTO.setId(user.getId())
+            ;
+            resUserDTO.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+            String accessToken = jwtService.generateToken(userDTO.getEmail());
+            String refreshToken = tokenService.generateToken(user);
+            RegisterResponse response = new RegisterResponse();
+            TokenResponse tr = TokenResponse.builder()
+
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+            response.setTokens(
+                    tr
+            );
+            response.setUser(resUserDTO);
+            return response;
+        }
 
 
-            return "User registered successfully";
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            throw new RuntimeException("Internal server error");
-        }
-    }
+
     public LoginResponse login(String email, String password) {
         try{
             User user = userRepository.findByEmail(email);
@@ -61,7 +79,18 @@ public class AuthService {
             }
             String accessToken = jwtService.generateToken(email);
             String refreshToken = tokenService.generateToken(user);
-            return new LoginResponse(accessToken, refreshToken);
+            UserDTO userDTO = new UserDTO();
+            userDTO.setEmail(user.getEmail());
+            userDTO.setUsername(user.getUsername());
+            userDTO.setId(user.getId());
+            userDTO.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+            LoginResponse response  =new LoginResponse();
+            response.setUser(userDTO);
+            response.setTokens(TokenResponse.builder()
+                            .accessToken(accessToken)
+                            .refreshToken(refreshToken)
+                    .build());
+            return response;
         }
         catch(Exception e){
             e.printStackTrace();
@@ -81,9 +110,13 @@ public class AuthService {
            {
                UserDTO userDTO = new UserDTO();
                userDTO.setEmail(user.getEmail());
+               userDTO.setUsername(user.getUsername());
+               userDTO.setId(user.getId());
+               userDTO.setAvatar(user.getAvatar());
+               userDTO.setBio(user.getBio());
+               userDTO.setChannelId(user.getChannelId());
                userDTO.setName(user.getName());
-               userDTO.setUserId(user.getId());
-
+                userDTO.setCreatedAt(new Timestamp(System.currentTimeMillis()));
                return userDTO;
            }
 else{

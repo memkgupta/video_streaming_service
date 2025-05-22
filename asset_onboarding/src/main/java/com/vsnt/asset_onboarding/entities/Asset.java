@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 import java.util.Map;
 
 @Entity
-public class Upload {
+public class Asset {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -24,6 +24,23 @@ public class Upload {
     private String uploadId;
     private String userId;
     private String key;
+    private String url;
+private String videoId;
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getVideoId() {
+        return videoId;
+    }
+
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
+    }
 
     @Override
     public String toString() {

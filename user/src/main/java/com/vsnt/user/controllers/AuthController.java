@@ -1,8 +1,6 @@
 package com.vsnt.user.controllers;
 
-import com.vsnt.user.payload.auth.LoginRequestPayload;
-import com.vsnt.user.payload.auth.LoginResponse;
-import com.vsnt.user.payload.auth.UserDTO;
+import com.vsnt.user.payload.auth.*;
 import com.vsnt.user.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +21,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(userDTO.getEmail(), userDTO.getPassword()));
     }
     @PostMapping("/register")
-    public String register(@RequestBody UserDTO userDTO){
+    public RegisterResponse register(@RequestBody RegisterRequest userDTO){
         return authService.register(userDTO);
     }
     @GetMapping("/authenticate")

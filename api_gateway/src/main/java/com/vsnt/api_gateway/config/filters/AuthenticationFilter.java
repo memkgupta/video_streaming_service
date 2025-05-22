@@ -54,7 +54,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                                 entity,
                                 Map.class);
 
-                        String userId = (String) response.getBody().get("userId");
+                        String userId = (String) response.getBody().get("id");
                         request= exchange.getRequest().mutate().header("X-USER-ID", userId).build();
                         exchange = exchange.mutate().request(request).build();
                     } catch (Exception e) {

@@ -19,10 +19,10 @@ public class KafkaProducer {
     }
 
     public void produce(UpdateRequestDTO updateRequestDTO) {
-        System.out.println("Producing "+updateRequestDTO);
+
         Message<UpdateRequestDTO> message = MessageBuilder.withPayload(updateRequestDTO)
-                .setHeader(KafkaHeaders.TOPIC,"updates")
-                .setHeader(KafkaHeaders.KEY,updateRequestDTO.getUploadId())
+                .setHeader(KafkaHeaders.TOPIC,"video-updates")
+                .setHeader(KafkaHeaders.KEY,updateRequestDTO.getVideoId())
                 .build();
         try{
             CompletableFuture<SendResult<String, UpdateRequestDTO>> future = kafkaTemplate.send(message);

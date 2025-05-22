@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/token")
 public class TokenController {
 
     private final TokenService tokenService;
@@ -19,14 +19,14 @@ public class TokenController {
         this.tokenService = tokenService;
     }
 
-    @PostMapping("/refresh-token")
+    @GetMapping("/refresh-token")
     public ResponseEntity<TokenResponse> refreshAccessToken(HttpServletRequest request) {
         if(request.getHeader("X-REFRESH-TOKEN") == null) {
             throw new RuntimeException("X-REFRESH-TOKEN header is null");
         }
         String token = request.getHeader("X-REFRESH-TOKEN");
         return ResponseEntity.ok(TokenResponse.builder()
-                        .token(tokenService.refreshToken(token))
+                        .accessToken(tokenService.refreshToken(token))
                 .build());
     }
 

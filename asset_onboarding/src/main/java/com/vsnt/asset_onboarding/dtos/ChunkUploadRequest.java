@@ -13,6 +13,16 @@ public class ChunkUploadRequest {
         return assetId;
     }
 
+    @Override
+    public String toString() {
+        return "ChunkUploadRequest{" +
+                "key='" + key + '\'' +
+                ", uploadId='" + uploadId + '\'' +
+                ", partNumber=" + partNumber +
+                ", assetId=" + assetId +
+                '}';
+    }
+
     public void setAssetId(long assetId) {
         this.assetId = assetId;
     }
@@ -40,4 +50,5 @@ public class ChunkUploadRequest {
     public void setPartNumber(int partNumber) {
         this.partNumber = partNumber;
     }
+
 }

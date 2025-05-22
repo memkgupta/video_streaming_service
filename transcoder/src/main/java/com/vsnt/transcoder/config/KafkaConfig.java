@@ -10,6 +10,6 @@ import org.springframework.kafka.config.TopicBuilder;
 public class KafkaConfig {
     @Bean
     public NewTopic topic() {
-        return TopicBuilder.name("updates").build();
+        return TopicBuilder.name("video-updates").build();
     }
 }

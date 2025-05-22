@@ -6,7 +6,7 @@ import java.util.Map;
 
 @Data
 public class FinalizeUploadRequest {
-    private String uploadId;
+    private String videoId;
     private String key;
     private Map<Integer,String> etagMap;
     private long assetId;
@@ -22,12 +22,12 @@ public class FinalizeUploadRequest {
         this.assetId = assetId;
     }
 
-    public String getUploadId() {
-        return uploadId;
+    public String getVideoId() {
+        return videoId;
     }
 
-    public void setUploadId(String uploadId) {
-        this.uploadId = uploadId;
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
     }
 
     public String getKey() {

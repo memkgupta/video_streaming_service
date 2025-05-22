@@ -3,7 +3,7 @@ package com.vsnt.dtos;
 import java.sql.Timestamp;
 
 public class UpdateRequestDTO {
-    private String uploadId;
+    private String videoId;
     private String status;
     private Timestamp timestamp;
     private String url;
@@ -16,12 +16,12 @@ public class UpdateRequestDTO {
         this.url = url;
     }
 
-    public String getUploadId() {
-        return uploadId;
+    public String getVideoId() {
+        return videoId;
     }
 
-    public void setUploadId(String uploadId) {
-        this.uploadId = uploadId;
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
     }
 
     public String getStatus() {

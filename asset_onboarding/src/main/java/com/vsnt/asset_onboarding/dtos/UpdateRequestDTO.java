@@ -5,7 +5,7 @@ package com.vsnt.asset_onboarding.dtos;
 import java.sql.Timestamp;
 
 public class UpdateRequestDTO {
-    private String uploadId;
+    private String videoId;
     private String url;
     private String timestamp;
     private String status;
@@ -13,19 +13,19 @@ public class UpdateRequestDTO {
     @Override
     public String toString() {
         return "UpdateRequestDTO{" +
-                "uploadId='" + uploadId + '\'' +
+                "videoId='" + videoId  + '\'' +
                 ", url='" + url + '\'' +
                 ", timestamp=" + timestamp +
                 ", status='" + status + '\'' +
                 '}';
     }
 
-    public String getUploadId() {
-        return uploadId;
+    public String getVideoId() {
+        return videoId;
     }
 
-    public void setUploadId(String uploadId) {
-        this.uploadId = uploadId;
+    public void setVideoId(String uploadId) {
+        this.videoId = uploadId;
     }
 
     public String getUrl() {
