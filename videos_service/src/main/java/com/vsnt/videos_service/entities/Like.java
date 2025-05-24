@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Data
+@Table(name = "video_like")
 public class Like {
     @Id
     @GeneratedValue

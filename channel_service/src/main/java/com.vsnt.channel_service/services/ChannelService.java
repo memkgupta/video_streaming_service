@@ -2,11 +2,17 @@ package com.vsnt.channel_service.services;
 
 import com.vsnt.channel_service.entities.Channel;
 import com.vsnt.channel_service.entities.Links;
+import com.vsnt.channel_service.exceptions.APIException;
+import com.vsnt.channel_service.exceptions.ChannelNotFoundException;
+import com.vsnt.channel_service.exceptions.InternalServerError;
 import com.vsnt.channel_service.payload.channel.ChannelPayload;
 import com.vsnt.channel_service.repositories.ChannelRepository;
 import jakarta.ws.rs.core.Link;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +75,27 @@ public class ChannelService {
         }
         return channelRepository.save(channel);
 
+    }
+    public Channel findByUserId(String userId)
+    {
+        try{
+            Specification<Channel> specification = (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("userId"), userId);
+            List<Channel> channel = channelRepository.findAll(specification);
+            if(channel.isEmpty())
+            {
+                throw new ChannelNotFoundException("Channel not found");
+            }
+            return channel.get(0);
+        }
+        catch(Exception e)
+        {
+            if(e instanceof APIException)
+            {
+                throw  e;
+            }
+            e.printStackTrace();
+            throw new InternalServerError(e.getLocalizedMessage());
+        }
     }
     public Channel findByHandle(String handle) {
         return channelRepository.findByHandle(handle).orElse(null);

@@ -43,10 +43,12 @@ public class AuthService {
             user.setPassword(bCryptPasswordEncoder.encode(userDTO.getPassword()));
             user.setEmail(userDTO.getEmail());
             user.setUsername(userDTO.getUsername());
+
             userRepository.save(user);
             UserDTO resUserDTO = new UserDTO();
             resUserDTO.setEmail(userDTO.getEmail());
             resUserDTO.setUsername(userDTO.getUsername());
+            resUserDTO.setName(userDTO.getUsername());
             resUserDTO.setId(user.getId())
             ;
             resUserDTO.setCreatedAt(new Timestamp(System.currentTimeMillis()));

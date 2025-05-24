@@ -32,6 +32,7 @@ spring:
           uri: http://localhost:8081
           filters:
             - AuthenticationFilter
+            - ApiResponseTransformFilter
             - RewritePath=/api/asset_onboarding/(?<segment>.*),/$\{segment}
           predicates:
             - Path=/api/asset_onboarding/**
@@ -42,6 +43,24 @@ spring:
             - RewritePath=/api/transcoder/(?<segment>.*),/$\{segment}
           predicates:
             - Path=/api/transcoder/**
+        - id: video_service
+          uri: http://localhost:8007
+          filters:
+            - AuthenticationFilter
+            - ApiResponseTransformFilter
+            - RewritePath=/api/video/(?<segment>.*),/$\{segment}
+          predicates:
+            - Path=/api/video/**
+        - id: channel_service
+          uri: http://localhost:8006
+          filters:
+            - AuthenticationFilter
+            - ApiResponseTransformFilter
+            - RewritePath=/api/channel/(?<segment>.*),/$\{segment}
+          predicates:
+            - Path=/api/channel/**
+
+
 
 server:
   port: 8001
