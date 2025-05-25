@@ -54,27 +54,28 @@ public ResponseEntity<VideoDTO> fillDetails(
     public ResponseEntity publishVideo(HttpServletRequest request,@RequestParam String videoId)
     {
         String userId = request.getHeader(USER_ID);
-       videoService.publishVideo(userId,videoId);
+       videoService.publishVideo(videoId,userId);
         return ResponseEntity.noContent().build();
     }
     @GetMapping("/")
     public ResponseEntity<PaginatedResponse<VideoDTO>> getVideos(HttpServletRequest request, @RequestParam Map<String,String> params )
     {
         String userId = request.getHeader(USER_ID);
-        int pageNumber = Integer.parseInt(params.getOrDefault("page","1"));
+        int pageNumber = Integer.parseInt(params.getOrDefault("page","1"))-1;
         int pageSize = Integer.parseInt(params.getOrDefault("size","100"));
         params.remove("page");
         params.remove("size");
-        String sortBy = params.getOrDefault("sortBy","");
+        String sortBy = params.getOrDefault("sortBy","uploadedAt");
         String order = params.getOrDefault("order","DESC");
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.fromString(order),sortBy));
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Page<Video> videos = videoService.getAllVideos(params,pageable);
         int totalPages = videos.getTotalPages();
         long totalResults = videos.getTotalElements();
+
         Integer nextCursor = pageNumber == totalPages?null:pageNumber + 1;
         Integer prevCursor = pageNumber == 0?null:pageNumber - 1;
         PaginatedResponse<VideoDTO> paginatedResponse = new PaginatedResponse<>();
-        paginatedResponse.setData(videos.stream().map(v->v.toDTO()).toList());
+        paginatedResponse.setData(videos.stream().map(Video::toDTO).toList());
         paginatedResponse.setNextCursor(nextCursor);
         paginatedResponse.setPreviousCursor(prevCursor);
         paginatedResponse.setTotalResults(totalResults);
@@ -92,4 +93,5 @@ public ResponseEntity<VideoDTO> fillDetails(
         videoService.deleteVideo(id, userId);
         return ResponseEntity.ok().build();
     }
+
 }

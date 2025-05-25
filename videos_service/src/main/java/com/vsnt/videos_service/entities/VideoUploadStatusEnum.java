@@ -4,4 +4,5 @@ public enum VideoUploadStatusEnum {
     UPLOADING,
     PROCESSING,
     COMPLETED,
+    SUCCESS
 }

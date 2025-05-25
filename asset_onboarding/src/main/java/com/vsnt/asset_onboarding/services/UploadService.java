@@ -78,7 +78,7 @@ return res;
         }
         return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
     }
-    public boolean finishUpload(String videoId, Long assetId,String key, Map<Integer,String> etagMap,String userId) throws JsonProcessingException {
+    public boolean finishUpload(String uploadId, Long assetId,String key, Map<Integer,String> etagMap,String userId) throws JsonProcessingException {
         Asset upload = assetService.getAssetById(assetId);
         if(upload==null){
             throw new RuntimeException("Bad request , upload doesn't exist");
@@ -86,7 +86,7 @@ return res;
         if(!upload.getUserId().equals(userId)){
             throw new RuntimeException("Bad request , upload doesn't exist");
         }
-       TranscodingJob job = s3Service.completeMultipartUpload(videoId,etagMap,key);
+       TranscodingJob job = s3Service.completeMultipartUpload(uploadId,etagMap,key);
         upload.setUploadStatus(UploadStatus.COMPLETED);
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
         upload.setChunksUploaded(etagMap.size());

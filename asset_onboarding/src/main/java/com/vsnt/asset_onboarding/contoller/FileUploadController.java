@@ -42,9 +42,10 @@ public class FileUploadController {
         return ResponseEntity.ok(   Map.of("url", url));
     }
     @PostMapping("/complete-upload")
-    public Boolean completeUpload(@RequestBody FinalizeUploadRequest finalizeUploadRequest, HttpServletRequest request) throws JsonProcessingException {
+    public ResponseEntity completeUpload(@RequestBody FinalizeUploadRequest finalizeUploadRequest, HttpServletRequest request) throws JsonProcessingException {
         String userId = request.getHeader("X-USER-ID");
-        return uploadService.finishUpload(finalizeUploadRequest.getVideoId(),finalizeUploadRequest.getAssetId(),finalizeUploadRequest.getKey(),finalizeUploadRequest.getEtagMap(),userId);
+         uploadService.finishUpload(finalizeUploadRequest.getUploadId(),finalizeUploadRequest.getAssetId(),finalizeUploadRequest.getKey(),finalizeUploadRequest.getEtagMap(),userId);
+    return ResponseEntity.noContent().build();
     }
     @PostMapping("/pause-upload")
     public Boolean pauseUpload(@RequestBody UploadPauseToggleRequest uploadPauseToggleRequest, HttpServletRequest request) {

@@ -59,6 +59,14 @@ spring:
             - RewritePath=/api/channel/(?<segment>.*),/$\{segment}
           predicates:
             - Path=/api/channel/**
+        - id: aggregtor_service
+          uri: lb://aggregator-service
+          filters:
+            - AuthenticationFilter
+            - ApiResponseTransformFilter
+            - RewritePath=/api/aggregate/(?<segment>.*),/$\{segment}
+          predicates:
+            - Path=/api/aggregate/**
 
 
 

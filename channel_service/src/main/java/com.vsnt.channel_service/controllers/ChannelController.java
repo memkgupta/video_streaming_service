@@ -1,6 +1,7 @@
 package com.vsnt.channel_service.controllers;
 
 import com.vsnt.channel_service.entities.Channel;
+import com.vsnt.channel_service.payload.PaginatedDTO;
 import com.vsnt.channel_service.payload.channel.ChannelDashboardDTO;
 import com.vsnt.channel_service.payload.channel.ChannelPayload;
 import com.vsnt.channel_service.services.ChannelService;
@@ -33,7 +34,7 @@ public class ChannelController {
     @GetMapping("/my-channel")
     public ResponseEntity<ChannelPayload> getMyChannel(HttpServletRequest request) {
         String userId = request.getHeader("X-USER-ID");
-        System.out.println("userId "+userId);
+        System.out.println(userId);
         return ResponseEntity.ok(channelService.findByUserId(userId).toDTO());
     }
     @PatchMapping("/{id}")

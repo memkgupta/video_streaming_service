@@ -8,6 +8,7 @@ public abstract class APIException extends RuntimeException {
     private String message;
     private Timestamp timestamp;
     private HttpStatus code;
+
     public APIException(String message, HttpStatus code, Timestamp timestamp) {
         super(message);
         this.message = message;

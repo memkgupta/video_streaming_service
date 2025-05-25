@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -41,7 +42,7 @@ public class VideoService {
         try
         {
             Video video = videoRepository.findById(videoId).orElse(null);
-            if(video == null){
+            if(video == null || !video.getUserId().equals(userId)){
                 throw new VideoNotFoundException(videoId);
             }
             video.setTitle(videoDTO.getTitle());
@@ -75,7 +76,9 @@ public class VideoService {
         try {
             Specification<Video> specification = specificationBuilder.build(params);
 
+
             Page<Video> videos = videoRepository.findAll(specification,pageable);
+            System.out.println(videos.getContent());
             return videos;
         }
         catch (Exception e)
@@ -152,7 +155,7 @@ public class VideoService {
     {
         try{
             Video video = videoRepository.findById(videoId).orElse(null);
-            if(video==null || !video.getUserId().equals(userId))
+            if(video==null )
             {
                 throw new VideoNotFoundException(videoId);
             }
