@@ -19,6 +19,7 @@ public class UpdateController {
     @PostMapping("/update")
     public String updateUpload(@RequestBody UpdateRequestDTO dto)
     {
+        System.out.println(dto.toString());
         kafkaProducer.produce(dto);
         return "success";
     }

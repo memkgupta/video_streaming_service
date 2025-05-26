@@ -90,7 +90,7 @@ return res;
         upload.setUploadStatus(UploadStatus.COMPLETED);
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
         upload.setChunksUploaded(etagMap.size());
-        job.setJobId(upload.getId().toString());
+        job.setJobId(upload.getVideoId().toString());
 
         job.setSize(upload.getFileSize());
 
