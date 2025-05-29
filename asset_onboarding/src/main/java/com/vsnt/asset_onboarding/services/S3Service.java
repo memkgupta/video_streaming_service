@@ -24,7 +24,7 @@ public class S3Service {
     }
 
     public String startMultiPartUpload(String key) {
-        System.out.println(s3.getS3AccountOwner());
+
         InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(Secrets.AWS_BUCKET_NAME, key);
         InitiateMultipartUploadResult result = s3.initiateMultipartUpload(request);
         return result.getUploadId();

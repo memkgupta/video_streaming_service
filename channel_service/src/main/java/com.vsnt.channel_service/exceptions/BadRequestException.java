@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 public class BadRequestException extends APIException {
     public BadRequestException(String message) {
-        super(message, HttpStatus.BAD_REQUEST,new Timestamp(System.currentTimeMillis()));
+        super(message);
+        status=400;
     }
 }

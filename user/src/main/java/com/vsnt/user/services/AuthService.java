@@ -3,7 +3,9 @@ package com.vsnt.user.services;
 import com.vsnt.user.config.UserDetailsImpl;
 import com.vsnt.user.entities.Token;
 import com.vsnt.user.entities.User;
+import com.vsnt.user.exceptions.BadRequestException;
 import com.vsnt.user.exceptions.UserAlreadyExistsException;
+import com.vsnt.user.exceptions.UserNotFoundException;
 import com.vsnt.user.payload.Token.TokenResponse;
 import com.vsnt.user.payload.auth.LoginResponse;
 import com.vsnt.user.payload.auth.RegisterRequest;
@@ -70,13 +72,13 @@ public class AuthService {
 
 
     public LoginResponse login(String email, String password) {
-        try{
+
             User user = userRepository.findByEmail(email);
             if (user == null) {
                 throw new RuntimeException("User not found");
             }
             if (!bCryptPasswordEncoder.matches(password, user.getPassword())) {
-                System.out.println("Wrong password");
+
                 throw new BadCredentialsException("Bad credentials");
             }
             String accessToken = jwtService.generateToken(email);
@@ -93,20 +95,17 @@ public class AuthService {
                             .refreshToken(refreshToken)
                     .build());
             return response;
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            throw new RuntimeException("Internal server error");
-        }
+
+
     }
 
     public UserDTO authenticate(String token)
     {
-        try{
+
             String email = jwtService.extractUserName(token);
             User user = userRepository.findByEmail(email);
             if (user == null) {
-            throw new RuntimeException("User not found");
+            throw new UserNotFoundException(email);
             }
            if(jwtService.isTokenValid(token,new UserDetailsImpl(user)))
            {
@@ -122,11 +121,9 @@ public class AuthService {
                return userDTO;
            }
 else{
-    throw new RuntimeException("Invalid token");
+    throw new BadRequestException("Invalid token");
            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
     }
 
 }

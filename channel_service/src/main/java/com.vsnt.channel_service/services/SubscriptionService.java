@@ -2,6 +2,8 @@ package com.vsnt.channel_service.services;
 
 import com.vsnt.channel_service.entities.Channel;
 import com.vsnt.channel_service.entities.Subscription;
+import com.vsnt.channel_service.exceptions.ChannelNotFoundException;
+import com.vsnt.channel_service.exceptions.SubscriptionNotFoundException;
 import com.vsnt.channel_service.repositories.SubscriptionRepository;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class SubscriptionService {
         Channel channel = channelService.findById(channelId);
         if(channel==null)
         {
-            throw new NotFoundException(channelId);
+            throw new ChannelNotFoundException(channelId);
         }
         Subscription subscription = new Subscription();
         subscription.setChannel(channel);
@@ -42,7 +44,7 @@ public class SubscriptionService {
         Subscription subscription = findById(subscriptionId);
         if(subscription==null || !subscription.getUserId().equals(userId))
         {
-            throw new NotFoundException(String.valueOf(subscriptionId));
+            throw new SubscriptionNotFoundException(String.valueOf(subscriptionId));
         }
         subscriptionRepository.delete(subscription);
     }

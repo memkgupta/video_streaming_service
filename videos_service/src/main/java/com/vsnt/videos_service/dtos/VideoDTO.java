@@ -2,9 +2,11 @@ package com.vsnt.videos_service.dtos;
 
 import com.vsnt.videos_service.entities.VideoUploadStatusEnum;
 import lombok.Data;
+import lombok.ToString;
 
 import java.sql.Timestamp;
 @Data
+@ToString
 public class VideoDTO {
     private String id;
     private String title;

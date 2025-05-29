@@ -1,11 +1,9 @@
-package com.vsnt.user.config;
+package com.vsnt.asset_onboarding.config;
 
-import com.vsnt.user.exceptions.APIException;
-import com.vsnt.user.exceptions.InternalServerError;
+import com.vsnt.asset_onboarding.exceptions.APIException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 

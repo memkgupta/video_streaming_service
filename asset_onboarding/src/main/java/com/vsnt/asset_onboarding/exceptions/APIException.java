@@ -1,4 +1,4 @@
-package com.vsnt.videos_service.exceptions;
+package com.vsnt.asset_onboarding.exceptions;
 
 import lombok.Data;
 

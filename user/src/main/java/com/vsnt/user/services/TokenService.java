@@ -2,6 +2,7 @@ package com.vsnt.user.services;
 
 import com.vsnt.user.entities.Token;
 import com.vsnt.user.entities.User;
+import com.vsnt.user.exceptions.BadRequestException;
 import com.vsnt.user.repositories.TokenRepository;
 import org.springframework.stereotype.Service;
 
@@ -19,23 +20,19 @@ public class TokenService {
     }
 //    public boolean isTokenValid
     public String refreshToken(String token){
-        System.out.println(token);
+
        Token t= tokenRepository.findByToken(token);
-        System.out.println(t.getToken());
-        System.out.println(t.getExpires()+" "+t.getExpires().before(new Date(Instant.now().toEpochMilli())));
+
        if(t==null){
-           throw new RuntimeException("Token not found");
+           throw new BadRequestException("Token not found");
        }
        if(t.getExpires().before(new Date(Instant.now().toEpochMilli()))){
-           throw new RuntimeException("Token is expired");
+           throw new BadRequestException("Token is expired");
        }
-       try {
+
            return jwtService.generateToken(t.getUser().getEmail());
-       }
-     catch (Exception e){
-           e.printStackTrace();
-           throw new RuntimeException("Some error occured");
-     }
+
+
     }
 
     public String generateToken(User user) {

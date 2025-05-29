@@ -40,7 +40,7 @@ public class App
             dto.setTimestamp(new Timestamp(System.currentTimeMillis()));
             dto.setStatus("SUCCESS");
             dto.setUrl(cloudFrontURL+"/"+file_key+"/index.m3u8");
-System.out.println("VideoId ************************* "+dto.getVideoId()+"******"+videoId);
+
             APIService service = new APIService(transcoderAPIURL);
             service.sendUpdateRequest(dto);
         }

@@ -36,30 +36,16 @@ import static java.util.function.UnaryOperator.identity;
 import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.ORIGINAL_RESPONSE_CONTENT_TYPE_ATTR;
 @Component
 public class ApiResponseTransformFilter extends AbstractGatewayFilterFactory<ApiResponseTransformFilter.Config> {
-    private final Map<String,MessageBodyDecoder> decoders;
-    private final Map<String,MessageBodyEncoder> encoders;
+    public ApiResponseTransformFilter() {
+        super(Config.class);
+    }
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private APIResponse transform(Map<String,Object> object,Config config) {
+    private APIResponse transform(Map<String,Object> object, Config config) {
         APIResponse apiResponse = new APIResponse();
         apiResponse.setData(object);
-apiResponse.setSuccess(true);
+        apiResponse.setSuccess(true);
         return apiResponse;
     };
-    private APIResponse errorTransform(Map<String,Object> object,Config config) {
-        APIResponse apiResponse = new APIResponse();
-        apiResponse.setSuccess(false);
-        apiResponse.setMessage(object.get("message").toString());
-        if(object.get("errors") != null) {
-            apiResponse.setData((Map<String, Object>) object.get("errors"));
-        }
-        return apiResponse;
-    }
-    public ApiResponseTransformFilter(Set<MessageBodyDecoder> decoders,Set<MessageBodyEncoder> encoders) {
-        super(Config.class);
-    this.decoders = decoders.stream().collect(Collectors.toMap(MessageBodyDecoder::encodingType, identity()));
-    this.encoders = encoders.stream().collect(Collectors.toMap(MessageBodyEncoder::encodingType, identity()));
-    }
-
 
     @Override
     public GatewayFilter apply(Config config) {
@@ -91,12 +77,10 @@ apiResponse.setSuccess(true);
                                 Map<String, Object> mapBody = JsonUtil.toMap(responseBody);
 
                                 APIResponse apiResponse =null;
-                                if(originalResponse.getStatusCode().isError()){
-                                    apiResponse = errorTransform(mapBody,config);
-                                }
-                                else{
-                                    apiResponse= transform(mapBody, config);
-                                }
+
+
+                                apiResponse= transform(mapBody, config);
+
 
                                 try {
                                     byte[] newContent = objectMapper.writeValueAsBytes(apiResponse);
@@ -118,5 +102,6 @@ apiResponse.setSuccess(true);
         }, NettyWriteResponseFilter.WRITE_RESPONSE_FILTER_ORDER - 1);
     }
 
-    public static class Config {}
+    public static class Config{}
 }
+

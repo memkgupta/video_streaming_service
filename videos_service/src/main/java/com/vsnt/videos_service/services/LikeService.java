@@ -25,7 +25,7 @@ public class LikeService {
 
     public void postLike(String userId, String videoId)
     {
-        try{
+
             Video video = videoService.getVideo(videoId);
             if(video == null)
             {
@@ -36,12 +36,8 @@ public class LikeService {
             like.setVideo(video);
             like.setCreatedAt(new Timestamp(System.currentTimeMillis()));
             likeRepository.save(like);
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-            throw new InternalServerError("Some error occured");
-        }
+
+
     }
     public void removeLike(String userId,String videoId)
     {

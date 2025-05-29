@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 public class VideoNotFoundException extends APIException {
 public VideoNotFoundException(String id) {
-    super("User with id " + id + " not found", HttpStatus.NOT_FOUND,new Timestamp(System.currentTimeMillis()));
+    super("Video with id " + id + " not found");
+    status=404;
 }
 }

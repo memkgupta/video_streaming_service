@@ -25,7 +25,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
 
     public Comment postComment(PostCommentPayload commentDTO , String userId) {
-        try{
+
             Video video = videoService.getVideo(commentDTO.getVideoId());
             if(video==null)
             {
@@ -37,43 +37,23 @@ public class CommentService {
             comment.setVideoId(video.getId());
             comment.setUserId(userId);
            return commentRepository.save(comment);
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            throw new InternalServerError("Something went wrong "+e.getMessage());
-        }
+
+
     }
     public Comment getComment(Long commentId) {
-        try{
             return commentRepository.findById(commentId).orElse(null);
-
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            throw new InternalServerError("Something went wrong "+e.getMessage());
-        }
     }
     public Page<Comment> getCommentsOfVideo(String videoId, int page, int size) {
-        try{
             Specification<Comment> specification = (root,query,cb)-> cb.equal(root.get("videoId"), videoId);
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             Page<Comment> comments = commentRepository.findAll(specification,pageable);
             return comments;
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            throw new InternalServerError("Something went wrong "+e.getMessage());
-        }
     }
     public Page<Comment> getReplies(String parentId, int page, int size) {
-        try{
             Specification<Comment> specification = (root,query,cb)-> cb.equal(root.get("parentId"), parentId);
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             Page<Comment> comments = commentRepository.findAll(specification,pageable);
             return comments;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new InternalServerError("Something went wrong "+e.getMessage());
-        }
+
     }
 }

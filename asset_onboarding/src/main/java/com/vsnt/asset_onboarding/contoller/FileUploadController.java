@@ -57,9 +57,5 @@ public class FileUploadController {
         String userId = request.getHeader("X-USER-ID");
         return uploadService.resumeUpload(uploadPauseToggleRequest.getAssetId(), userId);
     }
-    @PostMapping("/queue")
-    public String qu(@RequestBody TranscodingJob job){
-        transcodingJobMessageProducer.sendMessage(job);
-        return "";
-    }
+
 }

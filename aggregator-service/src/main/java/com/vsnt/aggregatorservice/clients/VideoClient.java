@@ -12,6 +12,6 @@ import java.util.Map;
 
 @FeignClient(name = "videos-service",configuration = FeignConfig.class)
 public interface VideoClient {
-    @GetMapping("/videos/")
+    @GetMapping("/videos")
     public PaginatedDTO<VideoDTO> getVideos(@RequestParam Map<String,String> params, @RequestHeader(name = "X-USER-ID") String userId);
 }

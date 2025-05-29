@@ -37,7 +37,7 @@ public class ChannelService {
         Channel channel = findById(channelId);
         if(channel == null)
         {
-            throw new RuntimeException("Channel not found");
+            throw new ChannelNotFoundException(channelId);
         }
         if(channelPayload.getName() != null && !channelPayload.getName().isEmpty() && !channelPayload.getName().equals(channel.getName()))
         {
@@ -78,7 +78,7 @@ public class ChannelService {
     }
     public Channel findByUserId(String userId)
     {
-        try{
+
             Specification<Channel> specification = (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("userId"), userId);
             List<Channel> channel = channelRepository.findAll(specification);
             if(channel.isEmpty())
@@ -86,16 +86,8 @@ public class ChannelService {
                 throw new ChannelNotFoundException("Channel not found");
             }
             return channel.get(0);
-        }
-        catch(Exception e)
-        {
-            if(e instanceof APIException)
-            {
-                throw  e;
-            }
-            e.printStackTrace();
-            throw new InternalServerError(e.getLocalizedMessage());
-        }
+
+
     }
     public Channel findByHandle(String handle) {
         return channelRepository.findByHandle(handle).orElse(null);

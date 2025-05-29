@@ -34,7 +34,7 @@ public class ChannelController {
     @GetMapping("/my-channel")
     public ResponseEntity<ChannelPayload> getMyChannel(HttpServletRequest request) {
         String userId = request.getHeader("X-USER-ID");
-        System.out.println(userId);
+
         return ResponseEntity.ok(channelService.findByUserId(userId).toDTO());
     }
     @PatchMapping("/{id}")

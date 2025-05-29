@@ -19,7 +19,7 @@ public class DockerUtils {
 
         CreateContainerResponse container = dockerClient.createContainerCmd(Secrets.DOCKER_TRANSCODER_CONTAINER_IMAGE)
 
-        .withName("transcoding_image")
+        .withName("transcoding_image-"+videoId)
                 .withEnv(
                         List.of(
                                 "ACCESS_KEY="+ACCESS_KEY,

@@ -11,6 +11,8 @@ import com.vsnt.asset_onboarding.dtos.UpdateRequestDTO;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 
+import com.vsnt.asset_onboarding.exceptions.BadRequestException;
+import com.vsnt.asset_onboarding.exceptions.InternalServerError;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -64,29 +66,33 @@ return res;
     }
     public String uploadChunk(String uploadId,Long assetId,int partNumber,String key,String userId)
     {
-        System.out.println(assetId);
+
         Asset upload = assetService.getAssetById(assetId);
         if(upload==null){
 
-            throw new RuntimeException("Bad request , upload doesn't exist");
+            throw new BadRequestException("Bad request , upload doesn't exist");
         }
        if(!upload.getUserId().equals(userId)){
-           throw new RuntimeException("Bad request , upload doesn't exist");
+           throw new BadRequestException("Bad request , upload doesn't exist");
        }
         if(!upload.getUploadStatus().equals(UploadStatus.INITIATED) ){
-            throw new RuntimeException("Bad request");
+            throw new BadRequestException("Bad request");
         }
         return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
     }
     public boolean finishUpload(String uploadId, Long assetId,String key, Map<Integer,String> etagMap,String userId) throws JsonProcessingException {
         Asset upload = assetService.getAssetById(assetId);
         if(upload==null){
-            throw new RuntimeException("Bad request , upload doesn't exist");
+            throw new BadRequestException("Bad request , upload doesn't exist");
         }
         if(!upload.getUserId().equals(userId)){
-            throw new RuntimeException("Bad request , upload doesn't exist");
+            throw new BadRequestException("Bad request , upload doesn't exist");
         }
        TranscodingJob job = s3Service.completeMultipartUpload(uploadId,etagMap,key);
+        if(job==null)
+        {
+            throw new InternalServerError("Something went wrong");
+        }
         upload.setUploadStatus(UploadStatus.COMPLETED);
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
         upload.setChunksUploaded(etagMap.size());
@@ -102,21 +108,21 @@ return res;
         dto.setVideoId(upload.getVideoId());
         dto.setTimestamp(String.valueOf(new Timestamp(System.currentTimeMillis())));
         kafkaProducer.produce(dto);
-        // push to the transcoding_queue
+
         jobProducer.sendMessage(job);
         return true;
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)
     {
-        try{
+
            Asset upload = assetService.getAssetById(assetId);
             if(upload==null || !upload.getUserId().equals(userId))
             {
-                throw new RuntimeException("Bad request , upload doesn't exist");
+                throw new BadRequestException("Bad request , upload doesn't exist");
             }
 
             if(!upload.getUploadStatus().equals(UploadStatus.UPLOADING)){
-                throw new RuntimeException("Bad request");
+                throw new BadRequestException("Bad request");
             }
             upload.setUploadStatus(UploadStatus.PAUSED);
            if(upload.getEtagMap()!=null){
@@ -128,22 +134,20 @@ return res;
             upload.setChunksUploaded(upload.getChunksUploaded()+etagMap.size());
             assetRepository.save(upload);
             return true;
-        }
-        catch(Exception e){
-            return false;
-        }
+
+
 
     }
     public boolean resumeUpload(Long assetId,String userId)
     {
-        try{
+
             Asset upload = assetService.getAssetById(assetId);
             if(upload==null || !upload.getUserId().equals(userId))
             {
-                throw new RuntimeException("Bad request , upload doesn't exist");
+                throw new BadRequestException("Bad request , upload doesn't exist");
             }
             if(!upload.getUploadStatus().equals(UploadStatus.PAUSED)){
-                throw new RuntimeException("Bad request");
+                throw new BadRequestException("Bad request");
             }
             upload.setUploadStatus(UploadStatus.UPLOADING);
 
@@ -151,8 +155,6 @@ return res;
             assetRepository.save(upload);
             return true;
         }
-        catch(Exception e){
-            return false;
-        }
+
     }
-}
+

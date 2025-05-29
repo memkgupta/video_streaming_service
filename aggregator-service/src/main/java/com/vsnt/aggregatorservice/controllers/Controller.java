@@ -2,6 +2,8 @@ package com.vsnt.aggregatorservice.controllers;
 
 import com.vsnt.aggregatorservice.clients.ChannelClient;
 import com.vsnt.aggregatorservice.clients.VideoClient;
+import com.vsnt.aggregatorservice.config.APIException;
+import com.vsnt.aggregatorservice.config.CustomFeignException;
 import com.vsnt.aggregatorservice.dtos.ChannelDTO;
 import com.vsnt.aggregatorservice.dtos.PaginatedDTO;
 import com.vsnt.aggregatorservice.dtos.VideoDTO;
@@ -21,7 +23,7 @@ public class Controller {
     private final ChannelClient channelClient;
     private final VideoClient videoClient;
     @GetMapping("/channel/videos")
-public ResponseEntity<?> getMyVideos(HttpServletRequest request, @RequestParam String channelId, @RequestParam String page, @RequestParam String size )
+public ResponseEntity<?> getMyVideos(HttpServletRequest request, @RequestParam String page, @RequestParam String size )
 {
     try{
         ChannelDTO channelDTO = channelClient.getMyChannel(request.getHeader("X-USER-ID"));
@@ -32,10 +34,11 @@ public ResponseEntity<?> getMyVideos(HttpServletRequest request, @RequestParam S
         PaginatedDTO<VideoDTO> videos = videoClient.getVideos(map,request.getHeader("X-USER-ID"));
 
         return ResponseEntity.ok(videos);
-    } catch (Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.status(500).body(e.getMessage());
+    } catch (CustomFeignException e) {
+
+       throw new APIException(e.getMessage(),e.getCode().value());
     }
+
 
 }
 

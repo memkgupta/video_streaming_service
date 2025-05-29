@@ -1,8 +1,4 @@
-package com.vsnt.user.exceptions;
-
-import org.springframework.http.HttpStatus;
-
-import java.sql.Timestamp;
+package com.vsnt.asset_onboarding.exceptions;
 
 public class InternalServerError extends APIException{
     public InternalServerError(String message) {

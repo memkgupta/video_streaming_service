@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 public class UserAlreadyExistsException extends APIException{
     public UserAlreadyExistsException(String email) {
-        super("User already exists with email "+email, HttpStatus.CONFLICT,new Timestamp(System.currentTimeMillis()));
+        super("User already exists with email "+email);
+        status=409;
     }
 }

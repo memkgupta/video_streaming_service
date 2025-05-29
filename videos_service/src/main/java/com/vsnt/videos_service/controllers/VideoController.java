@@ -57,9 +57,10 @@ public ResponseEntity<VideoDTO> fillDetails(
        videoService.publishVideo(videoId,userId);
         return ResponseEntity.noContent().build();
     }
-    @GetMapping("/")
+    @GetMapping("")
     public ResponseEntity<PaginatedResponse<VideoDTO>> getVideos(HttpServletRequest request, @RequestParam Map<String,String> params )
     {
+        System.out.println("Request came here");
         String userId = request.getHeader(USER_ID);
         int pageNumber = Integer.parseInt(params.getOrDefault("page","1"))-1;
         int pageSize = Integer.parseInt(params.getOrDefault("size","100"));

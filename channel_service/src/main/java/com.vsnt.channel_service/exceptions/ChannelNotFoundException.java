@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 public class ChannelNotFoundException extends APIException {
 public ChannelNotFoundException(String id) {
-    super("Channel with id " + id + " not found", HttpStatus.NOT_FOUND,new Timestamp(System.currentTimeMillis()));
+    super("Channel with id " + id + " not found");
+    status=404;
 }
 }

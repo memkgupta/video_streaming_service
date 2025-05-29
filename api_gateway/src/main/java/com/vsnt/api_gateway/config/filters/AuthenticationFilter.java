@@ -31,7 +31,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return (((exchange, chain) -> {
 
 
-            try{
+
                 ServerHttpRequest request = null;
                 if(routeValidator.isSecured.test(exchange.getRequest())) {
 
@@ -68,11 +68,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     }
                 }
                 return chain.filter(exchange);
-            }
-            catch(Exception e){
-                e.printStackTrace();
-                throw new RuntimeException("Something went wrong");
-            }
+
 
         }));
     }
