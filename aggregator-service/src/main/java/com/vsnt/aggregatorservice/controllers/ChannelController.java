@@ -19,7 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-public class Controller {
+public class ChannelController {
     private final ChannelClient channelClient;
     private final VideoClient videoClient;
     @GetMapping("/channel/videos")
@@ -36,7 +36,7 @@ public ResponseEntity<?> getMyVideos(HttpServletRequest request, @RequestParam S
         return ResponseEntity.ok(videos);
     } catch (CustomFeignException e) {
 
-       throw new APIException(e.getMessage(),e.getCode().value());
+       throw new APIException(e.getMessage(),e.getStatus().value());
     }
 
 

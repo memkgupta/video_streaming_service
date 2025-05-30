@@ -90,6 +90,6 @@ public class ChannelService {
 
     }
     public Channel findByHandle(String handle) {
-        return channelRepository.findByHandle(handle).orElse(null);
+        return channelRepository.findById(handle).orElse(null);
     }
 }

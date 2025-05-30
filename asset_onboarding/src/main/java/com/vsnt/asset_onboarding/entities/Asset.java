@@ -1,5 +1,6 @@
 package com.vsnt.asset_onboarding.entities;
 
+import com.vsnt.asset_onboarding.dtos.AssetDTO;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 import jakarta.persistence.*;
 
@@ -176,5 +177,25 @@ private String videoId;
 
     public void setEndTime(Timestamp endTime) {
         this.endTime = endTime;
+    }
+    public AssetDTO toDTO() {
+        AssetDTO dto = new AssetDTO();
+        dto.setId(this.id);
+        dto.setFileName(this.fileName);
+        dto.setFileType(this.fileType);
+        dto.setFileSize(this.fileSize);
+        dto.setFileUrl(this.fileUrl);
+        dto.setFileUploadId(this.fileUploadId);
+        dto.setUploadStatus(this.uploadStatus);
+        dto.setChunksUploaded(this.chunksUploaded);
+        dto.setStartTime(this.startTime);
+        dto.setEndTime(this.endTime);
+        dto.setUploadId(this.uploadId);
+        dto.setUserId(this.userId);
+        dto.setKey(this.key);
+        dto.setUrl(this.url);
+        dto.setVideoId(this.videoId);
+
+        return dto;
     }
 }

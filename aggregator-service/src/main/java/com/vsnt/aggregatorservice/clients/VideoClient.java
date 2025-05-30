@@ -14,4 +14,6 @@ import java.util.Map;
 public interface VideoClient {
     @GetMapping("/videos")
     public PaginatedDTO<VideoDTO> getVideos(@RequestParam Map<String,String> params, @RequestHeader(name = "X-USER-ID") String userId);
+    @GetMapping("/videos/watch")
+    VideoDTO getVideo(@RequestParam String v);
 }

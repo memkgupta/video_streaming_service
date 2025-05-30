@@ -19,6 +19,11 @@ public class AssetService {
     public Asset getAssetById(long id) {
         return assetRepository.findById(id);
     }
+    public Asset updateAssetUrl(String id ,String url) {
+        Asset asset = assetRepository.findByVideoId(id);
+        asset.setUrl(url);
+        return assetRepository.save(asset);
+    }
     public boolean removeAssetById(long id) {
         try{
            assetRepository.deleteById(id);

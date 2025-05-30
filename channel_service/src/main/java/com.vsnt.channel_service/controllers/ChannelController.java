@@ -1,6 +1,7 @@
 package com.vsnt.channel_service.controllers;
 
 import com.vsnt.channel_service.entities.Channel;
+import com.vsnt.channel_service.exceptions.ChannelNotFoundException;
 import com.vsnt.channel_service.payload.PaginatedDTO;
 import com.vsnt.channel_service.payload.channel.ChannelDashboardDTO;
 import com.vsnt.channel_service.payload.channel.ChannelPayload;
@@ -28,6 +29,10 @@ public class ChannelController {
     @GetMapping("/{handle}")
     public ResponseEntity<ChannelPayload> getChannel(@PathVariable String handle) {
         Channel channel = channelService.findByHandle(handle);
+        if(channel==null)
+        {
+            throw new ChannelNotFoundException(handle);
+        }
         ChannelPayload response =channel.toDTO();
         return ResponseEntity.ok(response);
     }
