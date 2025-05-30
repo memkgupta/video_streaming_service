@@ -13,7 +13,7 @@ public class GlobalErrorAttributes extends DefaultErrorAttributes {
     @Override
     public Map<String, Object> getErrorAttributes(ServerRequest request, ErrorAttributeOptions options) {
         Map<String, Object> errorResponse = super.getErrorAttributes(request, options);
-        HttpStatus status = HttpStatus.valueOf((Integer) errorResponse.get("status"));
+        HttpStatus status = HttpStatus.valueOf((Integer) errorResponse.getOrDefault("status",500));
         String message = errorResponse.get("message").toString();
         if(message==null)
         {

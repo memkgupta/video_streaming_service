@@ -7,6 +7,6 @@ import java.sql.Timestamp;
 @Data
 public class CustomFeignException extends RuntimeException {
    private String message;
-   private HttpStatus code;
+   private HttpStatus status;
    private Timestamp timestamp;
 }

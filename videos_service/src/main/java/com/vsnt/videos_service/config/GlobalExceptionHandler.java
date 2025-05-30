@@ -17,6 +17,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(APIException.class)
     public ResponseEntity<Map<String, Object>> handleUserNotFound(APIException ex) {
         Map<String, Object> body = new HashMap<>();
+        System.out.println(ex.getMessage()+" "+ex.getStatus());
         body.put("status", ex.getStatus());
         body.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatusCode.valueOf(ex.getStatus())).body(body);
@@ -27,6 +28,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("status", 500);
         body.put("message", "Internal server error");
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +19,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("status", ex.getStatus());
         body.put("message", ex.getMessage());
+        System.out.println(ex.getMessage());
         return ResponseEntity.status(HttpStatusCode.valueOf(ex.getStatus())).body(body);
     }
 
@@ -26,6 +28,8 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("status", 500);
         body.put("message", "Internal server error");
+        System.out.println("HEllo o am a ");
+        System.out.println(Arrays.toString(ex.getStackTrace()));
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }
