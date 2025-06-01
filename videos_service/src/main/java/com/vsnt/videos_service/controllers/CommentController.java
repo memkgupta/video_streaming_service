@@ -23,20 +23,20 @@ public class CommentController {
         this.commentService = commentService;
     }
 
-    @PostMapping("/")
-    public ResponseEntity<CommentDTO> postComment(HttpServletRequest request, @RequestBody PostCommentPayload dto) {
+    @PostMapping
+    public ResponseEntity<CommentDTO> postComment(HttpServletRequest request, @RequestBody PostCommentPayload dto,@RequestParam(defaultValue = "false") boolean isReply,@RequestParam(defaultValue = "") String parentId) {
         String userId = request.getHeader(X_USER_ID);
-        Comment comment = commentService.postComment(dto, userId);
+        Comment comment = commentService.postComment(dto, userId,isReply,parentId);
         return ResponseEntity.ok(comment.toDTO());
     }
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<PaginatedResponse<CommentDTO>> getAllComments(HttpServletRequest request,@RequestParam String videoId,@RequestParam int page , @RequestParam int size) {
-        Page<Comment> comments = commentService.getCommentsOfVideo(videoId, page, size);
+        Page<Comment> comments = commentService.getCommentsOfVideo(videoId, page-1, size);
         long totalResults = comments.getTotalElements();
         int totalPages = comments.getTotalPages();
         Integer nextCursor = page == totalPages ?null:page+1;
         Integer previousCursor = page == 0 ? null:page-1;
-        List<CommentDTO> commentDTOList = comments.getContent().stream().map(c->c.toDTO()).toList();
+        List<CommentDTO> commentDTOList = comments.getContent().stream().map(Comment::toDTO).toList();
         PaginatedResponse<CommentDTO> paginatedResponse = new PaginatedResponse<>();
         paginatedResponse.setData(commentDTOList);
         paginatedResponse.setNextCursor(nextCursor);
@@ -45,6 +45,7 @@ public class CommentController {
 
         return ResponseEntity.ok(paginatedResponse);
     }
+
     @GetMapping("/replies")
     public ResponseEntity<PaginatedResponse<CommentDTO>> getAllReplies(HttpServletRequest request,@RequestParam String parentId,@RequestParam int page , @RequestParam int size) {
         Page<Comment> comments = commentService.getReplies(parentId, page, size);
@@ -52,7 +53,7 @@ public class CommentController {
         int totalPages = comments.getTotalPages();
         Integer nextCursor = page == totalPages ?null:page+1;
         Integer previousCursor = page == 0 ? null:page-1;
-        List<CommentDTO> commentDTOList = comments.getContent().stream().map(c->c.toDTO()).toList();
+        List<CommentDTO> commentDTOList = comments.getContent().stream().map(Comment::toDTO).toList();
         PaginatedResponse<CommentDTO> paginatedResponse = new PaginatedResponse<>();
         paginatedResponse.setData(commentDTOList);
         paginatedResponse.setNextCursor(nextCursor);

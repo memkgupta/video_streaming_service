@@ -1,6 +1,7 @@
 package com.vsnt.aggregatorservice.clients;
 
 import com.vsnt.aggregatorservice.config.FeignConfig;
+import com.vsnt.aggregatorservice.dtos.CommentDTO;
 import com.vsnt.aggregatorservice.dtos.PaginatedDTO;
 import com.vsnt.aggregatorservice.dtos.VideoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,4 +17,7 @@ public interface VideoClient {
     public PaginatedDTO<VideoDTO> getVideos(@RequestParam Map<String,String> params, @RequestHeader(name = "X-USER-ID") String userId);
     @GetMapping("/videos/watch")
     VideoDTO getVideo(@RequestParam String v);
+    @GetMapping("/comment")
+    PaginatedDTO<CommentDTO> getComments(@RequestParam String videoId,@RequestParam int page , @RequestParam int size);
+
 }

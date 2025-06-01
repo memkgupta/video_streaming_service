@@ -19,6 +19,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("status", ex.getStatus());
         body.put("message", ex.getMessage());
+        ex.printStackTrace();
         return ResponseEntity.status(HttpStatusCode.valueOf(ex.getStatus())).body(body);
     }
 
@@ -27,6 +28,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("status", 500);
         body.put("message", "Internal server error");
+        ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

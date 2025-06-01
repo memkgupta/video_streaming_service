@@ -2,6 +2,8 @@ package com.vsnt.aggregatorservice.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vsnt.aggregatorservice.dtos.ErrorResponse;
+import feign.RequestInterceptor;
+import feign.RequestTemplate;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 import org.springframework.context.annotation.Bean;
@@ -32,5 +34,12 @@ public class FeignConfig {
 
 
     };
+    }
+    @Bean
+    public RequestInterceptor customHeaderInterceptor() {
+        return template -> {
+
+            template.header("X-API-KEY", "api-key-test");
+        };
     }
 }

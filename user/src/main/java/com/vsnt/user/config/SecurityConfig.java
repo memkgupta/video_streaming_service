@@ -27,7 +27,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 private final UserDetailsService userDetailsService;
-private final JWTFilter jwtFilter;
+
     @Bean
     UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -38,7 +38,7 @@ private final JWTFilter jwtFilter;
         return source;
     }
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter,JWTFilter jwtFilter) throws Exception {
         http.cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize->
@@ -48,10 +48,12 @@ private final JWTFilter jwtFilter;
                         )
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtFilter,ApiKeyAuthFilter.class);
         return http.build();
 
     }
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();

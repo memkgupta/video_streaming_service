@@ -9,4 +9,5 @@ public class PostCommentPayload {
     private String videoId;
     private Long id;
     private String parentCommentId;
+    private String replyTo;
 }

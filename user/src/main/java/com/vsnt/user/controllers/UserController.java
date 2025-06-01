@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/")
 public class UserController {
@@ -31,6 +33,12 @@ public class UserController {
         this.jwtService = jwtService;
         this.customUserDetailsService = customUserDetailsService;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<UserDTO>> getAllUsers(@RequestParam("ids") List<String> ids) {
+        List<User> users = userService.getAllUser(ids);
+        return ResponseEntity.ok(users.stream().map(User::userDTO).toList());
     }
 
     @GetMapping("/{id}")
