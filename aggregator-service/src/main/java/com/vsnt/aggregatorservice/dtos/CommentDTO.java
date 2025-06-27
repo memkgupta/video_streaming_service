@@ -19,6 +19,7 @@ public class CommentDTO {
     private UserDTO user;
     private String replyTo;
     private String parentCommentId;
+    private long totalReplies;
 
 }
 

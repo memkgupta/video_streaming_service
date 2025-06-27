@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -79,7 +80,12 @@ public class CommentService {
             Specification<Comment> specification = (root,query,cb)-> cb.equal(root.get("parentId"), parentId);
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             Page<Comment> comments = commentRepository.findAll(specification,pageable);
+
             return comments;
 
+    }
+    public List<Object[]> getReplyCountOfComments(List<String> parentIds)
+    {
+        return commentRepository.countRepliesForParentIds(parentIds);
     }
 }

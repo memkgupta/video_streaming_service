@@ -14,7 +14,7 @@ public class KafkaConsumer {
         this.videoService = videoService;
     }
 
-    @KafkaListener(topics = "video-updates",groupId = "video-updates-consumer")
+    @KafkaListener(topics = "video-updates",groupId = "video-updates-consumer-status")
     public void listen(UpdateRequestDTO updateRequestDTO) {
 videoService.updateVideoUploadStatus(updateRequestDTO.getVideoId(), VideoUploadStatusEnum.valueOf(updateRequestDTO.getStatus()));
     }

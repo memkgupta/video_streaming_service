@@ -10,7 +10,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/comment")
@@ -36,7 +40,19 @@ public class CommentController {
         int totalPages = comments.getTotalPages();
         Integer nextCursor = page == totalPages ?null:page+1;
         Integer previousCursor = page == 0 ? null:page-1;
-        List<CommentDTO> commentDTOList = comments.getContent().stream().map(Comment::toDTO).toList();
+        List<Object[]> replyCounts = commentService.getReplyCountOfComments(comments.getContent().stream().map(Comment::getId).toList());
+
+        HashMap<String,Long> countMap = new HashMap<>();
+        replyCounts.forEach(r->{
+            countMap.put((String)r[0],(Long)r[1]);
+        });
+
+
+        List<CommentDTO> commentDTOList = comments.getContent().stream().map(Comment::toDTO).collect(Collectors.toCollection(ArrayList::new));
+        commentDTOList.forEach(commentDTO -> {
+
+            commentDTO.setTotalReplies(countMap.getOrDefault(commentDTO.getId(),0L));
+        });
         PaginatedResponse<CommentDTO> paginatedResponse = new PaginatedResponse<>();
         paginatedResponse.setData(commentDTOList);
         paginatedResponse.setNextCursor(nextCursor);

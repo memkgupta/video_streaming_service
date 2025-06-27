@@ -36,6 +36,7 @@ public ResponseEntity<VideoDTO> fillDetails(
 )
 {
     String userId = request.getHeader(USER_ID);
+    System.out.println(request.getHeader(USER_ID));
     Video video = videoService.fillDetails(videoDTO,userId,videoId);
     return ResponseEntity.ok(video.toDTO());
 }
@@ -59,7 +60,7 @@ public ResponseEntity<VideoDTO> fillDetails(
        videoService.publishVideo(videoId,userId);
         return ResponseEntity.noContent().build();
     }
-    @GetMapping("")
+    @GetMapping("/feed")
     public ResponseEntity<PaginatedResponse<VideoDTO>> getVideos(HttpServletRequest request, @RequestParam Map<String,String> params )
     {
         System.out.println("Request came here");

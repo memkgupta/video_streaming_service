@@ -29,7 +29,7 @@ public class DockerUtils {
                                 "FILE_KEY="+fileKey,
                                 "VIDEO_ID="+videoId,
                                 "CLOUDFRONT_URL="+Secrets.CLOUD_FRONT_URL,
-                                "UPDATE_API_URL=http://host.docker.internal:8001/api/transcoder/update"
+                                "UPDATE_API_URL=http://host.docker.internal:8082/update"
                         )
                 )
 

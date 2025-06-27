@@ -32,6 +32,7 @@ public class VideoController {
         System.out.println(video.getChannelId());
         ChannelDTO channelDTO = channelClient.getChannel(video.getChannelId());
         AssetDTO assetDTO = assetClient.getAssetById(video.getAssetId());
+        System.out.println(assetDTO.getUrl()+" "+"Ye rha bc");
         VideoPlayerDTO videoPlayerDTO = VideoPlayerDTO.builder()
                 .duration(video.getDuration())
                 .url(assetDTO.getUrl())

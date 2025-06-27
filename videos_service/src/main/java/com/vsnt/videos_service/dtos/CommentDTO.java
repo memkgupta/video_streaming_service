@@ -16,5 +16,5 @@ public class CommentDTO {
     private String userId;
     private String replyTo;
     private String parentCommentId;
-    private List<CommentDTO> replies;
+    private long totalReplies;
 }

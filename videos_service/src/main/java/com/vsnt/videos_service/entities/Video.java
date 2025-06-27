@@ -34,6 +34,7 @@ public VideoDTO toDTO()
     dto.setUploadedAt(uploadedAt);
     dto.setDuration(duration);
     dto.setStatus(status);
+
     dto.setThumbnailUrl(thumbnailUrl);
     dto.setAssetId(assetId);
     return dto;

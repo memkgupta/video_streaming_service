@@ -39,6 +39,8 @@ public class VideoService {
 
             Video video = videoRepository.findById(videoId).orElse(null);
             if(video == null || !video.getUserId().equals(userId)){
+                System.out.println(video.getUserId());
+                System.out.println(userId);
                 throw new VideoNotFoundException(videoId);
             }
             System.out.println(videoDTO);
