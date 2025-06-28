@@ -53,7 +53,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                         HttpHeaders headers = new HttpHeaders();
                         headers.set("Authorization", "Bearer "+authHeader);
                         HttpEntity<String> entity = new HttpEntity<>(headers);
-                        ResponseEntity<Map> response = restTemplate.exchange( "http://localhost:8080/auth/authenticate",
+                        ResponseEntity<Map> response = restTemplate.exchange( "http://host.docker.internal:8080/auth/authenticate",
                                 HttpMethod.GET,
                                 entity,
                                 Map.class);
