@@ -5,19 +5,21 @@ import com.vsnt.videos_service.dtos.PaginatedResponse;
 import com.vsnt.videos_service.entities.Comment;
 import com.vsnt.videos_service.payloads.PostCommentPayload;
 import com.vsnt.videos_service.services.CommentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/comment")
+@Tag(name = "Comment Controller", description = "APIs for posting and retrieving comments and replies")
 public class CommentController {
 
     public static final String X_USER_ID = "X-USER-ID";
@@ -28,31 +30,59 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity<CommentDTO> postComment(HttpServletRequest request, @RequestBody PostCommentPayload dto,@RequestParam(defaultValue = "false") boolean isReply,@RequestParam(defaultValue = "") String parentId) {
+    @Operation(
+            summary = "Post a comment or reply",
+            description = "Posts a new comment or reply on a video",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Comment posted successfully"),
+                    @ApiResponse(responseCode = "400", description = "Invalid payload"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized")
+            }
+    )
+    public ResponseEntity<CommentDTO> postComment(
+            HttpServletRequest request,
+            @RequestBody PostCommentPayload dto,
+            @RequestParam(defaultValue = "false") boolean isReply,
+            @RequestParam(defaultValue = "") String parentId) {
+
         String userId = request.getHeader(X_USER_ID);
-        Comment comment = commentService.postComment(dto, userId,isReply,parentId);
+        Comment comment = commentService.postComment(dto, userId, isReply, parentId);
         return ResponseEntity.ok(comment.toDTO());
     }
+
     @GetMapping
-    public ResponseEntity<PaginatedResponse<CommentDTO>> getAllComments(HttpServletRequest request,@RequestParam String videoId,@RequestParam int page , @RequestParam int size) {
-        Page<Comment> comments = commentService.getCommentsOfVideo(videoId, page-1, size);
+    @Operation(
+            summary = "Get comments for a video",
+            description = "Retrieves paginated top-level comments for a video along with reply counts",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Comments fetched successfully"),
+                    @ApiResponse(responseCode = "400", description = "Missing or invalid video ID")
+            }
+    )
+    public ResponseEntity<PaginatedResponse<CommentDTO>> getAllComments(
+            HttpServletRequest request,
+            @RequestParam String videoId,
+            @RequestParam int page,
+            @RequestParam int size) {
+
+        Page<Comment> comments = commentService.getCommentsOfVideo(videoId, page - 1, size);
         long totalResults = comments.getTotalElements();
         int totalPages = comments.getTotalPages();
-        Integer nextCursor = page == totalPages ?null:page+1;
-        Integer previousCursor = page == 0 ? null:page-1;
-        List<Object[]> replyCounts = commentService.getReplyCountOfComments(comments.getContent().stream().map(Comment::getId).toList());
+        Integer nextCursor = page == totalPages ? null : page + 1;
+        Integer previousCursor = page == 0 ? null : page - 1;
 
-        HashMap<String,Long> countMap = new HashMap<>();
-        replyCounts.forEach(r->{
-            countMap.put((String)r[0],(Long)r[1]);
-        });
+        List<Object[]> replyCounts = commentService.getReplyCountOfComments(
+                comments.getContent().stream().map(Comment::getId).toList()
+        );
 
+        Map<String, Long> countMap = new HashMap<>();
+        replyCounts.forEach(r -> countMap.put((String) r[0], (Long) r[1]));
 
-        List<CommentDTO> commentDTOList = comments.getContent().stream().map(Comment::toDTO).collect(Collectors.toCollection(ArrayList::new));
-        commentDTOList.forEach(commentDTO -> {
+        List<CommentDTO> commentDTOList = comments.getContent().stream()
+                .map(Comment::toDTO)
+                .peek(dto -> dto.setTotalReplies(countMap.getOrDefault(dto.getId(), 0L)))
+                .collect(Collectors.toList());
 
-            commentDTO.setTotalReplies(countMap.getOrDefault(commentDTO.getId(),0L));
-        });
         PaginatedResponse<CommentDTO> paginatedResponse = new PaginatedResponse<>();
         paginatedResponse.setData(commentDTOList);
         paginatedResponse.setNextCursor(nextCursor);
@@ -63,13 +93,30 @@ public class CommentController {
     }
 
     @GetMapping("/replies")
-    public ResponseEntity<PaginatedResponse<CommentDTO>> getAllReplies(HttpServletRequest request,@RequestParam String parentId,@RequestParam int page , @RequestParam int size) {
+    @Operation(
+            summary = "Get replies to a comment",
+            description = "Retrieves paginated replies for a specific parent comment",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Replies fetched successfully"),
+                    @ApiResponse(responseCode = "400", description = "Missing or invalid parent ID")
+            }
+    )
+    public ResponseEntity<PaginatedResponse<CommentDTO>> getAllReplies(
+            HttpServletRequest request,
+            @RequestParam String parentId,
+            @RequestParam int page,
+            @RequestParam int size) {
+
         Page<Comment> comments = commentService.getReplies(parentId, page, size);
         long totalResults = comments.getTotalElements();
         int totalPages = comments.getTotalPages();
-        Integer nextCursor = page == totalPages ?null:page+1;
-        Integer previousCursor = page == 0 ? null:page-1;
-        List<CommentDTO> commentDTOList = comments.getContent().stream().map(Comment::toDTO).toList();
+        Integer nextCursor = page == totalPages ? null : page + 1;
+        Integer previousCursor = page == 0 ? null : page - 1;
+
+        List<CommentDTO> commentDTOList = comments.getContent().stream()
+                .map(Comment::toDTO)
+                .toList();
+
         PaginatedResponse<CommentDTO> paginatedResponse = new PaginatedResponse<>();
         paginatedResponse.setData(commentDTOList);
         paginatedResponse.setNextCursor(nextCursor);

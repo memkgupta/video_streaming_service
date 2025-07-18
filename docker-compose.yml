@@ -53,9 +53,13 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pass
-      POSTGRES_DB: vsnt_videos
+      POSTGRES_DB: default_db
     ports:
       - "5431:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
     networks:
       - app-net
     healthcheck:
@@ -210,3 +214,6 @@ services:
 networks:
   app-net:
     driver: bridge
+
+volumes:
+  pg_data: {}
