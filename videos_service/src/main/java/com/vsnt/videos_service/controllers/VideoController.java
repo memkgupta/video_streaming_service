@@ -47,7 +47,7 @@ public ResponseEntity<VideoDTO> fillDetails(
         Video video = videoService.getVideo(v);
         if(video==null)
         {
-            System.out.println("Video null");
+
             throw new VideoNotFoundException("Video not found");
         }
 

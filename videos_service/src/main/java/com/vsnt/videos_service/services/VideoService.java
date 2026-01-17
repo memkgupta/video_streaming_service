@@ -135,4 +135,12 @@ public class VideoService {
 
 
     }
+
+    public void updateTranscript(String videoId, String transcriptURL) {
+        Video video = videoRepository.findById(videoId).orElseThrow(
+                ()->new VideoNotFoundException(videoId)
+        );
+        video.setTranscriptUrl(transcriptURL);
+        videoRepository.save(video);
+    }
 }

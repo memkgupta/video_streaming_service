@@ -9,7 +9,8 @@ public class UpdateRequestDTO {
 
     private String timestamp;
     private String status;
-
+    private UpdateType type;
+    private String transcriptURL;
     @Override
     public String toString() {
         return "UpdateRequestDTO{" +

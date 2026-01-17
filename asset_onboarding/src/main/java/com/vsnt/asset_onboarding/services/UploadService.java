@@ -1,24 +1,19 @@
 package com.vsnt.asset_onboarding.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vsnt.asset_onboarding.config.KafkaProducer;
+import com.vsnt.asset_onboarding.config.SummarizationJobProducer;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
-import com.vsnt.asset_onboarding.dtos.FileMetaData;
-import com.vsnt.asset_onboarding.dtos.FileUploadStartResponse;
-import com.vsnt.asset_onboarding.dtos.TranscodingJob;
-import com.vsnt.asset_onboarding.dtos.UpdateRequestDTO;
+import com.vsnt.asset_onboarding.dtos.*;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
 import com.vsnt.asset_onboarding.exceptions.InternalServerError;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,12 +25,14 @@ public class UploadService {
     private final AssetService assetService;
     private final KafkaProducer kafkaProducer;
     private final TranscodingJobMessageProducer jobProducer;
-    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KafkaProducer kafkaProducer, TranscodingJobMessageProducer messageProducer) {
+    private final SummarizationJobProducer summarizationJobProducer;
+    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KafkaProducer kafkaProducer, TranscodingJobMessageProducer messageProducer, SummarizationJobProducer summarizationJobProducer) {
         this.s3Service = s3Service;
         this.assetRepository = assetRepository;
         this.assetService = assetService;
         this.kafkaProducer = kafkaProducer;
         this.jobProducer = messageProducer;
+        this.summarizationJobProducer = summarizationJobProducer;
     }
 
     public FileUploadStartResponse startUpload(FileMetaData obj,String userId)
@@ -80,7 +77,7 @@ return res;
         }
         return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
     }
-    public boolean finishUpload(String uploadId, Long assetId,String key, Map<Integer,String> etagMap,String userId) throws JsonProcessingException {
+    public void finishUpload(String uploadId, Long assetId, String key, Map<Integer,String> etagMap, String userId) throws JsonProcessingException {
         Asset upload = assetService.getAssetById(assetId);
         if(upload==null){
             throw new BadRequestException("Bad request , upload doesn't exist");
@@ -96,7 +93,7 @@ return res;
         upload.setUploadStatus(UploadStatus.COMPLETED);
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
         upload.setChunksUploaded(etagMap.size());
-        job.setJobId(upload.getVideoId().toString());
+        job.setJobId(upload.getVideoId());
 
         job.setSize(upload.getFileSize());
 
@@ -110,7 +107,12 @@ return res;
         kafkaProducer.produce(dto);
 
         jobProducer.sendMessage(job);
-        return true;
+
+        SummarizationJob summarizationJob = new SummarizationJob();
+        summarizationJob.setJobId(upload.getUploadId());
+        summarizationJob.setKey(job.getKey());
+        summarizationJob.setSize(job.getSize());
+        summarizationJobProducer.sendMessage(summarizationJob);
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)
     {

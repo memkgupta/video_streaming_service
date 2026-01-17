@@ -23,6 +23,7 @@ public class Video {
     private VideoUploadStatusEnum status;
     private String thumbnailUrl;
     private String assetId;
+    private String transcriptUrl;
 public VideoDTO toDTO()
 {
     VideoDTO dto = new VideoDTO();
