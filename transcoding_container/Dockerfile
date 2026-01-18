@@ -1,5 +1,5 @@
 # Use OpenJDK base image
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jdk
 
 # Install ffmpeg
 RUN apt-get update && \

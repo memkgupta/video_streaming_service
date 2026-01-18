@@ -16,6 +16,11 @@ public class KafkaConsumer {
 
     @KafkaListener(topics = "video-updates",groupId = "video-updates-consumer-status")
     public void listen(UpdateRequestDTO updateRequestDTO) {
-videoService.updateVideoUploadStatus(updateRequestDTO.getVideoId(), VideoUploadStatusEnum.valueOf(updateRequestDTO.getStatus()));
+        System.out.println("Received update request "+updateRequestDTO);
+        if(updateRequestDTO.getStatus()!=null && !updateRequestDTO.getStatus().isEmpty())
+        {
+            videoService.updateVideoUploadStatus(updateRequestDTO.getVideoId(), VideoUploadStatusEnum.valueOf(updateRequestDTO.getStatus()));
+
+        }
     }
 }

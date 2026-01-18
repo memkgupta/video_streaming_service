@@ -12,6 +12,10 @@ public class UpdateRequestDTO {
 
     private String timestamp;
     private String status;
+    public UpdateRequestDTO() {}
+    public UpdateRequestDTO(String status,String videoId) {
+        this.status = status;
+    }
 
     @Override
     public String toString() {

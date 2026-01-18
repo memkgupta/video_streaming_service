@@ -102,12 +102,12 @@ return res;
 
 
         assetRepository.save(upload);
-        // send the update to the video service ( and that video service will update the video status to uploaded and send a SSE to the frontend)
+
         UpdateRequestDTO dto = new UpdateRequestDTO();
-        dto.setStatus("UPLOADED");
+        dto.setStatus("PROCESSING");
         dto.setVideoId(upload.getVideoId());
         dto.setTimestamp(String.valueOf(new Timestamp(System.currentTimeMillis())));
-        kafkaProducer.produce(dto);
+
 
         jobProducer.sendMessage(job);
         return true;

@@ -4,6 +4,7 @@ public enum UploadStatus {
     INITIATED,
     PAUSED,
     UPLOADING,
+    PROCESSING,
     CANCELLED,
     FAILED,
     COMPLETED,

@@ -16,7 +16,9 @@ public class KafkaConsumer {
 
     @KafkaListener(topics = "video-updates",groupId = "video-updates-consumer")
     public void listen(UpdateRequestDTO updateRequestDTO) {
-        System.out.println(updateRequestDTO);
-       assetService.updateAssetUrl(updateRequestDTO.getVideoId(),updateRequestDTO.getUrl());
+        if(updateRequestDTO.getUrl()!=null) {
+            assetService.updateAssetUrl(updateRequestDTO.getVideoId(),updateRequestDTO.getUrl());
+
+        }
     }
 }

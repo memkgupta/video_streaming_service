@@ -45,6 +45,12 @@ public class App
             service.sendUpdateRequest(dto);
         }
         catch(Exception e){
+            UpdateRequestDTO failed = new UpdateRequestDTO();
+            failed.setVideoId(videoId);
+            failed.setTimestamp(new Timestamp(System.currentTimeMillis()));
+            failed.setStatus("FAILED");
+            APIService service = new APIService(transcoderAPIURL);
+            service.sendUpdateRequest(failed);
             e.printStackTrace();
         }
 

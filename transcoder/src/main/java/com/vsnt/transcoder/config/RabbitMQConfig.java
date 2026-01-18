@@ -21,6 +21,11 @@ public class RabbitMQConfig {
 
     static final String QUEUE_NAME = "transcoding_jobs" ;
 
+    private final DockerUtils dockerUtils;
+
+    public RabbitMQConfig(DockerUtils dockerUtils) {
+        this.dockerUtils = dockerUtils;
+    }
 
     @Bean
     public Queue transcodingQueue() {
@@ -33,7 +38,7 @@ public class RabbitMQConfig {
         Gson gson = new Gson();
        TranscodingJob job = gson.fromJson(data, TranscodingJob.class);
         System.out.println(job);
-        DockerUtils dockerUtils = new DockerUtils();
+
         dockerUtils.runContainer(job.getKey(),job.getJobId());
     }
 }

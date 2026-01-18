@@ -1,9 +1,13 @@
 package com.vsnt.transcoder.docker_utils;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.WaitResponse;
 import com.vsnt.transcoder.config.DockerClientSingleton;
+import com.vsnt.transcoder.config.KafkaProducer;
 import com.vsnt.transcoder.config.Secrets;
+import com.vsnt.transcoder.dtos.UpdateRequestDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +18,11 @@ public class DockerUtils {
     private String ACCESS_KEY = Secrets.AWS_ACCESS_KEY_ID;
     private String SECRET_KEY=Secrets.AWS_SECRET_KEY;
     private DockerClient dockerClient = DockerClientSingleton.getDockerClient();
+    private final KafkaProducer kafkaProducer;
+    public DockerUtils(KafkaProducer kafkaProducer) {
+        this.kafkaProducer = kafkaProducer;
+    }
+
     public void runContainer(String fileKey,String videoId)
     {
 
@@ -35,6 +44,10 @@ public class DockerUtils {
 
                 .exec()
                 ;
+
         dockerClient.startContainerCmd(container.getId()).exec();
+
+        kafkaProducer.produce(new UpdateRequestDTO("PROCESSING",videoId));
+
     }
 }
