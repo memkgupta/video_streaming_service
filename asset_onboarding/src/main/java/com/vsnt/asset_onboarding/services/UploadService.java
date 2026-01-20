@@ -14,6 +14,7 @@ import com.vsnt.asset_onboarding.repositories.AssetRepository;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -106,12 +107,13 @@ return res;
         dto.setTimestamp(String.valueOf(new Timestamp(System.currentTimeMillis())));
         kafkaProducer.produce(dto);
 
-        jobProducer.sendMessage(job);
+        List<AssetChunk> chunks = assetService.splitIntoChunks(String.valueOf(assetId));
 
         SummarizationJob summarizationJob = new SummarizationJob();
         summarizationJob.setJobId(upload.getUploadId());
         summarizationJob.setKey(job.getKey());
         summarizationJob.setSize(job.getSize());
+        summarizationJob.setChunks(chunks);
         summarizationJobProducer.sendMessage(summarizationJob);
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)

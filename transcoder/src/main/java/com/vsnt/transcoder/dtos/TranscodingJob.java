@@ -3,11 +3,22 @@ package com.vsnt.transcoder.dtos;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class TranscodingJob {
     private String jobId;
     private String key;
     private long size;
+    private  ModerationResult result;
+    private String assetId;
+
+    public String getAssetId() {
+        return assetId;
+    }
+
+    public ModerationResult getResult() {
+        return result;
+    }
 
     public TranscodingJob() {
     }

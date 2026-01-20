@@ -7,12 +7,32 @@ import com.vsnt.asset_onboarding.config.Serializer;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
+
 @JsonSerialize(using = Serializer.class)
 public class TranscodingJob  {
     private String jobId;
     private String key;
     private long size;
-//    private LocalDateTime time;
+    private ModerationResult moderationResult;
+    private List<AssetChunk> chunks;
+
+    public List<AssetChunk> getChunks() {
+        return chunks;
+    }
+
+    public void setChunks(List<AssetChunk> chunks) {
+        this.chunks = chunks;
+    }
+
+    public ModerationResult getModerationResult() {
+        return moderationResult;
+    }
+
+    public void setModerationResult(ModerationResult moderationResult) {
+        this.moderationResult = moderationResult;
+    }
+    //    private LocalDateTime time;
 
     public String getJobId() {
         return jobId;

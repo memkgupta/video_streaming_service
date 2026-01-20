@@ -9,7 +9,9 @@ public class UpdateRequestDTO {
     private String url;
     private String timestamp;
     private String status;
-
+    private UpdateType type;
+    private String transcriptURL;
+    private ModerationResult moderationResult;
     @Override
     public String toString() {
         return "UpdateRequestDTO{" +
@@ -18,6 +20,30 @@ public class UpdateRequestDTO {
                 ", timestamp=" + timestamp +
                 ", status='" + status + '\'' +
                 '}';
+    }
+
+    public UpdateType getType() {
+        return type;
+    }
+
+    public void setType(UpdateType type) {
+        this.type = type;
+    }
+
+    public String getTranscriptURL() {
+        return transcriptURL;
+    }
+
+    public void setTranscriptURL(String transcriptURL) {
+        this.transcriptURL = transcriptURL;
+    }
+
+    public ModerationResult getModerationResult() {
+        return moderationResult;
+    }
+
+    public void setModerationResult(ModerationResult moderationResult) {
+        this.moderationResult = moderationResult;
     }
 
     public String getVideoId() {

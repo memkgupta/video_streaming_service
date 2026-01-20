@@ -19,11 +19,8 @@ public class TranscodingJobMessageProducer {
     }
 
     public void sendMessage(TranscodingJob job) {
-
         try {
-
             rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME,objectMapper.writeValueAsString(job));
-
         }
         catch (Exception e) {
             e.printStackTrace();

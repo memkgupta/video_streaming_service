@@ -39,16 +39,25 @@ def transcribe_in_chunks(video_path, video_id):
     split_audio(audio_path)
 
     model = whisper.load_model(WHISPER_MODEL)
-    transcript = ""
 
+    timed_segments = []
     chunk_files = sorted(Path(CHUNK_DIR).glob("*.wav"))
 
     for idx, chunk in enumerate(chunk_files):
-        result = model.transcribe(chunk, language="en", task="translate")
+        chunk_offset = idx * CHUNK_LENGTH  # THIS IS KEY
+
+        result = model.transcribe(
+            chunk,
+            language="en",
+            task="translate"
+        )
 
         for seg in result["segments"]:
-            transcript += seg["text"]
+            timed_segments.append({
+                "start": seg["start"] + chunk_offset,
+                "end": seg["end"] + chunk_offset,
+                "text": seg["text"]
+            })
 
+    return timed_segments
 
-
-    return transcript

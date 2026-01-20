@@ -47,7 +47,7 @@ def start_consumer():
 
             # Business logic
             spawner = DockerSpawnerFactory.get_spawner()
-            spawner.spawn(job.videoId,job.key)
+            spawner.spawn(job)
 
             # ACK only after success
             ch.basic_ack(delivery_tag=method.delivery_tag)

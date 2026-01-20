@@ -1,9 +1,20 @@
 package com.vsnt.asset_onboarding.dtos;
 
+import java.util.List;
+
 public class SummarizationJob {
-    private String jobId;
-    private String key;
+    private String jobId; // video id
+    private String key; // for fetching the video from s3
     private long size;
+    private List<AssetChunk>  chunks;
+
+    public List<AssetChunk> getChunks() {
+        return chunks;
+    }
+
+    public void setChunks(List<AssetChunk> chunks) {
+        this.chunks = chunks;
+    }
 
     public String getJobId() {
         return jobId;
@@ -28,4 +39,5 @@ public class SummarizationJob {
     public void setSize(long size) {
         this.size = size;
     }
+
 }

@@ -1,10 +1,12 @@
 package com.vsnt.asset_onboarding.entities;
 
+import com.vsnt.asset_onboarding.dtos.AssetChunk;
 import com.vsnt.asset_onboarding.dtos.AssetDTO;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -27,6 +29,17 @@ public class Asset {
     private String key;
     private String url;
 private String videoId;
+@ElementCollection(fetch = FetchType.EAGER)
+private List<AssetChunk> chunks;
+
+    public List<AssetChunk> getChunks() {
+        return chunks;
+    }
+
+    public void setChunks(List<AssetChunk> chunks) {
+        this.chunks = chunks;
+    }
+
     public String getUrl() {
         return url;
     }

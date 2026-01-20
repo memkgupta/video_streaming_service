@@ -24,6 +24,8 @@ public class KafkaConsumer {
         } else if (updateRequestDTO.getType().equals(UpdateType.TRANSCRIPT_UPDATE)) {
             videoService.updateTranscript(updateRequestDTO.getVideoId(),updateRequestDTO.getTranscriptURL());
         }
+        else if(updateRequestDTO.getType().equals(UpdateType.MODERATION_UPDATE)) {
+            videoService.updateModerationSummary(updateRequestDTO.getModerationResult());
+        }
     }
-
 }
