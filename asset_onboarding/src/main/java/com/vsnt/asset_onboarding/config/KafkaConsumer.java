@@ -36,22 +36,18 @@ public class KafkaConsumer {
                 {
                     throw new RuntimeException("Asset Not Found");
                 }
-
                 TranscodingJob job = new TranscodingJob();
                 job.setJobId(
                         updateRequestDTO.getVideoId()
                 );
                 job.setKey(asset.getKey());
-
                 job.setModerationResult(updateRequestDTO.getModerationResult());
                 job.setSize(asset.getFileSize());
                 transcodingJobMessageProducer.sendMessage(
                         job
                 );
             }
-            else {
-                // notify users for flagging
-            }
+
 
         }
     }

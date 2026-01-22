@@ -8,7 +8,6 @@ import java.util.Map;
 @Data
 public class ModerationResult {
     private String id;
-    private String moderationResultKey;
     private ModerationStatus status;
     private double confidenceScore;
     private List<ModerationFlag> flags;

@@ -60,10 +60,8 @@ public class AssetService {
                             .chunkId(chunk_number++)
                             .size(size)
                             .assetId(assetId)
-
                             .end(end)
                             .start(start)
-
                             .build()
             );
         }

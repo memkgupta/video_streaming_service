@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map;
 @Data
 public class ModerationResult {
-    private String moderationResultKey;
+    private String id;
+
     private ModerationStatus status;
     private double confidenceScore;
     private List<ModerationFlag> flags;
