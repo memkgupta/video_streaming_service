@@ -2,7 +2,7 @@ package com.vsnt.asset_onboarding.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vsnt.asset_onboarding.config.KafkaProducer;
-import com.vsnt.asset_onboarding.config.SummarizationJobProducer;
+import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.*;
 import com.vsnt.asset_onboarding.entities.Asset;
@@ -11,6 +11,7 @@ import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
 import com.vsnt.asset_onboarding.exceptions.InternalServerError;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
+import com.vsnt.common_lib.dtos.ModerationJob;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -26,14 +27,14 @@ public class UploadService {
     private final AssetService assetService;
     private final KafkaProducer kafkaProducer;
     private final TranscodingJobMessageProducer jobProducer;
-    private final SummarizationJobProducer summarizationJobProducer;
-    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KafkaProducer kafkaProducer, TranscodingJobMessageProducer messageProducer, SummarizationJobProducer summarizationJobProducer) {
+    private final ModerationJobProducer moderationJobProducer;
+    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KafkaProducer kafkaProducer, TranscodingJobMessageProducer messageProducer, ModerationJobProducer moderationJobProducer) {
         this.s3Service = s3Service;
         this.assetRepository = assetRepository;
         this.assetService = assetService;
         this.kafkaProducer = kafkaProducer;
         this.jobProducer = messageProducer;
-        this.summarizationJobProducer = summarizationJobProducer;
+        this.moderationJobProducer = moderationJobProducer;
     }
 
     public FileUploadStartResponse startUpload(FileMetaData obj,String userId)
@@ -109,12 +110,11 @@ return res;
 
         List<AssetChunk> chunks = assetService.splitIntoChunks(String.valueOf(assetId));
 
-        SummarizationJob summarizationJob = new SummarizationJob();
-        summarizationJob.setJobId(upload.getUploadId());
-        summarizationJob.setKey(job.getKey());
-        summarizationJob.setSize(job.getSize());
-        summarizationJob.setChunks(chunks);
-        summarizationJobProducer.sendMessage(summarizationJob);
+        ModerationJob moderationJob = new ModerationJob();
+        moderationJob.setJobId(upload.getVideoId());
+        moderationJob.setFileKey(upload.getKey());
+        moderationJob.setSize(upload.getFileSize());
+        moderationJobProducer.sendMessage(moderationJob);
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)
     {

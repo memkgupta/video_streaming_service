@@ -11,14 +11,14 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 public class RabbitMQConfig {
     static final String QUEUE_NAME = "transcoding_jobs" ;
-    static final String SUMMARIZATION_QUEUE_NAME = "summarization_jobs";
+    static final String MODERATION_JOBS = "moderation_jobs" ;
     @Bean
     public Queue transcodingQueue() {
         return new Queue(QUEUE_NAME, false);
     }
     @Bean
-    public Queue summarizationQueue(){
-        return new Queue(SUMMARIZATION_QUEUE_NAME,false);
+    public Queue moderationJobsQueue() {
+        return new Queue(MODERATION_JOBS,false);
     }
     @Bean
     public MessageConverter jsonMessageConverter() {

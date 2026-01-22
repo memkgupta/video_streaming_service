@@ -2,23 +2,23 @@ package com.vsnt.asset_onboarding.config;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vsnt.asset_onboarding.dtos.SummarizationJob;
+import com.vsnt.common_lib.dtos.ModerationJob;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SummarizationJobProducer {
+public class ModerationJobProducer {
     private final RabbitTemplate template;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    public SummarizationJobProducer(RabbitTemplate template) {
+    public ModerationJobProducer(RabbitTemplate template) {
         this.template = template;
     }
-    public void sendMessage(SummarizationJob job)
+    public void sendMessage(ModerationJob job)
     {
         try{
             template.convertAndSend(
-                    RabbitMQConfig.SUMMARIZATION_QUEUE_NAME,objectMapper.writeValueAsString(
+                    RabbitMQConfig.MODERATION_JOBS,objectMapper.writeValueAsString(
                             job
                     )
             );

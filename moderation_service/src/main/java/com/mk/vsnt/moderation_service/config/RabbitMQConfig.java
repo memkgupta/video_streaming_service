@@ -8,14 +8,10 @@ import com.vsnt.common_lib.dtos.ModerationJob;
 import com.vsnt.common_lib.utils.DockerContainerSpawner;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.handler.annotation.Payload;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
@@ -41,10 +37,12 @@ public class RabbitMQConfig {
 
         ModerationJob job = gson.fromJson(data, ModerationJob.class);
 
+        // todo code for generating presigned url
 
         spawner.spawn(Map.of(
-                "FILE_KEY",job.getKey(),
-                "ASSET_ID",job.getJobId()
+                "PRESIGNED_URL",job.getFileKey(),
+                "JOB_ID",job.getJobId(),
+                "ASSET_SIZE",job.getSize()
         ));
 
     }
