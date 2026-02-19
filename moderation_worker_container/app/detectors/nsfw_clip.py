@@ -1,7 +1,7 @@
 # app/models/nsfw_clip.py
 import torch, clip
 from PIL import Image
-from app.models.base import Detector
+from models.base import Detector
 
 class ClipNSFWDetector(Detector):
 

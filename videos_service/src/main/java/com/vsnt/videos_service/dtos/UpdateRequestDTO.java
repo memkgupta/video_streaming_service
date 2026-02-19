@@ -19,6 +19,7 @@ public class UpdateRequestDTO {
         return "UpdateRequestDTO{" +
                 "videoId='" + videoId + '\'' +
                 ", url='" + url + '\'' +
+                "type="+type+
                 ", timestamp='" + timestamp + '\'' +
                 ", status='" + status + '\'' +
                 '}';

@@ -149,9 +149,9 @@ public class VideoService {
         moderationSummary.setId(
                 new ModerationId(moderationResult.getVideoId(), moderationResult.getId())
         );
-        moderationSummary.setModerationResultKey(moderationResult.getModerationResultKey());
+//        moderationSummary.setModerationResultKey(moderationResult.getId());
         moderationSummary.setFlags(moderationResult.getFlags());
-        moderationSummary.setMetadata(moderationResult.getMetadata());
+//        moderationSummary.setMetadata(moderationResult.getMetadata()); todo change after serialisation
         moderationSummary.setConfidenceScore(moderationResult.getConfidenceScore());
          moderationRepository.save(moderationSummary);
     }

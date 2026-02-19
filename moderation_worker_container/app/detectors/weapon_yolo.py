@@ -1,6 +1,6 @@
 # app/models/weapon_yolo.py
 from ultralytics import YOLO
-from app.models.base import Detector
+from models.base import Detector
 
 class WeaponDetector(Detector):
 

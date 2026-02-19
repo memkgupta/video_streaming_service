@@ -1,15 +1,15 @@
 # app/worker.py this will be later converted to a docker container code
-from app.pipeline.extractor import extract_frames
-from app.detectors.nsfw_clip import ClipNSFWDetector
-from app.detectors.weapon_yolo import WeaponDetector
-from app.detectors.ocr_easy import OCRDetector
-from app.pipeline.aggregator import aggregate_frame_results
-from app.pipeline.decision import decide
-from app.repository.moderation_repo import ModerationRepository
-from app.producer import send_moderation_event
-from app.utils.url import get_video_url_presigned
+from pipeline.extractor import extract_frames
+from detectors.nsfw_clip import ClipNSFWDetector
+from detectors.weapon_yolo import WeaponDetector
+from detectors.ocr_easy import OCRDetector
+from pipeline.aggregator import aggregate_frame_results
+from pipeline.decision import decide
+from repository.moderation_repo import ModerationRepository
+from producer import send_moderation_event
+from utils.url import get_video_url_presigned
 import os
-from app.dto.summarisation_job import ModerationJob
+from dto.summarisation_job import ModerationJob
 def process_video(event:ModerationJob):
     video_id = event.jobId
     video_url = event.url
@@ -57,5 +57,5 @@ def process_video(event:ModerationJob):
     repo = ModerationRepository()
     
     moderation_result = repo.save(report,video_id=video_id)
-    #save the moderation report to a storage with the same
+    # save the moderation report to a storage with the same
     send_moderation_event(video_id,moderation_result)

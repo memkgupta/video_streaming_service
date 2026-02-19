@@ -29,16 +29,16 @@ public class Asset {
     private String key;
     private String url;
 private String videoId;
-@ElementCollection(fetch = FetchType.EAGER)
-private List<AssetChunk> chunks;
+//@ElementCollection(fetch = FetchType.EAGER)
+//private List<AssetChunk> chunks;
 
-    public List<AssetChunk> getChunks() {
-        return chunks;
-    }
-
-    public void setChunks(List<AssetChunk> chunks) {
-        this.chunks = chunks;
-    }
+//    public List<AssetChunk> getChunks() {
+//        return chunks;
+//    }
+//
+//    public void setChunks(List<AssetChunk> chunks) {
+//        this.chunks = chunks;
+//    }
 
     public String getUrl() {
         return url;

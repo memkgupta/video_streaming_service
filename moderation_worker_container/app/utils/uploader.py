@@ -1,6 +1,6 @@
 import boto3
 import json
-from app.config import AWS_ACCESSID , AWS_SECRET , S3_REPORT_BUCKET
+from config import AWS_ACCESSID , AWS_SECRET , S3_REPORT_BUCKET
 
 def upload_json_to_s3(
    

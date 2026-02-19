@@ -5,10 +5,7 @@ import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.services.AssetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,5 +18,10 @@ public class AssetController {
         Asset asset = assetService.getAssetById(id);
         AssetDTO dto = asset.toDTO();
         return ResponseEntity.ok(dto);
+    }
+    @PostMapping
+    public String createAsset(@RequestBody String url) {
+        Asset res = assetService.createAsset(url);
+        return res.getId().toString();
     }
 }

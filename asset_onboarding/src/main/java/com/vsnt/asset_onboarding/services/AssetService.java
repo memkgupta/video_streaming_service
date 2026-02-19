@@ -27,6 +27,7 @@ public class AssetService {
         asset.setUrl(url);
         return assetRepository.save(asset);
     }
+
     public Asset getAssetByVideoId(String videoId) {
         return assetRepository.findByVideoId(videoId);
     }
@@ -65,9 +66,15 @@ public class AssetService {
                             .build()
             );
         }
-        asset.setChunks(assetChunks);
+//        asset.setChunks(assetChunks);
         assetRepository.save(asset);
         return assetChunks;
     }
-
+    public Asset createAsset(String url)
+    {
+        Asset asset = new Asset();
+        asset.setUrl(url);
+        asset.setUploadStatus(UploadStatus.COMPLETED);
+        return assetRepository.save(asset);
+    }
 }

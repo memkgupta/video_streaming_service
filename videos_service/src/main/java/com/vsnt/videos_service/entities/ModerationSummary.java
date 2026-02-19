@@ -19,7 +19,7 @@ public class ModerationSummary {
     private double confidenceScore;
     private List<ModerationFlag> flags;
     @ElementCollection(fetch = FetchType.EAGER)
-    private Map<String,Object> metadata;
+    private Map<String,String> metadata;
     @ManyToOne(optional = false)
     @MapsId("videoId")
     @JoinColumn(name = "video_id")

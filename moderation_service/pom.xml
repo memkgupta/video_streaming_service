@@ -73,6 +73,13 @@
             <artifactId>docker-java-transport-httpclient5</artifactId>
             <version>3.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.12.707</version>
+            <scope>compile</scope>
+
+        </dependency>
 
         <!-- Source: https://mvnrepository.com/artifact/com.google.code.gson/gson -->
         <dependency>

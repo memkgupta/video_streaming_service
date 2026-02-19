@@ -3,7 +3,7 @@ import json
 import pika
 
 
-KAFKA_HOST = os.getenv("KAFKA_HOST","localhost:9092")
+KAFKA_HOST = os.getenv("KAFKA_HOST","kafka:9092")
 
 S3_BUCKET = os.getenv("S3_ASSET_BUCKET", "videos")
 S3_REPORT_BUCKET = os.getenv("S3_REPORT_BUCKET","moderation/reports")

@@ -1,7 +1,7 @@
 # app/repository/moderation_repo.py
 import uuid
 import json
-from app.dto.moderation_result import ModerationResult,ModerationFlag,ModerationStatus
+from dto.moderation_result import ModerationResult,ModerationFlag,ModerationStatus
 from dataclasses import asdict
 class ModerationRepository:
 
@@ -16,7 +16,7 @@ class ModerationRepository:
         moderation_result = ModerationResult(
             id=report_id,
            
-            metadata=metadata,
+            # metadata=metadata,
             status=report.get("status",ModerationStatus.SAFE.value),
             flags=[v.value for v in flags],
             video_id=video_id,

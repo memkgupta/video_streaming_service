@@ -4,33 +4,38 @@ from typing import Optional
 from datetime import datetime
 
 # Reuse your earlier DTO
-from app.dto.moderation_result import ModerationResult
+from dto.moderation_result import ModerationResult
 
 
 class UpdateType(Enum):
-    UPLOAD = "UPLOAD"
-    TRANSCODE = "TRANSCODE"
-    MODERATION = "MODERATION"
-    TRANSCRIPT = "TRANSCRIPT"
 
+    MODERATION_UPDATE = "MODERATION_UPDATE"
+    TRANSCRIPT_UPDATE = "TRANSCRIPT_UPDATE"
+
+from dataclasses import dataclass, field
+from typing import Optional
+from datetime import datetime
+import json
 
 @dataclass
 class UpdateRequestDTO:
-    video_id: str
-    
-
+    videoId: str
     timestamp: str = field(
         default_factory=lambda: datetime.utcnow().isoformat()
     )
-   
     type: Optional[UpdateType] = None
-    
     moderation_result: Optional[ModerationResult] = None
 
-    def __str__(self) -> str:
-        return (
-            f"UpdateRequestDTO(video_id='{self.video_id}', "
-           
-            f"timestamp='{self.timestamp}', "
-           
-        )
+    def to_dict(self):
+        return {
+            "videoId": self.videoId,
+            "timestamp": self.timestamp,
+            "type": self.type,
+            "moderationResult": (
+                self.moderation_result.to_dict()
+                if self.moderation_result else None
+            )
+        }
+
+    def to_json(self) -> str:
+        return json.dumps(self.to_dict())

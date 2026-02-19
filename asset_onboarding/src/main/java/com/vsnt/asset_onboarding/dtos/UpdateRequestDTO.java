@@ -19,6 +19,7 @@ public class UpdateRequestDTO {
                 ", url='" + url + '\'' +
                 ", timestamp=" + timestamp +
                 ", status='" + status + '\'' +
+                ", type=" + type +
                 '}';
     }
 

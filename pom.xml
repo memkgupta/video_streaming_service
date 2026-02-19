@@ -22,6 +22,8 @@
         <module>ServiceDiscovery</module>
         <module>asset_onboarding</module>
         <module>user</module>
+        <module>live_stream_transcoding_container</module>
+        <!--        <module>rtmp</module>-->
     </modules>
 
     <properties>

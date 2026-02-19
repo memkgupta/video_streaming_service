@@ -24,12 +24,16 @@ public class KafkaConsumer {
         System.out.println(updateRequestDTO);
         if(updateRequestDTO.getType().equals(UpdateType.STATUS_UPDATE))
         {
-            assetService.updateAssetUrl(updateRequestDTO.getVideoId(),updateRequestDTO.getUrl());
+            if(updateRequestDTO.getUrl()!=null)
+            {
+                assetService.updateAssetUrl(updateRequestDTO.getVideoId(),updateRequestDTO.getUrl());
+
+            }
 
         }
         else if(updateRequestDTO.getType().equals(UpdateType.MODERATION_UPDATE))
         {
-            if(updateRequestDTO.getModerationResult().getStatus().equals(ModerationStatus.APPROVED))
+            if(!updateRequestDTO.getModerationResult().getStatus().equals(ModerationStatus.REJECTED) )
             {
                 Asset asset = assetService.getAssetByVideoId(updateRequestDTO.getVideoId());
                 if(asset==null)
@@ -46,6 +50,7 @@ public class KafkaConsumer {
                 transcodingJobMessageProducer.sendMessage(
                         job
                 );
+                System.out.println(job.toString());
             }
 
 

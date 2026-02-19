@@ -1,4 +1,4 @@
-from app.config import S3_BUCKET
+from config import S3_BUCKET
 import boto3
 from botocore.exceptions import ClientError
 def get_video_url_presigned(key:str):

@@ -32,6 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 .env
+/rtmp_server/.env
+/rtmp_server/node_modules
 
 ############################
 # Python (all subprojects)

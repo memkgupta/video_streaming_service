@@ -3,5 +3,7 @@ package com.vsnt.asset_onboarding.dtos;
 public enum ModerationStatus {
     APPROVED,
     REJECTED,
-    FLAGGED
+    FLAGGED,
+    REVIEW,
+    SAFE
 }

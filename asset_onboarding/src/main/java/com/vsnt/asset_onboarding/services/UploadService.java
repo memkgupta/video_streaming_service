@@ -2,6 +2,7 @@ package com.vsnt.asset_onboarding.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vsnt.asset_onboarding.config.KafkaProducer;
+//import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.*;
@@ -11,6 +12,7 @@ import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
 import com.vsnt.asset_onboarding.exceptions.InternalServerError;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
+//import com.vsnt.common_lib.dtos.ModerationJob;
 import com.vsnt.common_lib.dtos.ModerationJob;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +36,7 @@ public class UploadService {
         this.assetService = assetService;
         this.kafkaProducer = kafkaProducer;
         this.jobProducer = messageProducer;
+//        this.moderationJobProducer = moderationJobProducer;
         this.moderationJobProducer = moderationJobProducer;
     }
 
@@ -104,11 +107,12 @@ return res;
         // send the update to the video service ( and that video service will update the video status to uploaded and send a SSE to the frontend)
         UpdateRequestDTO dto = new UpdateRequestDTO();
         dto.setStatus("UPLOADED");
+        dto.setType(UpdateType.STATUS_UPDATE);
         dto.setVideoId(upload.getVideoId());
         dto.setTimestamp(String.valueOf(new Timestamp(System.currentTimeMillis())));
         kafkaProducer.produce(dto);
 
-        List<AssetChunk> chunks = assetService.splitIntoChunks(String.valueOf(assetId));
+//        List<AssetChunk> chunks = assetService.splitIntoChunks(String.valueOf(assetId));
 
         ModerationJob moderationJob = new ModerationJob();
         moderationJob.setJobId(upload.getVideoId());

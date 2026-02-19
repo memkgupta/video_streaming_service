@@ -1,4 +1,5 @@
-package com.vsnt.common_lib.config;
+package com.mk.vsnt.moderation_service.config;
+
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;

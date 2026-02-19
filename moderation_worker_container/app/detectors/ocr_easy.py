@@ -1,7 +1,7 @@
 # app/models/ocr_easy.py
 import cv2
 import easyocr
-from app.models.base import Detector
+from models.base import Detector
 
 class OCRDetector(Detector):
 

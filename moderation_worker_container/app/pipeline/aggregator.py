@@ -1,5 +1,5 @@
 # app/pipeline/aggregator.py
-from app.dto.asset_chunks import AssetChunk
+from dto.asset_chunks import AssetChunk
 from typing import List
 def aggregate_frame_results(results):
     nsfw_scores = [r["nsfw_score"] for r in results if "nsfw_score" in r]

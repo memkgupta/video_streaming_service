@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Data
+@Inheritance(strategy = InheritanceType.JOINED)
 public class Video {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
