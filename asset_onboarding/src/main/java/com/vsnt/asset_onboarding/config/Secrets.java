@@ -11,4 +11,8 @@ public class Secrets {
             System.getenv("PRIVATE_KEY_PATH");
     public static final String CDN_RESOURCE_URL =
             System.getenv("CDN_RESOURCE_URL");
+    public static final String CDN_DOMAIN =
+            System.getenv("CDN_DOMAIN");
+    public static final String AWS_SECURE_BUCKET =
+    System.getenv("AWS_SECURE_BUCKET");
 }

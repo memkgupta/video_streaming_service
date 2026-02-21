@@ -4,10 +4,8 @@ import com.vsnt.asset_onboarding.dtos.TranscodingSegmentUpdateDTO;
 import com.vsnt.asset_onboarding.dtos.segments.KVSegment;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.TranscodedSegment;
-import com.vsnt.asset_onboarding.entities.TranscodedSegmentId;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
-import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.repositories.TranscodedSegmentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +13,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class SegmentService {
@@ -28,13 +25,13 @@ public class SegmentService {
         this.segmentKVService = segmentKVService;
     }
 
-    public TranscodedSegment save(TranscodingSegmentUpdateDTO segmentUpdateDTO) {
+    public void save(TranscodingSegmentUpdateDTO segmentUpdateDTO) {
         TranscodedSegment segment = new TranscodedSegment();
         segment.setAssetId(segmentUpdateDTO.getAssetId());
         segment.setUrl(segmentUpdateDTO.getUrl());
         segment.setMediaId(segmentUpdateDTO.getMediaId());
         segment.setSequenceNumber(segmentUpdateDTO.getSequenceNumber());
-        return transcodedSegmentRepository.save(segment);
+        transcodedSegmentRepository.save(segment);
     }
     public String getLivePlaylist(
            Media media

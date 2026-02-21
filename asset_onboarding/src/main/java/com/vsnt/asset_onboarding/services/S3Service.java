@@ -7,7 +7,9 @@ import com.vsnt.asset_onboarding.config.Secrets;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.sync.RequestBody;
 
+import java.io.ByteArrayInputStream;
 import java.net.URL;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -55,8 +57,9 @@ public class S3Service {
             request.setPartETags(partETags);
         var e = s3.completeMultipartUpload(request);
 
-            TranscodingJob job = new TranscodingJob();
-            job.setKey(e.getKey());
+            TranscodingJob job = TranscodingJob.builder()
+                    .key(key)
+                    .build();
             return job;
         }
         catch (Exception e){
@@ -65,5 +68,25 @@ public class S3Service {
         }
 
 
+    }
+    public String uploadFileToS3(String bucketName,String key , byte[] body)
+    {
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(body.length);
+        metadata.setContentType("application/octet-stream");
+
+        // Upload to S3
+        ByteArrayInputStream inputStream =
+                new ByteArrayInputStream(body);
+
+        s3.putObject(
+                Secrets.AWS_BUCKET_NAME,
+                key,
+                inputStream,
+                metadata
+        );
+
+       return Secrets.CDN_RESOURCE_URL+"/"+key;
     }
 }

@@ -19,9 +19,5 @@ public class AssetController {
         AssetDTO dto = asset.toDTO();
         return ResponseEntity.ok(dto);
     }
-    @PostMapping
-    public String createAsset(@RequestBody String url) {
-        Asset res = assetService.createAsset(url);
-        return res.getId().toString();
-    }
+
 }
