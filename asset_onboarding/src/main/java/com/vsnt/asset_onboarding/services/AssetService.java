@@ -24,7 +24,7 @@ public class AssetService {
     }
     public Asset updateAssetUrl(String id ,String url) {
         Asset asset = assetRepository.findByVideoId(id);
-        asset.setUrl(url);
+        asset.setCdnURL(url);
         return assetRepository.save(asset);
     }
 
@@ -73,7 +73,7 @@ public class AssetService {
     public Asset createAsset(String url)
     {
         Asset asset = new Asset();
-        asset.setUrl(url);
+        asset.setCdnURL(url);
         asset.setUploadStatus(UploadStatus.COMPLETED);
         return assetRepository.save(asset);
     }

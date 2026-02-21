@@ -3,6 +3,7 @@ package com.vsnt.asset_onboarding.dtos;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.vsnt.asset_onboarding.config.Serializer;
+import lombok.Builder;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @JsonSerialize(using = Serializer.class)
+@Builder
 public class TranscodingJob  {
     private String jobId;
     private String key;
