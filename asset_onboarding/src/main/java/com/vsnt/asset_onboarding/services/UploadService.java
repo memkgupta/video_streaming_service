@@ -115,7 +115,7 @@ return res;
     {
 
            Asset upload = assetService.getAssetById(assetId);
-            if(upload==null || !upload.getUserId().equals(userId))
+            if(upload==null  )
             {
                 throw new BadRequestException("Bad request , upload doesn't exist");
             }
@@ -141,7 +141,7 @@ return res;
     {
 
             Asset upload = assetService.getAssetById(assetId);
-            if(upload==null || !upload.getUserId().equals(userId))
+            if(upload==null)
             {
                 throw new BadRequestException("Bad request , upload doesn't exist");
             }

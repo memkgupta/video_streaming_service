@@ -31,7 +31,8 @@ public class Asset {
     private String key;
     private String cdnURL;
     private UUID mediaId;
-
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Map<Integer,String> etagMap;
 
     public AssetDTO toDTO() {
         AssetDTO dto = new AssetDTO();
