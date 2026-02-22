@@ -1,21 +1,27 @@
 package com.vsnt.asset_onboarding.services;
 
+import com.vsnt.asset_onboarding.AssetCreationStrategy;
 import com.vsnt.asset_onboarding.dtos.AssetChunk;
 import com.vsnt.asset_onboarding.entities.Asset;
 
+import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
+import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
 
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AssetService {
+    private final MediaService mediaService;
     private final AssetRepository assetRepository;
     private final static int CHUNK_SIZE_MB =1;
-    public AssetService(AssetRepository assetRepository) {
+    public AssetService(MediaService mediaService, AssetRepository assetRepository) {
+        this.mediaService = mediaService;
         this.assetRepository = assetRepository;
     }
 
@@ -70,11 +76,13 @@ public class AssetService {
         assetRepository.save(asset);
         return assetChunks;
     }
-    public Asset createAsset(String url)
+    public <M> Asset createAsset(UUID mediaId , AssetCreationStrategy<M> strategy , M metadata)
     {
-        Asset asset = new Asset();
-        asset.setCdnURL(url);
-        asset.setUploadStatus(UploadStatus.COMPLETED);
-        return assetRepository.save(asset);
+        Media media = mediaService.getMedia(mediaId);
+        if(media==null)
+        {
+            throw new EntityNotFoundException("Media");
+        }
+        return strategy.createAsset(media, metadata);
     }
 }

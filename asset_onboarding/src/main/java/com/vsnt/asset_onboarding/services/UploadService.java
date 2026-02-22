@@ -2,6 +2,7 @@ package com.vsnt.asset_onboarding.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vsnt.asset_onboarding.CDNService;
+import com.vsnt.asset_onboarding.KeyCDNService;
 import com.vsnt.asset_onboarding.config.KafkaProducer;
 //import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.ModerationJobProducer;
@@ -28,10 +29,10 @@ public class UploadService {
     private final S3Service s3Service;
     private final AssetRepository assetRepository;
     private final AssetService assetService;
-    private final CDNService cdnService;
+    private final KeyCDNService cdnService;
     private final KeyService keyService;
     private final ModerationJobProducer moderationJobProducer;
-    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, CDNService cdnService, KeyService keyService, ModerationJobProducer moderationJobProducer) {
+    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KeyCDNService cdnService, KeyService keyService, ModerationJobProducer moderationJobProducer) {
         this.s3Service = s3Service;
         this.assetRepository = assetRepository;
         this.assetService = assetService;
@@ -88,7 +89,7 @@ return res;
             throw new BadRequestException("Bad request , upload doesn't exist");
         }
 
-        AssetAESKey assetKey = keyService.generateKey(upload.getId().toString());
+        AssetAESKey assetKey = keyService.getKey(upload.getId().toString());
         //todo add user auth check to upload the chunk
        TranscodingJob job = s3Service.completeMultipartUpload(uploadId,etagMap,key);
         if(job==null)
@@ -102,7 +103,7 @@ return res;
         upload.setChunksUploaded(etagMap.size());
         job.setJobId(upload.getMediaId().toString());
         job.setSize(upload.getFileSize());
-        job.setEncryptionKey(cdnService.fetch(assetKey.getKeyURL()));
+        job.setEncryptionKey(cdnService.fetchSecure(assetKey.getKeyURL()));
         assetRepository.save(upload);
 
         ModerationJob moderationJob = new ModerationJob();
