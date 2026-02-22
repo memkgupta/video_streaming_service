@@ -87,9 +87,7 @@ return res;
         if(upload==null){
             throw new BadRequestException("Bad request , upload doesn't exist");
         }
-//        if(!upload.get().equals(userId)){
-//            throw new BadRequestException("Bad request , upload doesn't exist");
-//        }
+
         AssetAESKey assetKey = keyService.generateKey(upload.getId().toString());
         //todo add user auth check to upload the chunk
        TranscodingJob job = s3Service.completeMultipartUpload(uploadId,etagMap,key);
