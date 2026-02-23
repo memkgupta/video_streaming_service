@@ -14,6 +14,7 @@ import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
 import com.vsnt.asset_onboarding.exceptions.InternalServerError;
+import com.vsnt.asset_onboarding.listeners.AssetUploadFinishListener;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
 //import com.vsnt.common_lib.dtos.ModerationJob;
 import com.vsnt.common_lib.dtos.ModerationJob;
@@ -32,7 +33,8 @@ public class UploadService {
     private final KeyCDNService cdnService;
     private final KeyService keyService;
     private final ModerationJobProducer moderationJobProducer;
-    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KeyCDNService cdnService, KeyService keyService, ModerationJobProducer moderationJobProducer) {
+    private final AssetUploadFinishListener uploadFinishListener;
+    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KeyCDNService cdnService, KeyService keyService, ModerationJobProducer moderationJobProducer, AssetUploadFinishListener uploadFinishListener) {
         this.s3Service = s3Service;
         this.assetRepository = assetRepository;
         this.assetService = assetService;
@@ -41,6 +43,7 @@ public class UploadService {
         this.keyService = keyService;
 //        this.moderationJobProducer = moderationJobProducer;
         this.moderationJobProducer = moderationJobProducer;
+        this.uploadFinishListener = uploadFinishListener;
     }
 
     public FileUploadStartResponse startUpload(FileMetaData obj,String userId)
@@ -89,28 +92,17 @@ return res;
             throw new BadRequestException("Bad request , upload doesn't exist");
         }
 
-        AssetAESKey assetKey = keyService.getKey(upload.getId().toString());
-        //todo add user auth check to upload the chunk
-       TranscodingJob job = s3Service.completeMultipartUpload(uploadId,etagMap,key);
-        if(job==null)
-        {
-            throw new InternalServerError("Something went wrong");
-        }
 
         upload.setUploadStatus(UploadStatus.COMPLETED);
 
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
         upload.setChunksUploaded(etagMap.size());
-        job.setJobId(upload.getMediaId().toString());
-        job.setSize(upload.getFileSize());
-        job.setEncryptionKey(cdnService.fetchSecure(assetKey.getKeyURL()));
         assetRepository.save(upload);
+        uploadFinishListener.listen(upload);
 
-        ModerationJob moderationJob = new ModerationJob();
-        moderationJob.setJobId(upload.getMediaId().toString());
-        moderationJob.setFileKey(upload.getKey());
-        moderationJob.setSize(upload.getFileSize());
-        moderationJobProducer.sendMessage(moderationJob);
+        //todo add user auth check to upload the chunk
+      s3Service.completeMultipartUpload(uploadId,etagMap,key);
+
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)
     {

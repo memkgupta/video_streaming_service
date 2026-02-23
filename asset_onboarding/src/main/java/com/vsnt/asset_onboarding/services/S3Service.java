@@ -69,7 +69,7 @@ public class S3Service {
         URL url = s3.generatePresignedUrl(request);
         return url.toString();
     }
-    public TranscodingJob completeMultipartUpload(String uploadId, Map<Integer,String> etagMap, String key)
+    public void completeMultipartUpload(String uploadId, Map<Integer,String> etagMap, String key)
     {
         try{
             CompleteMultipartUploadRequest request  = new CompleteMultipartUploadRequest();
@@ -82,16 +82,13 @@ public class S3Service {
                 partETags.add(new PartETag(etag.getKey(), etag.getValue()));
             }
             request.setPartETags(partETags);
-        var e = s3.completeMultipartUpload(request);
+        s3.completeMultipartUpload(request);
 
-            TranscodingJob job = TranscodingJob.builder()
-                    .key(key)
-                    .build();
-            return job;
+
         }
         catch (Exception e){
             e.printStackTrace();
-            return null;
+
         }
 
 

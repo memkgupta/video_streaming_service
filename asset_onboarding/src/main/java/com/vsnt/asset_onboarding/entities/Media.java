@@ -24,6 +24,7 @@ public class Media {
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private MediaAccessibility accessibility;
+    private boolean moderationEnabled;
     @OneToOne(cascade = CascadeType.ALL , fetch = FetchType.EAGER)
     private MediaPushKey pushKey;
     @ManyToOne(fetch = FetchType.EAGER)
