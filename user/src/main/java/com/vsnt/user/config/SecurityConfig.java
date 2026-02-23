@@ -43,7 +43,7 @@ private final UserDetailsService userDetailsService;
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize->
                         authorize.
-                                requestMatchers("/healthcheck","/auth/login","/auth/register","/token/refresh-token","/auth/authenticate").permitAll()
+                                requestMatchers("/healthcheck","/auth/login","/auth/register","/token/refresh-token","/auth/authenticate","/swagger-ui/**","/v3/api-docs/**").permitAll()
                                 .anyRequest().authenticated()
                         )
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
