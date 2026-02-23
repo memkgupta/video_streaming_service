@@ -1,6 +1,7 @@
 package com.vsnt.asset_onboarding.entities;
 
 import com.vsnt.asset_onboarding.dtos.AssetDTO;
+import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -22,6 +23,7 @@ public class Asset {
     private long fileSize;
     private String storageURL;
     private String fileUploadId;
+    private AssetType assetType;
     @Enumerated(EnumType.STRING)
     private UploadStatus uploadStatus;
     private long chunksUploaded;

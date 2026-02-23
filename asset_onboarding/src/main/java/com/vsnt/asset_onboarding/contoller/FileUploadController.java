@@ -25,13 +25,12 @@ public class FileUploadController {
 
         this.transcodingJobMessageProducer = transcodingJobMessageProducer;
     }
-
-    @PostMapping("/start-upload")
-    public ResponseEntity<FileUploadStartResponse> startUpload(@RequestBody FileMetaData fileMetaData, HttpServletRequest request) {
-
-        String userId = request.getHeader("X-USER-ID");
-        return ResponseEntity.ok(uploadService.startUpload(fileMetaData, userId));
-    }
+//
+//    @PostMapping("/start-upload")
+//    public ResponseEntity<FileUploadStartResponse> startUpload(@RequestBody FileMetaData fileMetaData, HttpServletRequest request) {
+//        String userId = request.getHeader("X-USER-ID");
+//        return ResponseEntity.ok(uploadService.startUpload(fileMetaData, userId));
+//    }
     @PostMapping("/upload-chunk")
     public ResponseEntity<Map<String, String>> uploadChunk(@RequestBody ChunkUploadRequest chunkUploadRequest, HttpServletRequest request) {
 

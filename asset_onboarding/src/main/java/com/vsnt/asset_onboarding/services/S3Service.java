@@ -25,14 +25,41 @@ public class S3Service {
         this.s3 = s3;
     }
 
+    public String startSingleUpload(String key , String fileType)
+    {
+//        if(fileSize>)
+       GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(Secrets.AWS_BUCKET_NAME,key)
+               .withMethod(HttpMethod.PUT)
+               .withContentType(fileType);
+       URL url = s3.generatePresignedUrl(request);
+       return url.toString();
+
+    }
     public String startMultiPartUpload(String key) {
 
         InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(Secrets.AWS_BUCKET_NAME, key);
         InitiateMultipartUploadResult result = s3.initiateMultipartUpload(request);
         return result.getUploadId();
     }
+    public String startMultiPartUpload(String key, String bucketName) {
+
+        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucketName, key);
+        InitiateMultipartUploadResult result = s3.initiateMultipartUpload(request);
+        return result.getUploadId();
+    }
     public String getPreSignedURLForMultipartUploadChunk(String uploadId,int chunkNumber,String key) {
         GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(Secrets.AWS_BUCKET_NAME, key)
+                .withMethod(HttpMethod.PUT)
+                .withContentType("application/octet-stream");
+
+
+        request.addRequestParameter("uploadId", uploadId);
+        request.addRequestParameter("partNumber", String.valueOf(chunkNumber));
+        URL url = s3.generatePresignedUrl(request);
+        return url.toString();
+    }
+    public String getPreSignedURLForMultipartUploadChunk(String uploadId,int chunkNumber,String key , String bucketName) {
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucketName, key)
                 .withMethod(HttpMethod.PUT)
                 .withContentType("application/octet-stream");
 

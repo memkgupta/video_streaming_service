@@ -17,7 +17,7 @@ import java.util.UUID;
 
 @Service
 public class AssetService {
-    private final MediaService mediaService;
+
     private final AssetRepository assetRepository;
     private final static int CHUNK_SIZE_MB =1;
     public AssetService(MediaService mediaService, AssetRepository assetRepository) {
@@ -76,9 +76,9 @@ public class AssetService {
         assetRepository.save(asset);
         return assetChunks;
     }
-    public <M> Asset createAsset(UUID mediaId , AssetCreationStrategy<M> strategy , M metadata)
+    public <M> Asset createAsset(Media media , AssetCreationStrategy<M> strategy , M metadata)
     {
-        Media media = mediaService.getMedia(mediaId);
+
         if(media==null)
         {
             throw new EntityNotFoundException("Media");
