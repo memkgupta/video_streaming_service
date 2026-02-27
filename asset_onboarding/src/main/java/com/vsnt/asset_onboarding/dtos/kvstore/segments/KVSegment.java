@@ -1,4 +1,4 @@
-package com.vsnt.asset_onboarding.dtos.segments;
+package com.vsnt.asset_onboarding.dtos.kvstore.segments;
 
 import lombok.Builder;
 import lombok.Data;

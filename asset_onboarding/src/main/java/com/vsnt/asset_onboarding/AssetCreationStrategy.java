@@ -16,7 +16,7 @@ public abstract class  AssetCreationStrategy<M> {
     }
 
 
-    public abstract Asset helper(Media media,M metadata);
+    protected abstract Asset helper(Media media,M metadata);
     public Asset createAsset(Media media, M metadata){
 
         Asset nAsset = helper(media,metadata);

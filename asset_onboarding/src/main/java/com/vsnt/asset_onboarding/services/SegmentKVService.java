@@ -1,6 +1,6 @@
 package com.vsnt.asset_onboarding.services;
 
-import com.vsnt.asset_onboarding.dtos.segments.KVSegment;
+import com.vsnt.asset_onboarding.dtos.kvstore.segments.KVSegment;
 
 import java.util.List;
 

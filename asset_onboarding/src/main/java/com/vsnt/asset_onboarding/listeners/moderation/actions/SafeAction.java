@@ -5,7 +5,7 @@ import com.vsnt.asset_onboarding.dtos.ModerationUpdateDTO;
 
 public class SafeAction implements ModerationAction{
     @Override
-    public void act(ModerationStatus status, ModerationUpdateDTO dto) {
+    public void act( ModerationUpdateDTO dto) {
         // eat 5 star do nothing
     }
 

@@ -1,7 +1,7 @@
 package com.vsnt.asset_onboarding.listeners;
 
 import com.vsnt.asset_onboarding.dtos.TranscodingSegmentUpdateDTO;
-import com.vsnt.asset_onboarding.dtos.segments.KVSegment;
+import com.vsnt.asset_onboarding.dtos.kvstore.segments.KVSegment;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.services.SegmentKVService;

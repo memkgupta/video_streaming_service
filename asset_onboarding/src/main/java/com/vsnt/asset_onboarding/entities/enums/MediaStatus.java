@@ -6,5 +6,6 @@ public enum MediaStatus {
     READY,
     LIVE,
     ENDED,
-    FAILED
+    FAILED,
+    BLOCKED
 }

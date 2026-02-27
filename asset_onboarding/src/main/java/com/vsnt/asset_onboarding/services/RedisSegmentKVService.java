@@ -1,7 +1,6 @@
 package com.vsnt.asset_onboarding.services;
 
-import com.vsnt.asset_onboarding.dtos.segments.KVSegment;
-import com.vsnt.asset_onboarding.repositories.TranscodedSegmentRepository;
+import com.vsnt.asset_onboarding.dtos.kvstore.segments.KVSegment;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 

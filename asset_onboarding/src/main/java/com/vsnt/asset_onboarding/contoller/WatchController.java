@@ -3,6 +3,7 @@ package com.vsnt.asset_onboarding.contoller;
 import com.vsnt.asset_onboarding.dtos.security.SignedCookie;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.MediaAccessibility;
+import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.services.GroupMemberService;
@@ -40,7 +41,7 @@ public class WatchController {
     {
         Media media = mediaService.getMedia(mediaId);
         ResponseEntity<?> responseEntity;
-        if(media == null)
+        if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
         {
             throw new EntityNotFoundException("Media");
         }

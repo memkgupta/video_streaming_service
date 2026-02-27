@@ -4,6 +4,7 @@ import lombok.Data;
 public class ModerationJob {
     private String jobId; // video id
     private String fileKey;
+
     private long size;
 
 }

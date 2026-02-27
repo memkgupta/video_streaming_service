@@ -7,18 +7,20 @@ import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
 import com.vsnt.asset_onboarding.services.AssetService;
 import com.vsnt.asset_onboarding.services.KeyService;
+import org.springframework.stereotype.Component;
 
+@Component
 public class LiveVideoAssetCreation extends AssetCreationStrategy<LiveVideoAssetCreationRequestDTO> {
-   private final KeyService keyService;
+
    private final AssetRepository assetRepository;
-    protected LiveVideoAssetCreation(KeyService keyService, KeyService keyService1, AssetRepository assetRepository) {
+    protected LiveVideoAssetCreation(KeyService keyService, AssetRepository assetRepository) {
         super(keyService,true);
-        this.keyService = keyService1;
+
         this.assetRepository = assetRepository;
     }
 
     @Override
-    public Asset helper(Media media, LiveVideoAssetCreationRequestDTO metadata) {
+    protected Asset helper(Media media, LiveVideoAssetCreationRequestDTO metadata) {
         Asset asset = new Asset();
         asset.setMediaId(media.getId());
         asset.setChunksUploaded(0);

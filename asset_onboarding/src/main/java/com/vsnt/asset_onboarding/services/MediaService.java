@@ -4,6 +4,8 @@ import com.vsnt.asset_onboarding.dtos.media.request.MediaCreateRequestDTO;
 import com.vsnt.asset_onboarding.entities.Group;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.MediaPushKey;
+import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
+import com.vsnt.asset_onboarding.producers.MediaBlockedProducer;
 import com.vsnt.asset_onboarding.repositories.MediaPushKeyRepository;
 import com.vsnt.asset_onboarding.repositories.MediaRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,10 +26,16 @@ public class MediaService {
     private final MediaRepository mediaRepository;
     private final GroupService groupService;
     private final MediaPushKeyRepository mediaPushKeyRepository;
-    public MediaService(MediaRepository mediaRepository, GroupService groupService, MediaPushKeyRepository mediaPushKeyRepository) {
+    private final MediaBlockedProducer mediaBlockedProducer;
+    public MediaService(MediaRepository mediaRepository, GroupService groupService, MediaPushKeyRepository mediaPushKeyRepository, MediaBlockedProducer mediaBlockedProducer) {
         this.mediaRepository = mediaRepository;
         this.groupService = groupService;
         this.mediaPushKeyRepository = mediaPushKeyRepository;
+        this.mediaBlockedProducer = mediaBlockedProducer;
+    }
+    public Media save(Media media)
+    {
+        return mediaRepository.save(media);
     }
     public Media createMedia(MediaCreateRequestDTO request)
     {
@@ -73,6 +81,13 @@ public class MediaService {
     {
         Pageable pageable = PageRequest.of(page - 1, limit);
         return mediaRepository.findAll(specification , pageable);
+    }
+    public void blockMedia(UUID mediaId , String reason)
+    {
+        Media media = getMedia(mediaId);
+        media.setStatus(MediaStatus.BLOCKED);
+        mediaBlockedProducer.send(mediaId.toString() , reason);
+        mediaRepository.save(media);
     }
 
 }

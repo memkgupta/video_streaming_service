@@ -23,7 +23,7 @@ private final AESKeyGenerator aesKeyGenerator;
     assetAESKey.setAssetID(assetId);
     return assetAESKeyRepository.save(assetAESKey);
 }
-public AssetAESKey getKey(String assetID) throws Exception {
+public AssetAESKey getKey(String assetID)  {
         return assetAESKeyRepository.findByAssetID(assetID).orElseThrow(() -> new EntityNotFoundException("Key"));
 }
 }
