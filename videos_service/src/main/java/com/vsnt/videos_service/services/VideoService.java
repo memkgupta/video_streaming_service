@@ -1,11 +1,11 @@
 package com.vsnt.videos_service.services;
 
+import com.vsnt.videos_service.dtos.ModerationResult;
 import com.vsnt.videos_service.dtos.VideoDTO;
-import com.vsnt.videos_service.entities.Video;
-import com.vsnt.videos_service.entities.VideoUploadStatusEnum;
-import com.vsnt.videos_service.entities.VideoVisibilityStatusEnum;
+import com.vsnt.videos_service.entities.*;
 import com.vsnt.videos_service.exceptions.InternalServerError;
 import com.vsnt.videos_service.exceptions.VideoNotFoundException;
+import com.vsnt.videos_service.repositories.ModerationRepository;
 import com.vsnt.videos_service.repositories.VideoRepository;
 import com.vsnt.videos_service.specifications.SpecificationBuilder;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,7 @@ import java.util.Map;
 public class VideoService {
     private final VideoRepository videoRepository;
     private final SpecificationBuilder specificationBuilder;
+    private final ModerationRepository moderationRepository;
     public Video createVideoDraft(String userId,String channelId)
     {
 
@@ -134,5 +135,24 @@ public class VideoService {
            return videoRepository.save(video);
 
 
+    }
+
+    public void updateTranscript(String videoId, String transcriptURL) {
+        Video video = videoRepository.findById(videoId).orElseThrow(
+                ()->new VideoNotFoundException(videoId)
+        );
+        video.setTranscriptUrl(transcriptURL);
+        videoRepository.save(video);
+    }
+    public void updateModerationSummary(ModerationResult moderationResult) {
+        ModerationSummary moderationSummary = new ModerationSummary();
+        moderationSummary.setId(
+                new ModerationId(moderationResult.getVideoId(), moderationResult.getId())
+        );
+//        moderationSummary.setModerationResultKey(moderationResult.getId());
+        moderationSummary.setFlags(moderationResult.getFlags());
+//        moderationSummary.setMetadata(moderationResult.getMetadata()); todo change after serialisation
+        moderationSummary.setConfidenceScore(moderationResult.getConfidenceScore());
+         moderationRepository.save(moderationSummary);
     }
 }

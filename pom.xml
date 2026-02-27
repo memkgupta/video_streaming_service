@@ -1,0 +1,35 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.vsnt</groupId>
+    <artifactId>backend</artifactId>
+    <version>1.0.0</version>
+
+    <packaging>pom</packaging>
+
+    <modules>
+      <module>aggregator-service</module>
+        <module>api_gateway</module>
+        <module>common-lib</module>
+        <module>moderation_service</module>
+        <module>channel_service</module>
+        <module>transcoder</module>
+        <module>videos_service</module>
+        <module>ServiceDiscovery</module>
+        <module>asset_onboarding</module>
+        <module>user</module>
+        <module>live_stream_transcoding_container</module>
+        <!--        <module>rtmp</module>-->
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+    </properties>
+
+</project>

@@ -32,3 +32,36 @@ build/
 ### VS Code ###
 .vscode/
 .env
+/rtmp_server/.env
+/rtmp_server/node_modules
+
+############################
+# Python (all subprojects)
+############################
+
+# Virtual environments
+**/venv/
+**/.venv/
+**/env/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Python logs
+**/*.log
+
+
+############################
+# Whisper / AI artifacts
+############################
+
+# Model weights
+**/*.pt
+
+# Audio / video generated files
+**/*.wav
+**/*.mp3
+**/*.mp4
+**/*.mkv

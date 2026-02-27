@@ -4,12 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vsnt.asset_onboarding.config.AuthenticateRequest;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.*;
+import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.asset_onboarding.services.UploadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,28 +18,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/")
-@Tag(name = "File Upload APIs", description = "Handle file chunk uploads and finalization")
 public class FileUploadController {
-
     private final UploadService uploadService;
     private final TranscodingJobMessageProducer transcodingJobMessageProducer;
-
-    public FileUploadController(UploadService uploadService, AuthenticateRequest authenticateRequest, TranscodingJobMessageProducer transcodingJobMessageProducer) {
+    public FileUploadController(UploadService uploadService, AuthenticateRequest authenticateRequest, TranscodingJobMessageProducer transcodingJobMessageProducer, S3Service s3Service) {
         this.uploadService = uploadService;
         this.transcodingJobMessageProducer = transcodingJobMessageProducer;
     }
-
-    @Operation(
-            summary = "Start a new file upload",
-            description = "Initiates upload session and returns upload ID and asset ID."
-    )
-    @PostMapping("/start-upload")
-    public ResponseEntity<FileUploadStartResponse> startUpload(
-            @RequestBody FileMetaData fileMetaData,
-            @Parameter(hidden = true) HttpServletRequest request) {
-        String userId = request.getHeader("X-USER-ID");
-        return ResponseEntity.ok(uploadService.startUpload(fileMetaData, userId));
-    }
+    @PostMapping("/upload-chunk")
+    public ResponseEntity<Map<String, String>> uploadChunk(@RequestBody ChunkUploadRequest chunkUploadRequest, HttpServletRequest request) {
 
     @Operation(
             summary = "Upload a file chunk",
@@ -71,13 +59,11 @@ public class FileUploadController {
             @Parameter(hidden = true) HttpServletRequest request) throws JsonProcessingException {
 
         String userId = request.getHeader("X-USER-ID");
-        uploadService.finishUpload(
-                finalizeUploadRequest.getUploadId(),
-                finalizeUploadRequest.getAssetId(),
-                finalizeUploadRequest.getKey(),
-                finalizeUploadRequest.getEtagMap(),
-                userId
-        );
+        try {
+            uploadService.finishUpload(finalizeUploadRequest.getUploadId(),finalizeUploadRequest.getAssetId(),finalizeUploadRequest.getKey(),finalizeUploadRequest.getEtagMap(),userId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return ResponseEntity.noContent().build();
     }
 
@@ -111,4 +97,6 @@ public class FileUploadController {
                 userId
         );
     }
+
+
 }

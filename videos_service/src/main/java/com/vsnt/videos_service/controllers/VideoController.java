@@ -60,9 +60,12 @@ public class VideoController {
             @RequestBody VideoDTO videoDTO,
             @RequestParam String videoId) {
         String userId = request.getHeader(USER_ID);
-        Video video = videoService.fillDetails(videoDTO, userId, videoId);
-        return ResponseEntity.ok(video.toDTO());
-    }
+        Video video = videoService.getVideo(v);
+        if(video==null)
+        {
+
+            throw new VideoNotFoundException("Video not found");
+        }
 
     @GetMapping("/watch")
     @Operation(

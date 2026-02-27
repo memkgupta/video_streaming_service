@@ -68,7 +68,11 @@ public class ApiResponseTransformFilter extends AbstractGatewayFilterFactory<Api
                     if (rawStatusCode >= 400) {
                         return super.writeWith(fluxBody);
                     }
-
+                    if(httpHeaders.containsKey(HttpHeaders.CONTENT_TYPE) && !httpHeaders.get(
+                            HttpHeaders.CONTENT_TYPE
+                    ).equals("application/json")) {
+                        return super.writeWith(fluxBody);
+                    }
                     return DataBufferUtils.join(fluxBody)
                             .publishOn(Schedulers.boundedElastic())
                             .flatMap(dataBuffer -> {

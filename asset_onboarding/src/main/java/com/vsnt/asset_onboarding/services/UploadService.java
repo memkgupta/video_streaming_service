@@ -1,24 +1,26 @@
 package com.vsnt.asset_onboarding.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vsnt.asset_onboarding.CDNService;
+import com.vsnt.asset_onboarding.KeyCDNService;
 import com.vsnt.asset_onboarding.config.KafkaProducer;
+//import com.vsnt.asset_onboarding.config.ModerationJobProducer;
+import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
-import com.vsnt.asset_onboarding.dtos.FileMetaData;
-import com.vsnt.asset_onboarding.dtos.FileUploadStartResponse;
-import com.vsnt.asset_onboarding.dtos.TranscodingJob;
-import com.vsnt.asset_onboarding.dtos.UpdateRequestDTO;
+import com.vsnt.asset_onboarding.dtos.*;
 import com.vsnt.asset_onboarding.entities.Asset;
+import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
 import com.vsnt.asset_onboarding.exceptions.InternalServerError;
+import com.vsnt.asset_onboarding.listeners.AssetUploadFinishListener;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
-import lombok.RequiredArgsConstructor;
+//import com.vsnt.common_lib.dtos.ModerationJob;
+import com.vsnt.common_lib.dtos.ModerationJob;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,14 +30,20 @@ public class UploadService {
     private final S3Service s3Service;
     private final AssetRepository assetRepository;
     private final AssetService assetService;
-    private final KafkaProducer kafkaProducer;
-    private final TranscodingJobMessageProducer jobProducer;
-    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KafkaProducer kafkaProducer, TranscodingJobMessageProducer messageProducer) {
+    private final KeyCDNService cdnService;
+    private final KeyService keyService;
+    private final ModerationJobProducer moderationJobProducer;
+    private final AssetUploadFinishListener uploadFinishListener;
+    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KeyCDNService cdnService, KeyService keyService, ModerationJobProducer moderationJobProducer, AssetUploadFinishListener uploadFinishListener) {
         this.s3Service = s3Service;
         this.assetRepository = assetRepository;
         this.assetService = assetService;
-        this.kafkaProducer = kafkaProducer;
-        this.jobProducer = messageProducer;
+        this.cdnService = cdnService;
+
+        this.keyService = keyService;
+//        this.moderationJobProducer = moderationJobProducer;
+        this.moderationJobProducer = moderationJobProducer;
+        this.uploadFinishListener = uploadFinishListener;
     }
 
     public FileUploadStartResponse startUpload(FileMetaData obj,String userId)
@@ -43,7 +51,6 @@ public class UploadService {
         String fileName = obj.getFileName();
         String fileUploadId = UUID.randomUUID().toString();
         String key = "uploads/"+fileName.split("\\.")[0]+"/"+fileUploadId+".mp4";
-
         String uploadId = s3Service.startMultiPartUpload(key);
         Asset upload = new Asset();
         upload.setFileUploadId(fileUploadId);
@@ -52,12 +59,13 @@ public class UploadService {
         upload.setUploadStatus(UploadStatus.INITIATED);
         upload.setUploadId(uploadId);
         upload.setStartTime(new Timestamp(System.currentTimeMillis()));
-        upload.setUserId(userId);
-        upload.setVideoId(obj.getVideoId());
+        upload.setMediaId(UUID.fromString(obj.getMediaId()));
         upload.setKey(key);
         upload.setFileSize(obj.getFileSize());
         upload.setFileType(obj.getFileType());
         assetRepository.save(upload);
+
+
       FileUploadStartResponse res = new FileUploadStartResponse();
       res.setKey(key);
       res.setAssetId(upload.getId().toString());
@@ -72,51 +80,33 @@ return res;
 
             throw new BadRequestException("Bad request , upload doesn't exist");
         }
-       if(!upload.getUserId().equals(userId)){
-           throw new BadRequestException("Bad request , upload doesn't exist");
-       }
+
         if(!upload.getUploadStatus().equals(UploadStatus.INITIATED) ){
             throw new BadRequestException("Bad request");
         }
         return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
     }
-    public boolean finishUpload(String uploadId, Long assetId,String key, Map<Integer,String> etagMap,String userId) throws JsonProcessingException {
+    public void finishUpload(String uploadId, Long assetId, String key, Map<Integer,String> etagMap, String userId) throws Exception {
         Asset upload = assetService.getAssetById(assetId);
         if(upload==null){
             throw new BadRequestException("Bad request , upload doesn't exist");
         }
-        if(!upload.getUserId().equals(userId)){
-            throw new BadRequestException("Bad request , upload doesn't exist");
-        }
-       TranscodingJob job = s3Service.completeMultipartUpload(uploadId,etagMap,key);
-        if(job==null)
-        {
-            throw new InternalServerError("Something went wrong");
-        }
         upload.setUploadStatus(UploadStatus.COMPLETED);
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
         upload.setChunksUploaded(etagMap.size());
-        job.setJobId(upload.getVideoId().toString());
-
-        job.setSize(upload.getFileSize());
-
-
         assetRepository.save(upload);
-        // send the update to the video service ( and that video service will update the video status to uploaded and send a SSE to the frontend)
-        UpdateRequestDTO dto = new UpdateRequestDTO();
-        dto.setStatus("UPLOADED");
-        dto.setVideoId(upload.getVideoId());
-        dto.setTimestamp(String.valueOf(new Timestamp(System.currentTimeMillis())));
-        kafkaProducer.produce(dto);
+        s3Service.completeMultipartUpload(uploadId,etagMap,key);
+        uploadFinishListener.listen(upload);
 
-        jobProducer.sendMessage(job);
-        return true;
+
+
+
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)
     {
 
            Asset upload = assetService.getAssetById(assetId);
-            if(upload==null || !upload.getUserId().equals(userId))
+            if(upload==null  )
             {
                 throw new BadRequestException("Bad request , upload doesn't exist");
             }
@@ -142,7 +132,7 @@ return res;
     {
 
             Asset upload = assetService.getAssetById(assetId);
-            if(upload==null || !upload.getUserId().equals(userId))
+            if(upload==null)
             {
                 throw new BadRequestException("Bad request , upload doesn't exist");
             }

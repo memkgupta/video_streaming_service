@@ -42,4 +42,5 @@ public class AssetController {
         AssetDTO dto = asset.toDTO();
         return ResponseEntity.ok(dto);
     }
+
 }

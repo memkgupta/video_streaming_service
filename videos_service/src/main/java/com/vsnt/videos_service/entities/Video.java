@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Data
+@Inheritance(strategy = InheritanceType.JOINED)
 public class Video {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,6 +24,7 @@ public class Video {
     private VideoUploadStatusEnum status;
     private String thumbnailUrl;
     private String assetId;
+    private String transcriptUrl;
 public VideoDTO toDTO()
 {
     VideoDTO dto = new VideoDTO();
