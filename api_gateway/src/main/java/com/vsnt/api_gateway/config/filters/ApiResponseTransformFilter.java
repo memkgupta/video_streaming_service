@@ -54,7 +54,13 @@ public class ApiResponseTransformFilter extends AbstractGatewayFilterFactory<Api
                     String originalResponseContentType = exchange.getAttribute(ORIGINAL_RESPONSE_CONTENT_TYPE_ATTR);
                     HttpHeaders httpHeaders = new HttpHeaders();
                     httpHeaders.add(HttpHeaders.CONTENT_TYPE, originalResponseContentType);
+                    String path = exchange.getRequest().getPath().toString();
 
+                    // If the path is for swagger docs, don't transform the response.
+                    // Pass the original body through without modification.
+                    if (path.contains("/v3/api-docs")) {
+                        return super.writeWith(body);
+                    }
                     Flux<? extends DataBuffer> fluxBody = Flux.from(body);
                     int rawStatusCode = getStatusCode().value();
 
