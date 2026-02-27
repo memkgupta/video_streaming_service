@@ -10,7 +10,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +40,7 @@ public class MediaService {
         media.setAccessibility(request.getMediaAccessibility());
         media.setMediaType(request.getMediaType());
         media.setPushKey(mediaPushKey);
+        media.setModerationEnabled(request.isModeration());
         if(request.getGroupId() != null)
         {
 

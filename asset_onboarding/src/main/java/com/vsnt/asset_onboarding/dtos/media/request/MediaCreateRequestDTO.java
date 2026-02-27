@@ -9,4 +9,5 @@ public class MediaCreateRequestDTO {
     private MediaType mediaType;
     private MediaAccessibility  mediaAccessibility;
     private String groupId;
+    private boolean moderation;
 }

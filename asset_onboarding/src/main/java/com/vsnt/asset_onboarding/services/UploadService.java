@@ -91,17 +91,15 @@ return res;
         if(upload==null){
             throw new BadRequestException("Bad request , upload doesn't exist");
         }
-
-
         upload.setUploadStatus(UploadStatus.COMPLETED);
-
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
         upload.setChunksUploaded(etagMap.size());
         assetRepository.save(upload);
+        s3Service.completeMultipartUpload(uploadId,etagMap,key);
         uploadFinishListener.listen(upload);
 
-        //todo add user auth check to upload the chunk
-      s3Service.completeMultipartUpload(uploadId,etagMap,key);
+
+
 
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)

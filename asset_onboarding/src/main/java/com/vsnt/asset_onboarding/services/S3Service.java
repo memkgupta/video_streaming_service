@@ -27,7 +27,7 @@ public class S3Service {
 
     public String startSingleUpload(String key , String fileType)
     {
-//        if(fileSize>)
+
        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(Secrets.AWS_BUCKET_NAME,key)
                .withMethod(HttpMethod.PUT)
                .withContentType(fileType);

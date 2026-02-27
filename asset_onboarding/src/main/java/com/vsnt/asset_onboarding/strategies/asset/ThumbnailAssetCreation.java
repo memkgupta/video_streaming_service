@@ -28,13 +28,12 @@ public class ThumbnailAssetCreation extends AssetCreationStrategy<FileMetaData> 
         String fileName = metadata.getFileName();
         String fileUploadId = UUID.randomUUID().toString();
         String key = "uploads/"+media.getId()+"/thumbnail/"+fileUploadId+fileName.split("\\.")[1];
-        String uploadId = s3Service.startSingleUpload(key,metadata.getFileType());
+//        String uploadId = s3Service.startSingleUpload(key,metadata.getFileType());
         Asset asset = new Asset();
         asset.setFileUploadId(fileUploadId);
         asset.setFileName(fileName);
         asset.setChunksUploaded(0);
         asset.setUploadStatus(UploadStatus.INITIATED);
-        asset.setUploadId(uploadId);
         asset.setAssetType(AssetType.THUMBNAIL);
         asset.setStartTime(new Timestamp(System.currentTimeMillis()));
         asset.setMediaId(media.getId());

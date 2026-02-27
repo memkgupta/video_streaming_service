@@ -1,6 +1,7 @@
 package com.vsnt.asset_onboarding.contoller;
 
 import com.vsnt.asset_onboarding.dtos.FileMetaData;
+import com.vsnt.asset_onboarding.dtos.FileUploadStartResponse;
 import com.vsnt.asset_onboarding.dtos.PageResponseDTO;
 import com.vsnt.asset_onboarding.dtos.media.request.MediaCreateRequestDTO;
 import com.vsnt.asset_onboarding.dtos.media.response.MediaDTO;
@@ -10,6 +11,7 @@ import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.mapper.MediaMapper;
 import com.vsnt.asset_onboarding.services.AssetService;
 import com.vsnt.asset_onboarding.services.MediaService;
+import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.asset_onboarding.strategies.asset.StaticVideoAssetCreation;
 import com.vsnt.asset_onboarding.strategies.asset.ThumbnailAssetCreation;
 import org.springframework.data.domain.Page;
@@ -30,12 +32,15 @@ public class MediaController {
     private final AssetService assetService;
     private final ThumbnailAssetCreation  thumbnailAssetCreation;
     private final StaticVideoAssetCreation staticVideoAssetCreation;
-    public MediaController(MediaService mediaService, MediaMapper mediaMapper, AssetService assetService, ThumbnailAssetCreation thumbnailAssetCreation, StaticVideoAssetCreation staticVideoAssetCreation) {
+    private final S3Service s3Service;
+
+    public MediaController(MediaService mediaService, MediaMapper mediaMapper, AssetService assetService, ThumbnailAssetCreation thumbnailAssetCreation, StaticVideoAssetCreation staticVideoAssetCreation, S3Service s3Service) {
         this.mediaService = mediaService;
         this.mediaMapper = mediaMapper;
         this.assetService = assetService;
         this.thumbnailAssetCreation = thumbnailAssetCreation;
         this.staticVideoAssetCreation = staticVideoAssetCreation;
+        this.s3Service = s3Service;
     }
     @PostMapping
     public ResponseEntity<MediaDTO> createMedia(@RequestBody MediaCreateRequestDTO request)
@@ -96,10 +101,11 @@ public class MediaController {
         throw new EntityNotFoundException("Media");
     }
     Asset asset = assetService.createAsset(media ,thumbnailAssetCreation,metaData);
-    return ResponseEntity.ok(asset.getCdnURL());
+    String preSignedURL = s3Service.startSingleUpload(asset.getKey(),asset.getFileType());
+    return ResponseEntity.ok(preSignedURL);
     }
     @PutMapping("/{id}/video")
-    public ResponseEntity<?> startUploadVideo(
+    public ResponseEntity<FileUploadStartResponse> startUploadVideo(
             @PathVariable UUID id, @RequestBody FileMetaData metaData
     )
     {
@@ -109,7 +115,11 @@ public class MediaController {
             throw new EntityNotFoundException("Media");
         }
         Asset asset = assetService.createAsset(media ,staticVideoAssetCreation,metaData);
-        return ResponseEntity.ok().build();
+        FileUploadStartResponse res = new  FileUploadStartResponse();
+        res.setKey(asset.getKey());
+        res.setUploadId(asset.getUploadId());
+        res.setAssetId(asset.getId().toString());
+        return ResponseEntity.ok(res);
     }
 
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vsnt.asset_onboarding.config.AuthenticateRequest;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.*;
+import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.asset_onboarding.services.UploadService;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -14,23 +15,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/")
-
 public class FileUploadController {
     private final UploadService uploadService;
-
     private final TranscodingJobMessageProducer transcodingJobMessageProducer;
-
-    public FileUploadController(UploadService uploadService, AuthenticateRequest authenticateRequest, TranscodingJobMessageProducer transcodingJobMessageProducer) {
+    public FileUploadController(UploadService uploadService, AuthenticateRequest authenticateRequest, TranscodingJobMessageProducer transcodingJobMessageProducer, S3Service s3Service) {
         this.uploadService = uploadService;
 
         this.transcodingJobMessageProducer = transcodingJobMessageProducer;
     }
-//
-//    @PostMapping("/start-upload")
-//    public ResponseEntity<FileUploadStartResponse> startUpload(@RequestBody FileMetaData fileMetaData, HttpServletRequest request) {
-//        String userId = request.getHeader("X-USER-ID");
-//        return ResponseEntity.ok(uploadService.startUpload(fileMetaData, userId));
-//    }
     @PostMapping("/upload-chunk")
     public ResponseEntity<Map<String, String>> uploadChunk(@RequestBody ChunkUploadRequest chunkUploadRequest, HttpServletRequest request) {
 
@@ -60,5 +52,6 @@ public class FileUploadController {
         String userId = request.getHeader("X-USER-ID");
         return uploadService.resumeUpload(uploadPauseToggleRequest.getAssetId(), userId);
     }
+
 
 }

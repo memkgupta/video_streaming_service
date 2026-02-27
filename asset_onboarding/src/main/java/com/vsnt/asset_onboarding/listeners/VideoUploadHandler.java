@@ -8,7 +8,6 @@ import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
-import com.vsnt.asset_onboarding.exceptions.InternalServerError;
 import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.common_lib.dtos.ModerationJob;
@@ -60,10 +59,6 @@ public class VideoUploadHandler implements AssetUploadHandler{
         }
 
         //todo add user auth check to upload the chunk
-
-
-
-
     }
 
     @Override
