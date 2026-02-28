@@ -15,7 +15,13 @@ public class RouteValidator {
             "/api/user/token/refresh-token",
             "/api/video/videos/feed",
             "/api/aggregate/videos/watch",
-            "/eureka"
+            "/eureka",
+            "/api/channel/v3/api-docs",
+            "/api/user/v3/api-docs",
+            "/api/transcoder/v3/api-docs",
+            "/api/asset_onboarding/v3/api-docs",
+            "/api/video/v3/api-docs",
+            "/api/aggregate/v3/api-docs"
     );
 
     public Predicate<ServerHttpRequest> isSecured =

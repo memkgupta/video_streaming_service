@@ -3,6 +3,7 @@ package com.vsnt.transcoder.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.vsnt.transcoder.docker_utils.DockerUtils;
+import com.vsnt.transcoder.dtos.ModerationStatus;
 import com.vsnt.transcoder.dtos.TranscodingJob;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -21,11 +22,6 @@ public class RabbitMQConfig {
 
     static final String QUEUE_NAME = "transcoding_jobs" ;
 
-    private final DockerUtils dockerUtils;
-
-    public RabbitMQConfig(DockerUtils dockerUtils) {
-        this.dockerUtils = dockerUtils;
-    }
 
     @Bean
     public Queue transcodingQueue() {
@@ -37,8 +33,11 @@ public class RabbitMQConfig {
     public void receive(@Payload String data) {
         Gson gson = new Gson();
        TranscodingJob job = gson.fromJson(data, TranscodingJob.class);
-        System.out.println(job);
 
-        dockerUtils.runContainer(job.getKey(),job.getJobId());
+            DockerUtils dockerUtils = new DockerUtils();
+            dockerUtils.runContainer(job.getKey(),job.getJobId());
+
+
+
     }
 }

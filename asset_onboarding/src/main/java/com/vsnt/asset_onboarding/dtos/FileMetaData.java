@@ -10,14 +10,14 @@ public class FileMetaData {
     private String fileUrl;
     private String uploadStatus;
     private String errorMessage;
-    private String videoId;
+    private String mediaId;
 
-    public String getVideoId() {
-        return videoId;
+    public String getMediaId() {
+        return mediaId;
     }
 
-    public void setVideoId(String videoId) {
-        this.videoId = videoId;
+    public void setMediaId(String mediaId) {
+        this.mediaId = mediaId;
     }
 
     public String getErrorMessage() {

@@ -31,20 +31,35 @@ private final UserDetailsService userDetailsService;
     @Bean
     UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","http://localhost:8001","http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","http://localhost:8001","http://localhost:5173","http://localhost:8007"));
         configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","OPTIONS"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-    @Bean
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter,JWTFilter jwtFilter) throws Exception {
+//        http.cors(AbstractHttpConfigurer::disable)
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .authorizeHttpRequests(authorize->
+//                        authorize.
+//                                requestMatchers("/healthcheck","/auth/login","/auth/register","/token/refresh-token","/auth/authenticate","/*").permitAll()
+//                                .anyRequest().authenticated()
+//                        )
+//                .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .authenticationProvider(authenticationProvider())
+//                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+//                .addFilterAfter(jwtFilter,ApiKeyAuthFilter.class);
+//        return http.build();
+//
+//    }
+@Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter,JWTFilter jwtFilter) throws Exception {
         http.cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize->
                         authorize.
-                                requestMatchers("/healthcheck","/auth/login","/auth/register","/token/refresh-token","/auth/authenticate").permitAll()
-                                .anyRequest().authenticated()
+                                anyRequest().permitAll()
                         )
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
@@ -53,7 +68,6 @@ private final UserDetailsService userDetailsService;
         return http.build();
 
     }
-
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();

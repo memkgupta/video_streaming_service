@@ -7,7 +7,9 @@ import com.vsnt.asset_onboarding.config.Secrets;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.sync.RequestBody;
 
+import java.io.ByteArrayInputStream;
 import java.net.URL;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -23,9 +25,25 @@ public class S3Service {
         this.s3 = s3;
     }
 
+    public String startSingleUpload(String key , String fileType)
+    {
+
+       GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(Secrets.AWS_BUCKET_NAME,key)
+               .withMethod(HttpMethod.PUT)
+               .withContentType(fileType);
+       URL url = s3.generatePresignedUrl(request);
+       return url.toString();
+
+    }
     public String startMultiPartUpload(String key) {
 
         InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(Secrets.AWS_BUCKET_NAME, key);
+        InitiateMultipartUploadResult result = s3.initiateMultipartUpload(request);
+        return result.getUploadId();
+    }
+    public String startMultiPartUpload(String key, String bucketName) {
+
+        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucketName, key);
         InitiateMultipartUploadResult result = s3.initiateMultipartUpload(request);
         return result.getUploadId();
     }
@@ -40,7 +58,18 @@ public class S3Service {
         URL url = s3.generatePresignedUrl(request);
         return url.toString();
     }
-    public TranscodingJob completeMultipartUpload(String uploadId, Map<Integer,String> etagMap, String key)
+    public String getPreSignedURLForMultipartUploadChunk(String uploadId,int chunkNumber,String key , String bucketName) {
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucketName, key)
+                .withMethod(HttpMethod.PUT)
+                .withContentType("application/octet-stream");
+
+
+        request.addRequestParameter("uploadId", uploadId);
+        request.addRequestParameter("partNumber", String.valueOf(chunkNumber));
+        URL url = s3.generatePresignedUrl(request);
+        return url.toString();
+    }
+    public void completeMultipartUpload(String uploadId, Map<Integer,String> etagMap, String key)
     {
         try{
             CompleteMultipartUploadRequest request  = new CompleteMultipartUploadRequest();
@@ -53,17 +82,35 @@ public class S3Service {
                 partETags.add(new PartETag(etag.getKey(), etag.getValue()));
             }
             request.setPartETags(partETags);
-        var e = s3.completeMultipartUpload(request);
+        s3.completeMultipartUpload(request);
 
-            TranscodingJob job = new TranscodingJob();
-            job.setKey(e.getKey());
-            return job;
+
         }
         catch (Exception e){
             e.printStackTrace();
-            return null;
+
         }
 
 
+    }
+    public String uploadFileToS3(String bucketName,String key , byte[] body)
+    {
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(body.length);
+        metadata.setContentType("application/octet-stream");
+
+        // Upload to S3
+        ByteArrayInputStream inputStream =
+                new ByteArrayInputStream(body);
+
+        s3.putObject(
+                Secrets.AWS_BUCKET_NAME,
+                key,
+                inputStream,
+                metadata
+        );
+
+       return Secrets.CDN_RESOURCE_URL+"/"+key;
     }
 }
