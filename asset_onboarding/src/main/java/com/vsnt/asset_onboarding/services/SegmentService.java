@@ -4,6 +4,7 @@ import com.vsnt.asset_onboarding.dtos.TranscodingSegmentUpdateDTO;
 import com.vsnt.asset_onboarding.dtos.kvstore.segments.KVSegment;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.TranscodedSegment;
+import com.vsnt.asset_onboarding.entities.TranscodedSegmentId;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
 import com.vsnt.asset_onboarding.repositories.TranscodedSegmentRepository;
@@ -27,10 +28,10 @@ public class SegmentService {
 
     public void save(TranscodingSegmentUpdateDTO segmentUpdateDTO) {
         TranscodedSegment segment = new TranscodedSegment();
-        segment.setAssetId(segmentUpdateDTO.getAssetId());
+        segment.setId(new TranscodedSegmentId(segmentUpdateDTO.getAssetId() ,  segmentUpdateDTO.getSequenceNumber()));
         segment.setUrl(segmentUpdateDTO.getUrl());
         segment.setMediaId(segmentUpdateDTO.getMediaId());
-        segment.setSequenceNumber(segmentUpdateDTO.getSequenceNumber());
+        segment.setResolution(segmentUpdateDTO.getResolution());
         transcodedSegmentRepository.save(segment);
     }
     public String getLivePlaylist(

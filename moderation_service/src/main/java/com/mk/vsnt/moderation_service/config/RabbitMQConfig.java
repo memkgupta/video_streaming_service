@@ -23,21 +23,16 @@ import java.util.Map;
 
 @Configuration
 public class RabbitMQConfig {
-
     static final String QUEUE_NAME = "moderation_jobs" ;
     private final Gson gson = new Gson();
     private final DockerContainerSpawner spawner;
-
     public RabbitMQConfig(DockerContainerSpawner spawner) {
         this.spawner = spawner;
     }
-
     @Bean
     public Queue transcodingQueue() {
         return new Queue(QUEUE_NAME, false);
     }
-
-
     @RabbitListener(queues = QUEUE_NAME)
     public void receive(@Payload String data) {
 
