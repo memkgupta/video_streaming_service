@@ -1,13 +1,16 @@
 package com.vsnt.asset_onboarding.listeners.moderation;
 
+import com.vsnt.asset_onboarding.KeyCDNService;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.ModerationStatus;
 import com.vsnt.asset_onboarding.dtos.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;
+import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.listeners.moderation.actions.ModerationAction;
 import com.vsnt.asset_onboarding.listeners.moderation.actions.ModerationActionFactory;
+import com.vsnt.asset_onboarding.services.KeyService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -17,11 +20,14 @@ import java.util.concurrent.Executor;
 public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
     private final TranscodingJobMessageProducer transcodingJobMessageProducer;
     private final ModerationActionFactory  moderationActionFactory;
-
+    private final KeyService keyService;
+    private final KeyCDNService keyCDNService;
     private final Executor executor;
-    public StaticModerationUpdateHandler(TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationActionFactory moderationActionFactory,     @Qualifier("moderationExecutor") Executor executor) {
+    public StaticModerationUpdateHandler(TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationActionFactory moderationActionFactory, KeyService keyService, KeyCDNService keyCDNService, @Qualifier("moderationExecutor") Executor executor) {
         this.transcodingJobMessageProducer = transcodingJobMessageProducer;
         this.moderationActionFactory = moderationActionFactory;
+        this.keyService = keyService;
+        this.keyCDNService = keyCDNService;
         this.executor = executor;
     }
 
@@ -35,12 +41,23 @@ public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
         ModerationStatus status = update.getModerationStatus();
         if(status.equals(ModerationStatus.SAFE) || status.equals(ModerationStatus.REVIEW))
         {
-            CompletableFuture.runAsync(() -> transcodingJobMessageProducer.sendMessage(
+            AssetAESKey assetKey = null;
+            try {
+                assetKey = keyService.getKey(update.getAssetId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            TranscodingJob job =
                     TranscodingJob.builder()
-                            .key(media.getId().toString())
-                            .jobId(update.getAssetId())
-
-                            .build()
+                            .key(media.getVideoAsset().getKey())
+                            .encryptionKey(keyCDNService.fetchSecure(
+                                    assetKey.getKeyURL()
+                            ))
+                            .jobId(media.getId().toString())
+                            .build();
+            transcodingJobMessageProducer.sendMessage(job);
+            CompletableFuture.runAsync(() -> transcodingJobMessageProducer.sendMessage(
+                   job
             ) , executor);
         }
 

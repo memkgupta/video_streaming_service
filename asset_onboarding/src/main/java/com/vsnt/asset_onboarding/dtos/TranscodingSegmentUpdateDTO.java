@@ -1,5 +1,6 @@
 package com.vsnt.asset_onboarding.dtos;
 
+import com.vsnt.asset_onboarding.entities.enums.ResolutionEnum;
 import lombok.Data;
 
 @Data
@@ -9,4 +10,5 @@ public class TranscodingSegmentUpdateDTO {
     private long sequenceNumber;
     private String mediaId;
     private long duration;
+    private ResolutionEnum resolution;
 }

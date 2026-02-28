@@ -20,11 +20,13 @@ public class AssetService {
 
     private final AssetRepository assetRepository;
     private final static int CHUNK_SIZE_MB =1;
-    public AssetService(MediaService mediaService, AssetRepository assetRepository) {
-        this.mediaService = mediaService;
+    public AssetService(AssetRepository assetRepository) {
+
         this.assetRepository = assetRepository;
     }
-
+    public Asset save(Asset asset) {
+        return assetRepository.save(asset);
+    }
     public Asset getAssetById(long id) {
         return assetRepository.findById(id);
     }

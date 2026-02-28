@@ -2,6 +2,7 @@ package com.vsnt.asset_onboarding.contoller;
 
 import com.vsnt.asset_onboarding.dtos.security.SignedCookie;
 import com.vsnt.asset_onboarding.entities.Media;
+import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.entities.enums.MediaAccessibility;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
@@ -53,14 +54,13 @@ public class WatchController {
         {
             throw new RuntimeException("Forbidden");
         }
-      if(media.getMediaType().equals(MediaType.LIVE))
+      if(media.getVideoAsset().getAssetType().equals(AssetType.LIVE_VIDEO))
       {
           String indexFile = null;
           if(start<0)
           {
               // get live playlist
             indexFile= segmentService.getLivePlaylist(media);
-
           }
           else {
               // get playlist with offset
@@ -70,11 +70,14 @@ public class WatchController {
                   .header(HttpHeaders.CONTENT_TYPE, "application/vnd.apple.mpegurl")
                   .body(indexFile);
       }
-      else {
+      else if(media.getVideoAsset().getAssetType().equals(AssetType.VIDEO)){
            String indexFile =  segmentService.getPlaylist(-1 , media);
 
            responseEntity = ResponseEntity.status(302)
                    .header(HttpHeaders.LOCATION,indexFile).build();
+      }
+      else {
+          throw new RuntimeException("Unsupported Media");
       }
         SignedCookie cookies = cookiesService.generateCookies();
         addCookie(httpServletResponse, "CloudFront-Key-Pair-Id", cookies.getKeyPairId());
