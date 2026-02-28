@@ -6,7 +6,9 @@ import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.services.AssetService;
 import com.vsnt.asset_onboarding.workers.PlaylistGeneratorWorker;
+import org.springframework.stereotype.Component;
 
+@Component
 public class LiveMediaFinishHandler implements MediaFinishHandler {
     private final AssetService assetService;
     private final PlaylistGeneratorWorker playlistGeneratorWorker;
