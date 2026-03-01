@@ -16,6 +16,19 @@ public class TranscodingJob {
         this.key = key;
         this.size = size;
     }
+
+    public byte[] getEncryptionKey() {
+        return encryptionKey;
+    }
+
+    public void setEncryptionKey(byte[] encryptionKey) {
+        this.encryptionKey = encryptionKey;
+    }
+
+    public void setAssetId(String assetId) {
+        this.assetId = assetId;
+    }
+
     public String getJobId() {
         return jobId;
     }

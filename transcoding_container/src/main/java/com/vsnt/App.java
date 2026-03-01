@@ -1,12 +1,18 @@
 package com.vsnt;
 
+import com.vsnt.dtos.MediaType;
+import com.vsnt.dtos.TranscodingFinishEventDTO;
 import com.vsnt.dtos.UpdateRequestDTO;
 import com.vsnt.services.APIService;
+import com.vsnt.services.HlsDirectoryWatcher;
 import com.vsnt.services.S3Service;
+import org.apache.kafka.common.protocol.types.Field;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.concurrent.Future;
 
 /**
  * Hello world!
@@ -18,9 +24,15 @@ public class App
     {
         S3Service s3Service = new S3Service();
         String file_key = System.getenv("FILE_KEY");
-        String videoId = System.getenv("VIDEO_ID");
+        String mediaId = System.getenv("MEDIA_ID");
+        String encryptionKey = System.getenv("ENCRYPTION_KEY");
+
         String bucket_name = System.getenv("BUCKET_NAME");
-        String transcoded_bucket_name = System.getenv("TRANSCODED_BUCKET_NAME");
+
+        String kafka_brokers = System.getenv("KAFKA_BROKERS");
+        String kafka_topic_segment_update = System.getenv("UPDATE_TOPIC_NAME");
+        String kafka_topic_finish = System.getenv("FINISH_TOPIC_NAME");
+        String assetId =  System.getenv("ASSET_ID");
         String transcoderAPIURL = System.getenv("UPDATE_API_URL");
         String cloudFrontURL = System.getenv("CLOUDFRONT_URL");
         if(file_key == null || bucket_name == null){
@@ -28,31 +40,37 @@ public class App
             System.exit(1);
         }
 
-        Path filePath = s3Service.fetchVideo(file_key,bucket_name,"original/");
-        VideoTranscoder transcoder = new VideoTranscoder();
-        transcoder.transcodeVideo(filePath.toAbsolutePath().toString(), "transcoded");
-        try{
-            file_key = file_key.replace("uploads/","transcoded/");
-            s3Service.uploadObject(transcoded_bucket_name,file_key, Paths.get("/app/transcoded"));
-            // send api request to the transcoder for updating status
-            UpdateRequestDTO dto = new UpdateRequestDTO();
-            dto.setVideoId(videoId);
-            dto.setTimestamp(new Timestamp(System.currentTimeMillis()));
-            dto.setStatus("SUCCESS");
-            dto.setUrl(cloudFrontURL+"/"+file_key+"/index.m3u8");
+        try {
+            String signedURL = s3Service.generatePresignedUrl(bucket_name , file_key);
+            VideoTranscoder transcoder = new VideoTranscoder();
+SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
+        kafka_topic_segment_update,kafka_topic_finish
+        );
+           Future<Boolean> transcoding =  transcoder.startTranscodingAsync(signedURL, mediaId, encryptionKey, transcoderAPIURL);
+            HlsDirectoryWatcher watcher = new HlsDirectoryWatcher(
+                    "transcoded",new SegmentEventFactory(
+                            assetId ,
+                    mediaId ,
+                    cloudFrontURL,
+                    4000
+            ),
+    producer
+            );
+            watcher.start();
+        boolean result_transcodign = transcoding.get();
+        if(result_transcodign){
+            TranscodingFinishEventDTO finishEventDTO = new TranscodingFinishEventDTO();
+            finishEventDTO.setFinishedAt(Timestamp.valueOf(LocalDateTime.now()));
+            finishEventDTO.setMediaId(mediaId);
+            finishEventDTO.setMediaType(MediaType.STATIC);
+            producer.sendFinishEvent(finishEventDTO);
+        }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-            APIService service = new APIService(transcoderAPIURL);
-            service.sendUpdateRequest(dto);
-        }
-        catch(Exception e){
-            UpdateRequestDTO failed = new UpdateRequestDTO();
-            failed.setVideoId(videoId);
-            failed.setTimestamp(new Timestamp(System.currentTimeMillis()));
-            failed.setStatus("FAILED");
-            APIService service = new APIService(transcoderAPIURL);
-            service.sendUpdateRequest(failed);
-            e.printStackTrace();
-        }
+
+
 
     }
 }

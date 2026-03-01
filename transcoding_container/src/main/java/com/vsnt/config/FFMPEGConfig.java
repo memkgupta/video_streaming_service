@@ -6,7 +6,7 @@ import java.util.List;
 public class FFMPEGConfig {
     private List<String> ffmpegCommands;
     private String masterPlaylistContent;
-    public FFMPEGConfig(String filePath,String outputPath) {
+    public FFMPEGConfig(String filePath,String outputPath,String encryptionKey) {
         ffmpegCommands = List.of(
                 String.format(
                         "ffmpeg -i \"%s\" -vf \"scale=w=640:h=360\" -c:v libx264 -b:v 800k -c:a aac -b:a 96k -f hls -hls_time 15 -hls_playlist_type vod -hls_segment_filename \"%s/segment%%03d.ts\" -start_number 0 \"%s/index.m3u8\"",

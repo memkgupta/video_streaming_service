@@ -1,20 +1,27 @@
 package com.vsnt.services;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.*;
 import com.vsnt.config.S3Config;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class S3Service {
+
+    public String generatePresignedUrl(String bucketName, String key) throws Exception
+    {
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucketName, key);
+        S3Config s3Config = new S3Config();
+        AmazonS3 s3Client = s3Config.getS3Client();
+        URL url = s3Client.generatePresignedUrl(request);
+        return url.toString();
+    }
     public Path fetchVideo(String key,String bucket,String downloadPath)
     {
         S3Config s3Config = new S3Config();
