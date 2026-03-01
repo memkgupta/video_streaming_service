@@ -28,23 +28,38 @@ public class KafkaConsumer {
         this.moderationUpdateListener = moderationUpdateListener;
         this.transcodingFinishListener = transcodingFinishListener;
     }
-    @KafkaListener(topics = "asset-transcoding-updates",groupId = "asset-updates-consumer")
+    @KafkaListener(
+            topics = "asset-transcoding-updates",
+            containerFactory = "transcodingSegmentUpdateFactory"
+    )
     public void listen(TranscodingSegmentUpdateDTO updateRequestDTO) {
         transcodingSegmentUpdateListener.onMessage(updateRequestDTO);
-        }
-       @KafkaListener(topics = "asset-transcoding-finish" , groupId = "asset-updates-consumer")
-       public void listen(TranscodingFinishEventDTO finishEventDTO) {
-        transcodingFinishListener.onMessage(finishEventDTO);
-       }
-    @KafkaListener(topics="media-moderation-update",groupId = "media-moderation-consumer")
-    public void listenModerationUpdate(ModerationUpdateDTO moderationUpdateDTO) {
-      moderationUpdateListener.onMessage(moderationUpdateDTO);
     }
-    @KafkaListener(topics = "group-member-notification",groupId = "group-member")
+    @KafkaListener(
+            topics = "asset-transcoding-finish",
+            containerFactory = "transcodingFinishFactory"
+    )
+    public void listen(TranscodingFinishEventDTO finishEventDTO) {
+        transcodingFinishListener.onMessage(finishEventDTO);
+    }
+    @KafkaListener(
+            topics = "media-moderation-update",
+            containerFactory = "moderationUpdateFactory"
+    )
+    public void listenModerationUpdate(ModerationUpdateDTO moderationUpdateDTO) {
+        moderationUpdateListener.onMessage(moderationUpdateDTO);
+    }
+    @KafkaListener(
+            topics = "group-member-notification",
+            containerFactory = "groupMemberFactory"
+    )
     public void listen(GroupMemberCreateRequestDTO member) {
         messageListener.onMessage(member);
     }
-    @KafkaListener(topics = "group-creation",groupId = "group-creation-consumer")
+    @KafkaListener(
+            topics = "group-creation",
+            containerFactory = "groupCreateFactory"
+    )
     public void listen(GroupCreateRequestDTO group) {
         groupMemberListener.onMessage(group);
     }

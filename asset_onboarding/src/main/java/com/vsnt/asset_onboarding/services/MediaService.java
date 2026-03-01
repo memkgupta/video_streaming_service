@@ -44,6 +44,7 @@ public class MediaService {
         mediaPushKey = mediaPushKeyRepository.save(mediaPushKey);
         Media media = new Media();
         media.setCreatedAt(Timestamp.from(Instant.now()));
+        media.setActive(true);
         media.setUpdatedAt(Timestamp.from(Instant.now()));
         media.setAccessibility(request.getMediaAccessibility());
         media.setMediaType(request.getMediaType());

@@ -30,7 +30,7 @@ public class CloudFrontService implements CookiesService , CDNService , KeyCDNSe
     }
 
     private final String keyPairId = Secrets.CLOUDFRONT_KEY_PAIR_ID;
-    private final String privateKeyPath = Secrets.PRIVATE_KEY_PATH;
+    private final String privateKeyPath = "private_key.der";
     private final String resourceURL = Secrets.CDN_RESOURCE_URL;
     private static final CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
     private final HttpClient httpClient =

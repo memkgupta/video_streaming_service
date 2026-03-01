@@ -19,8 +19,9 @@ public class HlsDirectoryWatcher implements Runnable {
     private final SegmentEventProducer producer;
     private volatile boolean running = false;
     private Thread watcherThread;
-
+    private String transcodingBucketUrl;
     public HlsDirectoryWatcher(String basePath,
+
                                SegmentEventFactory segmentEventFactory, SegmentEventProducer producer)
             throws IOException {
 

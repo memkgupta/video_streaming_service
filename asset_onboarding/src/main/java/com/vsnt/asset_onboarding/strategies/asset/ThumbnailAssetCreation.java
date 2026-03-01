@@ -10,16 +10,18 @@ import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
 import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.S3Service;
+import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.util.UUID;
 
+@Component
 public class ThumbnailAssetCreation extends AssetCreationStrategy<FileMetaData> {
-    private final S3Service s3Service;
+//    private final S3Service s3Service;
     private final AssetRepository assetRepository;
-    protected ThumbnailAssetCreation(KeyService keyService, S3Service s3Service, AssetRepository assetRepository) {
+    protected ThumbnailAssetCreation(KeyService keyService, AssetRepository assetRepository) {
         super(keyService, false);
-        this.s3Service = s3Service;
+
         this.assetRepository = assetRepository;
     }
 

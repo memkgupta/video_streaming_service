@@ -2,6 +2,7 @@ package com.vsnt;
 
 import com.vsnt.dtos.ResolutionEnum;
 import com.vsnt.dtos.TranscodingSegmentUpdateDTO;
+import com.vsnt.services.S3Service;
 
 import java.nio.file.Path;
 
@@ -11,15 +12,18 @@ public class SegmentEventFactory {
     private final String mediaId;
     private final String cdnBaseUrl;
     private final long segmentDuration;
-
+    private final S3Service s3Service;
+    private final String transcodedBucketName;
     public SegmentEventFactory(String assetId,
                                String mediaId,
                                String cdnBaseUrl,
-                               long segmentDuration) {
+                               long segmentDuration, S3Service s3Service, String transcodedBucketName) {
         this.assetId = assetId;
         this.mediaId = mediaId;
         this.cdnBaseUrl = cdnBaseUrl;
         this.segmentDuration = segmentDuration;
+        this.s3Service = s3Service;
+        this.transcodedBucketName = transcodedBucketName;
     }
 
     public TranscodingSegmentUpdateDTO generate(Path segmentPath) {
@@ -30,17 +34,28 @@ public class SegmentEventFactory {
         String resolutionFolder = segmentPath.getParent().getFileName().toString();
         ResolutionEnum resolution =
                 ResolutionEnum.valueOf(resolutionFolder.replace("p", "_P"));
-        String url = cdnBaseUrl + "/" + resolutionFolder + "/" + fileName;
-        return new TranscodingSegmentUpdateDTO(
-                assetId,
-                url,
-                sequenceNumber,
-                mediaId,
-                segmentDuration,
-                resolution
-        );
+       String s3Key = "transcoded/"+assetId+"/"+resolution.toResolutionString()+"/"+fileName;
+        try{
+            s3Service.uploadSegment(
+                    transcodedBucketName ,
+                    s3Key,
+                    segmentPath
+            );
+            String url = cdnBaseUrl + "/" +s3Key;
+            return new TranscodingSegmentUpdateDTO(
+                    assetId,
+                    url,
+                    sequenceNumber,
+                    mediaId,
+                    segmentDuration,
+                    resolution
+            );
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
-
     private long extractSequenceNumber(String fileName) {
         String number = fileName
                 .replace("segment", "")

@@ -28,14 +28,8 @@ public class FileUploadController {
     @PostMapping("/upload-chunk")
     public ResponseEntity<Map<String, String>> uploadChunk(@RequestBody ChunkUploadRequest chunkUploadRequest, HttpServletRequest request) {
 
-    @Operation(
-            summary = "Upload a file chunk",
-            description = "Uploads a specific part of a file using upload ID and part number."
-    )
-    @PostMapping("/upload-chunk")
-    public ResponseEntity<Map<String, String>> uploadChunk(
-            @RequestBody ChunkUploadRequest chunkUploadRequest,
-            @Parameter(hidden = true) HttpServletRequest request) {
+
+
         String userId = request.getHeader("X-USER-ID");
 
         String url = uploadService.uploadChunk(

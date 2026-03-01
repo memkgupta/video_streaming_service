@@ -1,11 +1,14 @@
 package com.vsnt.services;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.vsnt.config.S3Config;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -51,21 +54,42 @@ public class S3Service {
 
         return outputPath;
     }
-    public void uploadObject(String bucket,String keyPrefix,Path directory) throws IOException {
+    public void uploadSegment(String bucket, String key, Path path) throws IOException {
+
+        if (!Files.exists(path)) {
+            throw new IOException("File does not exist: " + path);
+        }
+
         S3Config s3Config = new S3Config();
         AmazonS3 client = s3Config.getS3Client();
 
-        Files.walk(directory)
-                .filter(Files::isRegularFile)
-                .forEach(path -> {
-                    String key = keyPrefix+"/"+directory.relativize(path).toString().replace("\\","/");
-                    try{
-                        client.putObject(new PutObjectRequest(bucket,key,path.toFile()));
-                    }
-                    catch(Exception e){
-                        e.printStackTrace();
-                        throw new RuntimeException("Unable to upload file " + key + " → " + e.getMessage());
-                    }
-                });
+        File file = path.toFile();
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(file.length());
+
+        // Set proper content type
+        if (key.endsWith(".ts")) {
+            metadata.setContentType("video/MP2T");
+        } else if (key.endsWith(".m3u8")) {
+            metadata.setContentType("application/vnd.apple.mpegurl");
+        }
+
+        try (InputStream inputStream = Files.newInputStream(path)) {
+
+            PutObjectRequest putRequest =
+                    new PutObjectRequest(bucket, key, inputStream, metadata);
+
+            client.putObject(putRequest);
+
+            System.out.println("Uploaded to S3: s3://" + bucket + "/" + key);
+
+        } catch (AmazonServiceException e) {
+            System.err.println("S3 rejected the request: " + e.getErrorMessage());
+            throw e;
+        } catch (SdkClientException e) {
+            System.err.println("Client error while uploading: " + e.getMessage());
+            throw e;
+        }
     }
 }

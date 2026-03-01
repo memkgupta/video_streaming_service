@@ -1,23 +1,16 @@
 package com.vsnt.asset_onboarding.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.vsnt.asset_onboarding.CDNService;
 import com.vsnt.asset_onboarding.KeyCDNService;
-import com.vsnt.asset_onboarding.config.KafkaProducer;
 //import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.ModerationJobProducer;
-import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.*;
 import com.vsnt.asset_onboarding.entities.Asset;
-import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
-import com.vsnt.asset_onboarding.exceptions.InternalServerError;
 import com.vsnt.asset_onboarding.listeners.AssetUploadFinishListener;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
 //import com.vsnt.common_lib.dtos.ModerationJob;
-import com.vsnt.common_lib.dtos.ModerationJob;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;

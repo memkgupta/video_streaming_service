@@ -28,7 +28,7 @@ public class App
         String encryptionKey = System.getenv("ENCRYPTION_KEY");
 
         String bucket_name = System.getenv("BUCKET_NAME");
-
+        String transcoded_bucket_name = System.getenv("TRANSCODED_BUCKET_NAME");
         String kafka_brokers = System.getenv("KAFKA_BROKERS");
         String kafka_topic_segment_update = System.getenv("UPDATE_TOPIC_NAME");
         String kafka_topic_finish = System.getenv("FINISH_TOPIC_NAME");
@@ -52,7 +52,9 @@ SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
                             assetId ,
                     mediaId ,
                     cloudFrontURL,
-                    4000
+                    4000,
+                    s3Service,
+                    transcoded_bucket_name
             ),
     producer
             );

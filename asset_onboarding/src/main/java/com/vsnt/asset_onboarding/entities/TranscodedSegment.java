@@ -19,6 +19,7 @@ public class TranscodedSegment {
     private ResolutionEnum resolution;
 
     private long start;
+    @Column(name = "_end")
     private long end;
     private long duration;
 }

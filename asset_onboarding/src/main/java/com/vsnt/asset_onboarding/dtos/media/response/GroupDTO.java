@@ -1,6 +1,7 @@
 package com.vsnt.asset_onboarding.dtos.media.response;
 
 import lombok.Builder;
+import lombok.Data;
 
 import java.sql.Timestamp;
 import java.util.UUID;
