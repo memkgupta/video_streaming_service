@@ -1,10 +1,12 @@
 package com.vsnt.transcoder.dtos;
 
+import java.util.Arrays;
+
 public class TranscodingJob {
     private String jobId;
     private String key;
     private long size;
-    private byte[] encryptionKey;
+    private String encryptionKey;
     private String assetId;
     public String getAssetId() {
         return assetId;
@@ -17,11 +19,11 @@ public class TranscodingJob {
         this.size = size;
     }
 
-    public byte[] getEncryptionKey() {
+    public String getEncryptionKey() {
         return encryptionKey;
     }
 
-    public void setEncryptionKey(byte[] encryptionKey) {
+    public void setEncryptionKey(String encryptionKey) {
         this.encryptionKey = encryptionKey;
     }
 
@@ -53,7 +55,7 @@ public class TranscodingJob {
                 "jobId='" + jobId + '\'' +
                 ", key='" + key + '\'' +
                 ", size=" + size +
-
+                " , encryptionKey=" + encryptionKey +
                 '}';
     }
 }

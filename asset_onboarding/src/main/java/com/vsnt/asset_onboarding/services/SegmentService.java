@@ -28,10 +28,10 @@ public class SegmentService {
 
     public void save(TranscodingSegmentUpdateDTO segmentUpdateDTO) {
         TranscodedSegment segment = new TranscodedSegment();
-        segment.setId(new TranscodedSegmentId(segmentUpdateDTO.getAssetId() ,  segmentUpdateDTO.getSequenceNumber()));
+        segment.setId(new TranscodedSegmentId(segmentUpdateDTO.getAssetId() ,  segmentUpdateDTO.getSequenceNumber(),segmentUpdateDTO.getResolution()));
         segment.setUrl(segmentUpdateDTO.getUrl());
         segment.setMediaId(segmentUpdateDTO.getMediaId());
-        segment.setResolution(segmentUpdateDTO.getResolution());
+        segment.setDuration(segmentUpdateDTO.getDuration());
         transcodedSegmentRepository.save(segment);
     }
     public String getLivePlaylist(

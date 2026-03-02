@@ -4,4 +4,5 @@ import com.vsnt.asset_onboarding.dtos.security.SignedCookie;
 
 public interface CookiesService {
     SignedCookie generateCookies();
+    String generateSignedURLWildcard(String path);
 }

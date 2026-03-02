@@ -15,21 +15,21 @@ public class VideoTranscoder {
     private final ExecutorService executor =
             Executors.newFixedThreadPool(4); // 4 resolutions
 
-    public Future<Boolean> startTranscodingAsync(
+    public boolean startTranscodingAsync(
             String url,
             String outputPath,
             String hexKey,
             String publicKeyURL) throws IOException {
-        String[] resolutions = {"360p", "480p", "720p", "1080p"};
+//        String[] resolutions = {"360p", "480p", "720p", "1080p"};
         Path basePath = Paths.get(outputPath);
 
-        for (String resolution : resolutions) {
-            Files.createDirectories(basePath.resolve(resolution));
-        }
+//        for (String resolution : resolutions) {
+//            Files.createDirectories(basePath.resolve(resolution));
+//        }
 
         // Generate key file
         Path keyFilePath =
-                HlsKeyUtil.createKeyFile(hexKey, outputPath + "/enc.key");
+                HlsKeyUtil.createKeyFile(hexKey, outputPath );
 
         Path keyInfoPath = basePath.resolve("key_info.txt");
 
@@ -40,40 +40,37 @@ public class VideoTranscoder {
 
         Files.writeString(keyInfoPath, keyInfoContent);
 
-        return executor.submit(() -> {
-
-            try {
+        try {
 
 
 
-                FFMPEGConfig config =
-                        new FFMPEGConfig(url,
-                                outputPath,
-                                keyInfoPath.toAbsolutePath().toString());
+            FFMPEGConfig config =
+                    new FFMPEGConfig(url,
+                            outputPath,
+                            keyInfoPath.toAbsolutePath().toString());
 
-                List<String> commands = config.getFfmpegCommands();
+            List<String> commands = config.getFfmpegCommands();
 
-                // Run resolutions in parallel
-                List<Future<Boolean>> results =
-                        commands.stream()
-                                .map(cmd -> executor.submit(() -> executeFFmpeg(cmd)))
-                                .toList();
+            // Run resolutions in parallel
+            List<Future<Boolean>> results =
+                    commands.stream()
+                            .map(cmd -> executor.submit(() -> executeFFmpeg(cmd)))
+                            .toList();
 
-                // Wait for all to complete
-                for (Future<Boolean> future : results) {
-                    if (!future.get()) {
-                        return false;
-                    }
+            // Wait for all to complete
+            for (Future<Boolean> future : results) {
+                if (!future.get()) {
+                    return false;
                 }
-
-                System.out.println("Transcoding completed successfully.");
-                return true;
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
             }
-        });
+
+            System.out.println("Transcoding completed successfully.");
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private boolean executeFFmpeg(String command) {
@@ -87,15 +84,7 @@ public class VideoTranscoder {
 
             Process process = pb.start();
 
-            try (BufferedReader reader =
-                         new BufferedReader(
-                                 new InputStreamReader(process.getInputStream()))) {
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    System.out.println(line);
-                }
-            }
 
             int exitCode = process.waitFor();
             return exitCode == 0;

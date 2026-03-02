@@ -3,16 +3,17 @@ package com.vsnt.services;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 public class HlsKeyUtil {
 
     public static Path createKeyFile(String hexKey, String outputDir) throws IOException {
 
-        if (hexKey == null || hexKey.length() != 32) {
+        if (hexKey == null ) {
             throw new IllegalArgumentException("AES-128 key must be 32 hex characters (16 bytes)");
         }
 
-        byte[] keyBytes = hexToBytes(hexKey);
+        byte[] keyBytes = Base64.getDecoder().decode(hexKey);
 
         Path keyPath = Path.of(outputDir, "enc.key");
         Files.write(keyPath, keyBytes);

@@ -13,6 +13,8 @@ import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.common_lib.dtos.ModerationJob;
 import org.springframework.stereotype.Component;
 
+import java.util.Base64;
+
 @Component
 public class VideoUploadHandler implements AssetUploadHandler{
     private final KeyService keyService;
@@ -47,13 +49,16 @@ public class VideoUploadHandler implements AssetUploadHandler{
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+            byte[] encryptionKey = keyCDNService.fetchSecure(
+                    assetKey.getKeyURL()
+            );
+            String encodedKey  = Base64.getEncoder().encodeToString(encryptionKey);
             TranscodingJob job =
                     TranscodingJob.builder()
                             .key(asset.getKey())
-                            .encryptionKey(keyCDNService.fetchSecure(
-                                    assetKey.getKeyURL()
-                            ))
+                            .encryptionKey(encodedKey)
                             .jobId(media.getId().toString())
+                            .assetId(asset.getId().toString())
                             .build();
             transcodingJobMessageProducer.sendMessage(job);
         }

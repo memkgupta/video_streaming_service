@@ -16,7 +16,6 @@ public class TranscodedSegment {
     private String url;
 
     private String mediaId;
-    private ResolutionEnum resolution;
 
     private long start;
     @Column(name = "_end")

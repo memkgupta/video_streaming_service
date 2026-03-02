@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.handler.annotation.Payload;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 @Configuration
@@ -37,13 +38,16 @@ public class RabbitMQConfig {
     }
     @RabbitListener(queues = QUEUE_NAME)
     public void receive(Message message, Channel channel) throws IOException {
+        byte[] body = message.getBody();
 
+        String json = new String(body);
+        System.out.println("Received Message : " + json);
         Gson gson = new Gson();
         TranscodingJob job = gson.fromJson(
-                new String(message.getBody()),
+                json,
                 TranscodingJob.class
         );
-
+        System.out.println(job);
         long tag = message.getMessageProperties().getDeliveryTag();
 
         try {

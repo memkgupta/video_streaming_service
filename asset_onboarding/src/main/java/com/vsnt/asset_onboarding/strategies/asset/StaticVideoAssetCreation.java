@@ -8,7 +8,9 @@ import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
+import com.vsnt.asset_onboarding.repositories.MediaRepository;
 import com.vsnt.asset_onboarding.services.KeyService;
+import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.services.S3Service;
 import org.springframework.stereotype.Component;
 
@@ -19,10 +21,12 @@ import java.util.UUID;
 public class StaticVideoAssetCreation extends AssetCreationStrategy<FileMetaData> {
     private final AssetRepository assetRepository;
     private final S3Service s3Service;
-    protected StaticVideoAssetCreation(KeyService keyService, AssetRepository assetRepository, S3Service s3Service) {
+    private final MediaRepository mediaRepository;
+    protected StaticVideoAssetCreation(KeyService keyService, MediaRepository mediaService, AssetRepository assetRepository, S3Service s3Service) {
         super(keyService,true);
         this.assetRepository = assetRepository;
         this.s3Service = s3Service;
+        this.mediaRepository = mediaService;
     }
 
     @Override
@@ -30,7 +34,7 @@ public class StaticVideoAssetCreation extends AssetCreationStrategy<FileMetaData
         String fileName = metadata.getFileName();
         String fileUploadId = UUID.randomUUID().toString();
         String key = "uploads/"+media.getId()+"/video"+"/"+fileUploadId+".mp4";
-        String uploadId = s3Service.startMultiPartUpload(key, Secrets.AWS_SECURE_BUCKET);
+        String uploadId = s3Service.startMultiPartUpload(key, Secrets.AWS_BUCKET_NAME);
         Asset asset = new Asset();
         asset.setFileUploadId(fileUploadId);
         asset.setFileName(fileName);
@@ -43,6 +47,11 @@ public class StaticVideoAssetCreation extends AssetCreationStrategy<FileMetaData
         asset.setKey(key);
         asset.setFileSize(metadata.getFileSize());
         asset.setFileType(metadata.getFileType());
-        return assetRepository.save(asset);
+        asset =  assetRepository.save(asset);
+
+        media.setVideoAsset(asset);
+        mediaRepository.save(media);
+        System.out.println("Video Asset Created");
+        return asset;
     }
 }

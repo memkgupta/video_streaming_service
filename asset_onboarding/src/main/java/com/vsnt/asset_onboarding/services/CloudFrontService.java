@@ -19,18 +19,20 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.cloudfront.CloudFrontUtilities;
 import software.amazon.awssdk.services.cloudfront.cookie.CookiesForCannedPolicy;
 import software.amazon.awssdk.services.cloudfront.model.CannedSignerRequest;
+import software.amazon.awssdk.services.cloudfront.model.CustomSignerRequest;
 import software.amazon.awssdk.services.cloudfront.url.SignedUrl;
 
 @Service
 public class CloudFrontService implements CookiesService , CDNService , KeyCDNService {
     @Override
     public byte[] fetchSecure(String path) {
-        String signedURL = generateSignedURL();
+        String signedURL = generateSignedURL(path);
+        System.out.println("Signing URL: " + signedURL);
         return fetch(signedURL);
     }
 
     private final String keyPairId = Secrets.CLOUDFRONT_KEY_PAIR_ID;
-    private final String privateKeyPath = "private_key.der";
+    private final String privateKeyPath = "private_key.pem";
     private final String resourceURL = Secrets.CDN_RESOURCE_URL;
     private static final CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
     private final HttpClient httpClient =
@@ -57,6 +59,23 @@ public class CloudFrontService implements CookiesService , CDNService , KeyCDNSe
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+    public String generateSignedURLWildcard(String path)
+    {
+        return Secrets.CDN_RESOURCE_URL + path;
+//        Instant expirationDate = Instant.now().plus(1, ChronoUnit.DAYS);
+//        CustomSignerRequest request = null;
+//        try {
+//            request = CustomSignerRequest.builder()
+//                    .keyPairId(keyPairId)
+//                    .privateKey(Paths.get(privateKeyPath))
+//                    .resourceUrl(Secrets.CDN_RESOURCE_URL+path+"/*")
+//                    .expirationDate(expirationDate)
+//                    .build();
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        return cloudFrontUtilities.getSignedUrlWithCustomPolicy(request).url();
     }
     public SignedCookie generateCookies()  {
 
@@ -85,21 +104,22 @@ public class CloudFrontService implements CookiesService , CDNService , KeyCDNSe
                 .signature(cldCookie.signatureHeaderValue())
                 .build();
     }
-    private String generateSignedURL()
+    private String generateSignedURL(String path)
     {
-        Instant expirationDate = Instant.now().plus(1, ChronoUnit.HOURS);
-        CannedSignerRequest request = null;
-        try {
-            request = CannedSignerRequest.builder()
-                    .keyPairId(keyPairId)
-                    .privateKey(Paths.get(privateKeyPath))
-                    .resourceUrl(resourceURL)
-                    .expirationDate(expirationDate)
-                    .build();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        SignedUrl signedUrl = cloudFrontUtilities.getSignedUrlWithCannedPolicy(request);
-        return signedUrl.url();
+        return Secrets.CDN_RESOURCE_URL + path;
+//        Instant expirationDate = Instant.now().plus(1, ChronoUnit.HOURS);
+//        CannedSignerRequest request = null;
+//        try {
+//            request = CannedSignerRequest.builder()
+//                    .keyPairId(keyPairId)
+//                    .privateKey(Paths.get(privateKeyPath))
+//                    .resourceUrl(resourceURL+path)
+//                    .expirationDate(expirationDate)
+//                    .build();
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        SignedUrl signedUrl = cloudFrontUtilities.getSignedUrlWithCannedPolicy(request);
+//        return signedUrl.url();
     }
 }

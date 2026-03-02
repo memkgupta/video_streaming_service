@@ -3,16 +3,21 @@ package com.vsnt.asset_onboarding;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.entities.Media;
+import com.vsnt.asset_onboarding.repositories.MediaRepository;
 import com.vsnt.asset_onboarding.services.KeyService;
+import com.vsnt.asset_onboarding.services.MediaService;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class  AssetCreationStrategy<M> {
     private final KeyService keyService;
-    private boolean isSecuredAsset;
+    private final boolean isSecuredAsset;
+
     protected AssetCreationStrategy(KeyService keyService, boolean isSecuredAsset) {
         this.keyService = keyService;
+        this.isSecuredAsset = isSecuredAsset;
+
     }
 
 
@@ -27,6 +32,7 @@ public abstract class  AssetCreationStrategy<M> {
                 e.printStackTrace();
             }
         }
+        media.setVideoAsset(nAsset);
 
         return nAsset;
     }

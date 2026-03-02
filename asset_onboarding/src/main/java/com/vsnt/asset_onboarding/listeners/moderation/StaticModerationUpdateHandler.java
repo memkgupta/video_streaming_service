@@ -14,6 +14,7 @@ import com.vsnt.asset_onboarding.services.KeyService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 @Component
@@ -47,18 +48,18 @@ public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+            byte[] encKey = keyCDNService.fetchSecure(
+                    assetKey.getKeyURL()
+            );
+            String encodedKey = Base64.getEncoder().encodeToString(encKey);
             TranscodingJob job =
                     TranscodingJob.builder()
                             .key(media.getVideoAsset().getKey())
-                            .encryptionKey(keyCDNService.fetchSecure(
-                                    assetKey.getKeyURL()
-                            ))
+                            .encryptionKey(encodedKey)
                             .jobId(media.getId().toString())
                             .build();
             transcodingJobMessageProducer.sendMessage(job);
-            CompletableFuture.runAsync(() -> transcodingJobMessageProducer.sendMessage(
-                   job
-            ) , executor);
+
         }
 
     }

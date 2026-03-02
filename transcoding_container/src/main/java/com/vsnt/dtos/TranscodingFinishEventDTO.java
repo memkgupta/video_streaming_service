@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 public class TranscodingFinishEventDTO {
     private String mediaId;
     private MediaType mediaType;
-    private Timestamp finishedAt;
+//    private Timestamp finishedAt;
 
     public String getMediaId() {
         return mediaId;
@@ -22,12 +22,12 @@ public class TranscodingFinishEventDTO {
     public void setMediaType(MediaType mediaType) {
         this.mediaType = mediaType;
     }
-
-    public Timestamp getFinishedAt() {
-        return finishedAt;
-    }
-
-    public void setFinishedAt(Timestamp finishedAt) {
-        this.finishedAt = finishedAt;
-    }
+//
+//    public Timestamp getFinishedAt() {
+//        return finishedAt;
+//    }
+//
+//    public void setFinishedAt(Timestamp finishedAt) {
+//        this.finishedAt = finishedAt;
+//    }
 }

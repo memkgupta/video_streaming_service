@@ -1,5 +1,6 @@
 package com.vsnt.asset_onboarding.entities;
 
+import com.vsnt.asset_onboarding.entities.enums.ResolutionEnum;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,12 +15,13 @@ public class TranscodedSegmentId implements Serializable {
 
     private String assetId;
     private long sequenceNumber;
-
+    private ResolutionEnum resolution;
     public TranscodedSegmentId() {}
 
-    public TranscodedSegmentId( String assetId, long sequenceNumber) {
+    public TranscodedSegmentId( String assetId, long sequenceNumber,ResolutionEnum resolution) {
 
         this.assetId = assetId;
+        this.resolution = resolution;
         this.sequenceNumber = sequenceNumber;
     }
 
@@ -30,15 +32,14 @@ public class TranscodedSegmentId implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof TranscodedSegmentId)) return false;
-        TranscodedSegmentId that = (TranscodedSegmentId) o;
+        if (!(o instanceof TranscodedSegmentId that)) return false;
         return sequenceNumber == that.sequenceNumber &&
 
-                Objects.equals(assetId, that.assetId);
+                Objects.equals(assetId, that.assetId) && resolution == that.resolution;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash( assetId, sequenceNumber);
+        return Objects.hash( assetId, sequenceNumber,resolution);
     }
 }

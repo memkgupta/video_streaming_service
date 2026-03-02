@@ -1,5 +1,6 @@
 package com.vsnt.asset_onboarding.contoller;
 
+import com.vsnt.asset_onboarding.config.Secrets;
 import com.vsnt.asset_onboarding.dtos.security.SignedCookie;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
@@ -42,14 +43,15 @@ public class WatchController {
     {
         Media media = mediaService.getMedia(mediaId);
         ResponseEntity<?> responseEntity;
-        if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
-        {
-            throw new EntityNotFoundException("Media");
-        }
+//        if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
+//        {
+//            throw new EntityNotFoundException("Media");
+//        }
 
-        boolean allowed = isAllowedToWatch(
-                media , headers
-        );
+//        boolean allowed = isAllowedToWatch(
+//                media , headers
+//        );
+        boolean allowed = true;
         if(!allowed)
         {
             throw new RuntimeException("Forbidden");
@@ -71,18 +73,16 @@ public class WatchController {
                   .body(indexFile);
       }
       else if(media.getVideoAsset().getAssetType().equals(AssetType.VIDEO)){
-           String indexFile =  segmentService.getPlaylist(-1 , media);
-
-           responseEntity = ResponseEntity.status(302)
-                   .header(HttpHeaders.LOCATION,indexFile).build();
+//           String signedURL =  cookiesService.generateSignedURLWildcard(
+//                   "transcoded/"+media.getVideoAsset().getId()
+//           );
+String indexFile = segmentService.getPlaylist(-1, media);
+           responseEntity = ResponseEntity.ok(Map.of("masterUrl", indexFile));
       }
       else {
           throw new RuntimeException("Unsupported Media");
       }
-        SignedCookie cookies = cookiesService.generateCookies();
-        addCookie(httpServletResponse, "CloudFront-Key-Pair-Id", cookies.getKeyPairId());
-        addCookie(httpServletResponse, "CloudFront-Expires", cookies.getExpires());
-        addCookie(httpServletResponse, "CloudFront-Signature", cookies.getSignature());
+
       return responseEntity;
     }
     private boolean isAllowedToWatch(Media media , Map<String, String> headers)
@@ -122,7 +122,7 @@ public class WatchController {
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
-
+        cookie.setDomain("duabp30ylgzsf.cloudfront.net");
         response.addCookie(cookie);
     }
 }

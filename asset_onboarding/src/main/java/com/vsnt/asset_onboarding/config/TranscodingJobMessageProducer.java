@@ -25,10 +25,10 @@ public class TranscodingJobMessageProducer {
     public void sendMessage(TranscodingJob job) {
 
         try {
-
+            System.out.println(job);
             String message =
                     objectMapper.writeValueAsString(job);
-
+            System.out.println(message);
             rabbitTemplate.convertAndSend(
                     RabbitMQConfig.QUEUE_NAME,
                     message

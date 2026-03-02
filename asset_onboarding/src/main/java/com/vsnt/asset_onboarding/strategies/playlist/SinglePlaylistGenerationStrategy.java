@@ -9,6 +9,7 @@ import com.vsnt.asset_onboarding.repositories.TranscodedSegmentRepository;
 import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.asset_onboarding.services.SegmentService;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Stream;
 
@@ -26,13 +27,15 @@ public class SinglePlaylistGenerationStrategy implements PlaylistGenerationStrat
     }
 
     @Override
+    @Transactional
     public String generate(Media media , BitrateConfig bitrateConfig) {
         StringBuilder sb = new StringBuilder();
         Long maxDuration = transcodedSegmentRepository
                 .getMaxDuration(media.getId().toString() , bitrateConfig.getResolution()).orElse(null);
         if(maxDuration == null){
+            maxDuration = 4000L;
             //todo replace with correct exception handling
-            throw new RuntimeException("Max duration is null");
+//            throw new RuntimeException("Max duration is null");
         }
         long targetDuration = (long) Math.ceil(maxDuration / 1000.0);
 
@@ -43,10 +46,11 @@ public class SinglePlaylistGenerationStrategy implements PlaylistGenerationStrat
         sb.append("#EXT-X-MEDIA-SEQUENCE:0\n");
         sb.append("#EXT-X-PLAYLIST-TYPE:VOD\n\n");
 
-        Stream<TranscodedSegment> segmentStream = transcodedSegmentRepository.findByMediaIdOrderById_SequenceNumber(
-                media.getId().toString()
+        Stream<TranscodedSegment> segmentStream = transcodedSegmentRepository.findById_AssetIdOrderById_SequenceNumber(
+                media.getVideoAsset().getId().toString()
         );
         segmentStream.forEachOrdered(segment -> {
+            System.out.println(segment);
             sb.append("#EXTINF:")
                     .append(String.format("%.3f", segment.getDuration() / 1000.0))
                     .append(",\n");
@@ -55,7 +59,7 @@ public class SinglePlaylistGenerationStrategy implements PlaylistGenerationStrat
         });
 
         sb.append("\n#EXT-X-ENDLIST\n");
-        String key = "/playlists/"+media.getVideoAsset().getId().toString()+"/"+bitrateConfig.getResolution().toString()+"/index.m3u8";
+        String key = "transcoded/"+media.getVideoAsset().getId().toString()+"/playlists/"+bitrateConfig.getResolution().toString()+"/index.m3u8";
         String url = s3Service.uploadFileToS3(
                 Secrets.AWS_SECURE_BUCKET,key , sb.toString().getBytes()
 

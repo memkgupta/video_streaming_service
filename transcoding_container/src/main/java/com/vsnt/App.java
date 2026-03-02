@@ -8,6 +8,7 @@ import com.vsnt.services.HlsDirectoryWatcher;
 import com.vsnt.services.S3Service;
 import org.apache.kafka.common.protocol.types.Field;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
@@ -46,9 +47,14 @@ public class App
 SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
         kafka_topic_segment_update,kafka_topic_finish
         );
-           Future<Boolean> transcoding =  transcoder.startTranscodingAsync(signedURL, mediaId, encryptionKey, transcoderAPIURL);
+            String[] resolutions = {"360p", "480p", "720p", "1080p"};
+            Path basePath = Paths.get(mediaId);
+
+            for (String resolution : resolutions) {
+                Files.createDirectories(basePath.resolve(resolution));
+            }
             HlsDirectoryWatcher watcher = new HlsDirectoryWatcher(
-                    "transcoded",new SegmentEventFactory(
+                    mediaId,new SegmentEventFactory(
                             assetId ,
                     mediaId ,
                     cloudFrontURL,
@@ -59,13 +65,17 @@ SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
     producer
             );
             watcher.start();
-        boolean result_transcodign = transcoding.get();
-        if(result_transcodign){
-            TranscodingFinishEventDTO finishEventDTO = new TranscodingFinishEventDTO();
-            finishEventDTO.setFinishedAt(Timestamp.valueOf(LocalDateTime.now()));
-            finishEventDTO.setMediaId(mediaId);
-            finishEventDTO.setMediaType(MediaType.STATIC);
-            producer.sendFinishEvent(finishEventDTO);
+           boolean transcoding =  transcoder.startTranscodingAsync(signedURL, mediaId, encryptionKey, transcoderAPIURL);
+        if(transcoding){
+            watcher.stop();
+            watcher.getCompletionFuture().get();
+                TranscodingFinishEventDTO finishEventDTO = new TranscodingFinishEventDTO();
+//            finishEventDTO.setFinishedAt(Timestamp.valueOf(LocalDateTime.now()));
+                finishEventDTO.setMediaId(mediaId);
+                finishEventDTO.setMediaType(MediaType.STATIC);
+                producer.sendFinishEvent(finishEventDTO);
+
+
         }
         } catch (Exception e) {
             throw new RuntimeException(e);

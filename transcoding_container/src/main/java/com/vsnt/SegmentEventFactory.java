@@ -33,8 +33,8 @@ public class SegmentEventFactory {
         // resolution from folder name (360p, 480p etc.)
         String resolutionFolder = segmentPath.getParent().getFileName().toString();
         ResolutionEnum resolution =
-                ResolutionEnum.valueOf(resolutionFolder.replace("p", "_P"));
-       String s3Key = "transcoded/"+assetId+"/"+resolution.toResolutionString()+"/"+fileName;
+                ResolutionEnum.valueOf("RESOLUTION_"+resolutionFolder.replace("p", "P"));
+       String s3Key = "transcoded/"+assetId+"/"+resolution.toString()+"/"+fileName;
         try{
             s3Service.uploadSegment(
                     transcodedBucketName ,

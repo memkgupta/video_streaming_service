@@ -9,6 +9,6 @@ import java.sql.Timestamp;
 public class TranscodingFinishEventDTO {
     private String mediaId;
     private MediaType mediaType;
-    private Timestamp finishedAt;
+//    private Timestamp finishedAt;
 
 }

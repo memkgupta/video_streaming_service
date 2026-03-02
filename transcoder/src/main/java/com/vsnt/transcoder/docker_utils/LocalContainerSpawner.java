@@ -20,10 +20,11 @@ public class LocalContainerSpawner implements ContainerSpawner {
         String mediaId = (String)args.get("mediaId");
         String assetId = (String)args.get("assetId");
         String assetKey  = (String)args.get("assetKey");
-        byte[] encryptionKey =  (byte[])args.get("encryptionKey");
+        String encryptionKey = (String)args.get("encryptionKey");
         CreateContainerResponse container = dockerClient.createContainerCmd(Secrets.DOCKER_TRANSCODER_CONTAINER_IMAGE)
 
                 .withName("transcoding_image-"+assetId)
+                .withNetworkMode("url_shortener_backend_app-net")
                 .withEnv(
                         List.of(
                                 "ACCESS_KEY="+ACCESS_KEY,
@@ -35,8 +36,8 @@ public class LocalContainerSpawner implements ContainerSpawner {
                                 "ASSET_ID="+assetId,
                                 "ENCRYPTION_KEY="+new String(encryptionKey),
                                 "CLOUDFRONT_URL="+Secrets.CLOUD_FRONT_URL,
-                                "KAFKA_BROKERS="+"kafka:29092",
-                                "UDPATE_TOPIC_NAME="+"asset-transcoding-update",
+                                "KAFKA_BROKERS="+"kafka:9092",
+                                "UPDATE_TOPIC_NAME="+"asset-transcoding-updates",
                                 "FINISH_TOPIC_NAME="+"asset-transcoding-finish"
                         )
                 )

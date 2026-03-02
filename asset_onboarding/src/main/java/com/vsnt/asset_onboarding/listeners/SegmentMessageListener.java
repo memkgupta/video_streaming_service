@@ -23,6 +23,7 @@ public class SegmentMessageListener implements MessageListener<TranscodingSegmen
 
     @Override
     public void onMessage(TranscodingSegmentUpdateDTO message) {
+        System.out.println("Segment Update "+message);
         segmentService.save(message);
         handleUpdate(message);
     }

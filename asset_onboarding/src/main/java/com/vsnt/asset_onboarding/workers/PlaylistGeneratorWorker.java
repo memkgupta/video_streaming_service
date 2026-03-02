@@ -75,7 +75,7 @@ public class PlaylistGeneratorWorker {
                             .toList();
                  String masterPlaylist =generateMasterPlaylist(urls);
                  String masterKey =
-                         "playlists/"+media.getVideoAsset().getId()+"/master.m3u8";
+                         "transcoded/"+media.getVideoAsset().getId()+"/playlists/master.m3u8";
                  String masterPlaylistURL = s3Service.uploadFileToS3(
                          Secrets.AWS_SECURE_BUCKET ,
                          masterKey ,

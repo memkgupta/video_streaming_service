@@ -105,12 +105,12 @@ public class S3Service {
                 new ByteArrayInputStream(body);
 
         s3.putObject(
-                Secrets.AWS_BUCKET_NAME,
+                bucketName,
                 key,
                 inputStream,
                 metadata
         );
 
-       return Secrets.CDN_RESOURCE_URL+"/"+key;
+       return Secrets.CDN_RESOURCE_URL+key;
     }
 }

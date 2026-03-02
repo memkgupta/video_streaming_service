@@ -15,10 +15,10 @@ import java.util.stream.Stream;
 public interface TranscodedSegmentRepository extends JpaRepository<
         TranscodedSegment , TranscodedSegmentId> , JpaSpecificationExecutor<TranscodedSegment> {
 
-    Stream<TranscodedSegment> findByMediaIdOrderById_SequenceNumber(String mediaId);
+    Stream<TranscodedSegment> findById_AssetIdOrderById_SequenceNumber(String mediaId);
     @Query("""
     select max (s.duration) from TranscodedSegment  s where 
-    s.mediaId = :mediaId and s.resolution = :resolution
+    s.mediaId = :mediaId and s.id.resolution = :resolution
 """)
     Optional<Long> getMaxDuration(@Param("mediaId") String mediaId , @Param("resolution")ResolutionEnum resolution);
 }

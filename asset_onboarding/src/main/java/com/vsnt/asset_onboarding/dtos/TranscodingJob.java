@@ -10,9 +10,10 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
-@JsonSerialize(using = Serializer.class)
+
 @Builder
 @Getter
 @Setter
@@ -20,7 +21,8 @@ public class TranscodingJob  {
     private String jobId;
     private String key;
     private long size;
-    private byte[] encryptionKey;
+    private String encryptionKey;
+    private String assetId;
     private ModerationResult moderationResult;
     private List<AssetChunk> chunks;
 
@@ -32,6 +34,7 @@ public class TranscodingJob  {
                 "jobId='" + jobId + '\'' +
                 ", key='" + key + '\'' +
                 ", size=" + size +
+                ", encryptionKey=" + new String(encryptionKey) +
                 '}';
     }
 }

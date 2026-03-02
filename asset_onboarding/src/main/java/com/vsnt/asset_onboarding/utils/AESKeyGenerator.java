@@ -18,7 +18,7 @@ public class AESKeyGenerator {
         byte[] key = new byte[16]; // AES-128 requires 16 bytes
         SecureRandom secureRandom = new SecureRandom();
         secureRandom.nextBytes(key);
-        String path = "/keys/" + assetId+"_.key";
+        String path = "keys/" + assetId+"_.key";
         s3Service.uploadFileToS3(
                 Secrets.AWS_SECURE_BUCKET,
                 path , key
