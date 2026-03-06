@@ -2,9 +2,10 @@ package com.vsnt;
 
 public class AppConfig {
 
-    public static final String STREAM_KEY =
-            System.getenv("STREAM_KEY");
-
+    public static final String MEDIA_ID =
+            System.getenv("MEDIA_ID");
+    public static final String ASSET_ID =
+            System.getenv("ASSET_ID");
     public static final String OUTPUT_DIR =
             System.getenv().getOrDefault("OUTPUT_DIR", "/output");
 
@@ -24,7 +25,7 @@ public class AppConfig {
             System.getenv("KAFKA_BOOTSTRAP");
 
     public static final String KAFKA_TOPIC =
-            System.getenv().getOrDefault("KAFKA_TOPIC", "segment-created");
+            System.getenv().getOrDefault("KAFKA_TOPIC", "asset-transcoding-updates");
 
     public static final String CDN_BASE_URL =
             System.getenv("CDN_BASE_URL");

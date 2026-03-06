@@ -1,11 +1,12 @@
 package com.vsnt;
 
-import com.vsnt.config.FFMPEGConfig;
+import com.vsnt.config.FFMPEGCommand;
+import com.vsnt.config.FFMPEGCommandFactory;
+import com.vsnt.config.FFMPEGConfigVOD;
+import com.vsnt.dtos.MediaType;
 import com.vsnt.services.HlsKeyUtil;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -19,6 +20,7 @@ public class VideoTranscoder {
             String url,
             String outputPath,
             String hexKey,
+            MediaType mediaType,
             String publicKeyURL) throws IOException {
 //        String[] resolutions = {"360p", "480p", "720p", "1080p"};
         Path basePath = Paths.get(outputPath);
@@ -44,12 +46,13 @@ public class VideoTranscoder {
 
 
 
-            FFMPEGConfig config =
-                    new FFMPEGConfig(url,
-                            outputPath,
-                            keyInfoPath.toAbsolutePath().toString());
-
-            List<String> commands = config.getFfmpegCommands();
+            FFMPEGCommand config = FFMPEGCommandFactory.getFFMPEGCommand(
+                    mediaType,
+                    url,
+                    outputPath,
+                    keyInfoPath.toAbsolutePath().toString()
+            );
+            List<String> commands = config.getFFMPEGCommands();
 
             // Run resolutions in parallel
             List<Future<Boolean>> results =

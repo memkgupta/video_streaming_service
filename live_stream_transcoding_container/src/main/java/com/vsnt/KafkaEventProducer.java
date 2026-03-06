@@ -29,7 +29,7 @@ public class KafkaEventProducer {
         objectMapper = new ObjectMapper();
     }
 
-    public void send(StreamSegmentUpdateDTO dto) {
+    public void send(TranscodingSegmentUpdateDTO dto) {
 
         try {
 
@@ -39,7 +39,7 @@ public class KafkaEventProducer {
             ProducerRecord<String, String> record =
                     new ProducerRecord<>(
                             AppConfig.KAFKA_TOPIC,
-                            dto.getStreamKey(),
+                            dto.getMediaId(),
                             json
                     );
 

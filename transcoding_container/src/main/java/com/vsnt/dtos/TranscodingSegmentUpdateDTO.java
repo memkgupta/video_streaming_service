@@ -1,8 +1,9 @@
 package com.vsnt.dtos;
 public class TranscodingSegmentUpdateDTO {
-    public TranscodingSegmentUpdateDTO(String assetId, String url, long sequenceNumber, String mediaId, long duration, ResolutionEnum resolution) {
+    public TranscodingSegmentUpdateDTO(String assetId, String url, long sequenceNumber, String mediaId, long duration, ResolutionEnum resolution,MediaType mediaType) {
         this.assetId = assetId;
         this.url = url;
+        this.mediaType = mediaType;
         this.sequenceNumber = sequenceNumber;
         this.mediaId = mediaId;
         this.duration = duration;
@@ -15,6 +16,15 @@ public class TranscodingSegmentUpdateDTO {
     private String mediaId;
     private long duration;
     private ResolutionEnum resolution;
+    private MediaType mediaType;
+
+    public MediaType getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(MediaType mediaType) {
+        this.mediaType = mediaType;
+    }
 
     public String getAssetId() {
         return assetId;

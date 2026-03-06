@@ -55,25 +55,17 @@ public class SegmentWatcher {
 
                 long duration = 4; // seconds
 
-                long end = System.currentTimeMillis();
 
-                long start = end - duration * 1000;
 
-                StreamSegmentUpdateDTO dto =
-                        new StreamSegmentUpdateDTO();
 
-                dto.setStreamKey(AppConfig.STREAM_KEY);
 
-                dto.setSegmentId(segmentId);
-
+                TranscodingSegmentUpdateDTO dto =
+                        new TranscodingSegmentUpdateDTO();
+                dto.setMediaId(AppConfig.MEDIA_ID);
+                dto.setSequenceNumber(segmentId);
                 dto.setUrl(url);
-
-                dto.setStart(start);
-
-                dto.setEnd(end);
-
+                dto.setAssetId(AppConfig.ASSET_ID);
                 dto.setDuration(duration);
-
                 kafkaProducer.send(dto);
                 try {
                     Files.delete(fullPath);

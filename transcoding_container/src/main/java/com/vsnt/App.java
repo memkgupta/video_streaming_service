@@ -27,14 +27,14 @@ public class App
         String file_key = System.getenv("FILE_KEY");
         String mediaId = System.getenv("MEDIA_ID");
         String encryptionKey = System.getenv("ENCRYPTION_KEY");
-
+        MediaType mediaType = MediaType.valueOf(System.getenv("MEDIA_TYPE"));
         String bucket_name = System.getenv("BUCKET_NAME");
         String transcoded_bucket_name = System.getenv("TRANSCODED_BUCKET_NAME");
         String kafka_brokers = System.getenv("KAFKA_BROKERS");
         String kafka_topic_segment_update = System.getenv("UPDATE_TOPIC_NAME");
         String kafka_topic_finish = System.getenv("FINISH_TOPIC_NAME");
         String assetId =  System.getenv("ASSET_ID");
-        String transcoderAPIURL = System.getenv("UPDATE_API_URL");
+        String publicKeyURL = System.getenv("PUBLIC_KEY_URL");
         String cloudFrontURL = System.getenv("CLOUDFRONT_URL");
         if(file_key == null || bucket_name == null){
             System.out.println("Missing environment variables");
@@ -57,6 +57,7 @@ SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
                     mediaId,new SegmentEventFactory(
                             assetId ,
                     mediaId ,
+                    mediaType,
                     cloudFrontURL,
                     4000,
                     s3Service,
@@ -65,7 +66,7 @@ SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
     producer
             );
             watcher.start();
-           boolean transcoding =  transcoder.startTranscodingAsync(signedURL, mediaId, encryptionKey, transcoderAPIURL);
+           boolean transcoding =  transcoder.startTranscodingAsync(signedURL, mediaId, encryptionKey,mediaType, publicKeyURL);
         if(transcoding){
             watcher.stop();
             watcher.getCompletionFuture().get();

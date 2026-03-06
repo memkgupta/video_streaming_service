@@ -34,7 +34,7 @@ public class S3Uploader {
     public String upload(Path file) {
 
         String key = "streams/" +
-                AppConfig.STREAM_KEY +
+                AppConfig.MEDIA_ID +
                 "/" +
                 file.getFileName();
 

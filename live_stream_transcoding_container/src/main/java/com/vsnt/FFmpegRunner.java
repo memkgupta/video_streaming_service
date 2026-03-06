@@ -10,7 +10,7 @@ public class FFmpegRunner {
 
         System.out.println("[INFO] Starting FFmpeg runner...");
 
-        String rtmpUrl = "rtmp://host.docker.internal:1935/live/" + AppConfig.STREAM_KEY;
+        String rtmpUrl = "rtmp://host.docker.internal:1935/live/" + AppConfig.MEDIA_ID;
 
         System.out.println("[INFO] Reading from RTMP: " + rtmpUrl);
 

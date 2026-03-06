@@ -2,13 +2,13 @@ package com.vsnt.config;
 
 import java.util.List;
 
-public class FFMPEGConfig {
+public class FFMPEGConfigVOD extends FFMPEGCommand {
 
-    private List<String> ffmpegCommands;
-    private String masterPlaylistContent;
+    private final List<String> ffmpegCommands;
 
-    public FFMPEGConfig(String filePath, String outputPath, String encryptionKey) {
 
+    public FFMPEGConfigVOD(String filePath, String outputPath, String encryptionKey) {
+        super(filePath, outputPath, encryptionKey);
         ffmpegCommands = List.of(
 
                 // 360p
@@ -68,24 +68,12 @@ public class FFMPEGConfig {
                 )
         );
 
-        masterPlaylistContent = """
-                #EXTM3U
-                #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
-                360p/index.m3u8
-                #EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=854x480
-                480p/index.m3u8
-                #EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
-                720p/index.m3u8
-                #EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
-                1080p/index.m3u8
-                """;
+
     }
 
-    public List<String> getFfmpegCommands() {
+    public List<String> getFFMPEGCommands() {
         return ffmpegCommands;
     }
 
-    public String getMasterPlaylistContent() {
-        return masterPlaylistContent;
-    }
+
 }
