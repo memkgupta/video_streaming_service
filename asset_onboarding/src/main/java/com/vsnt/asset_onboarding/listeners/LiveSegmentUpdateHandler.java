@@ -20,6 +20,7 @@ public class LiveSegmentUpdateHandler implements SegmentUpdateHandler{
         segmentKVService.addSegment(
                 KVSegment.builder()
                         .url(segmentUpdate.getUrl())
+                        .resolution(segmentUpdate.getResolution().toResolutionString())
                         .assetId(segmentUpdate.getAssetId())
                         .duration(segmentUpdate.getDuration())
                         .sequenceNumber(segmentUpdate.getSequenceNumber())

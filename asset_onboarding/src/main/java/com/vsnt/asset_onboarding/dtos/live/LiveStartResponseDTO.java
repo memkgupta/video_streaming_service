@@ -6,7 +6,8 @@ import lombok.Data;
 @Builder
 @Data
 public class LiveStartResponseDTO {
-    private byte[] encryptionKey;
+    private String encryptionKey;
    private boolean isModerationEnabled;
+   private String assetId;
 
 }

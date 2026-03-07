@@ -62,7 +62,7 @@ public class WatchController {
           if(start<0)
           {
               // get live playlist
-            indexFile= segmentService.getLivePlaylist(media);
+            indexFile= segmentService.getLiveMasterPlaylist(media);
           }
           else {
               // get playlist with offset
@@ -84,6 +84,23 @@ String indexFile = segmentService.getPlaylist(-1, media);
       }
 
       return responseEntity;
+    }
+    @GetMapping("/live/{mediaId}/{resolution}/playlist.m3u8")
+    public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, HttpServletResponse httpServletResponse)
+    {
+        Media media = mediaService.getMedia(mediaId);
+        if(media== null)
+        {
+            throw new EntityNotFoundException("Media Not Found");
+        }
+        if(!media.getVideoAsset().getAssetType().equals(AssetType.LIVE_VIDEO))
+        {
+            throw new RuntimeException("Unsupported Media");
+        }
+        String indexFile =  segmentService.getLiveVariantPlaylist(media,resolution);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/vnd.apple.mpegurl")
+                .body(indexFile);
     }
     private boolean isAllowedToWatch(Media media , Map<String, String> headers)
     {

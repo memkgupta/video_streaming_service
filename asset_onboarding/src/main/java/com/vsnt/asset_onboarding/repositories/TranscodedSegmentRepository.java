@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 public interface TranscodedSegmentRepository extends JpaRepository<
         TranscodedSegment , TranscodedSegmentId> , JpaSpecificationExecutor<TranscodedSegment> {
 
-    Stream<TranscodedSegment> findById_AssetIdOrderById_SequenceNumber(String mediaId);
+    Stream<TranscodedSegment> findById_AssetIdAndId_ResolutionOrderById_SequenceNumber(String assetId , ResolutionEnum resolution);
     @Query("""
     select max (s.duration) from TranscodedSegment  s where 
     s.mediaId = :mediaId and s.id.resolution = :resolution

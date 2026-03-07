@@ -28,7 +28,7 @@ public class SinglePlaylistGenerationStrategy implements PlaylistGenerationStrat
 
     @Override
     @Transactional
-    public String generate(Media media , BitrateConfig bitrateConfig) {
+    public String  generate(Media media , BitrateConfig bitrateConfig) {
         StringBuilder sb = new StringBuilder();
         Long maxDuration = transcodedSegmentRepository
                 .getMaxDuration(media.getId().toString() , bitrateConfig.getResolution()).orElse(null);
@@ -46,11 +46,11 @@ public class SinglePlaylistGenerationStrategy implements PlaylistGenerationStrat
         sb.append("#EXT-X-MEDIA-SEQUENCE:0\n");
         sb.append("#EXT-X-PLAYLIST-TYPE:VOD\n\n");
 
-        Stream<TranscodedSegment> segmentStream = transcodedSegmentRepository.findById_AssetIdOrderById_SequenceNumber(
-                media.getVideoAsset().getId().toString()
+        Stream<TranscodedSegment> segmentStream = transcodedSegmentRepository.findById_AssetIdAndId_ResolutionOrderById_SequenceNumber(
+                media.getVideoAsset().getId().toString(),bitrateConfig.getResolution()
         );
         segmentStream.forEachOrdered(segment -> {
-            System.out.println(segment);
+
             sb.append("#EXTINF:")
                     .append(String.format("%.3f", segment.getDuration() / 1000.0))
                     .append(",\n");

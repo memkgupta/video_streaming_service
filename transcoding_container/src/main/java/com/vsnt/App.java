@@ -42,7 +42,14 @@ public class App
         }
 
         try {
-            String signedURL = s3Service.generatePresignedUrl(bucket_name , file_key);
+            String signedURL ="";
+            if(mediaType.equals(MediaType.LIVE))
+            {
+                signedURL = file_key;
+            }
+            else {
+                signedURL =  s3Service.generatePresignedUrl(bucket_name , file_key);
+            }
             VideoTranscoder transcoder = new VideoTranscoder();
 SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
         kafka_topic_segment_update,kafka_topic_finish
@@ -67,7 +74,7 @@ SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
             );
             watcher.start();
            boolean transcoding =  transcoder.startTranscodingAsync(signedURL, mediaId, encryptionKey,mediaType, publicKeyURL);
-        if(transcoding){
+        if(mediaType.equals(MediaType.STATIC) && transcoding){
             watcher.stop();
             watcher.getCompletionFuture().get();
                 TranscodingFinishEventDTO finishEventDTO = new TranscodingFinishEventDTO();

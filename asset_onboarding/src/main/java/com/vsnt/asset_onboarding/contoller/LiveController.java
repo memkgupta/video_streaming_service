@@ -16,9 +16,11 @@ import com.vsnt.asset_onboarding.strategies.asset.LiveVideoAssetCreationRequestD
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Base64;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/live")
 public class LiveController {
     private final MediaService mediaService;
     private final LiveVideoAssetCreation liveVideoAssetCreation;
@@ -51,7 +53,8 @@ public ResponseEntity<?> startLive(@PathVariable UUID mediaId, @RequestBody Live
     media.setStatus(MediaStatus.LIVE);
     mediaService.save(media);
     LiveStartResponseDTO liveStartResponseDTO = LiveStartResponseDTO.builder()
-            .encryptionKey(key)
+            .encryptionKey(  Base64.getEncoder().encodeToString(key))
+            .assetId(asset.getId().toString())
             .isModerationEnabled(media.isModerationEnabled())
             .build();
     return ResponseEntity.ok().body(liveStartResponseDTO);

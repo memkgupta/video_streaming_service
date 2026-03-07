@@ -24,6 +24,6 @@ public enum ResolutionEnum {
     }
 
     public String toResolutionString() {
-        return width + "x" + height;
+        return height+"p";
     }
 }
