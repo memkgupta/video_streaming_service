@@ -1,6 +1,6 @@
 package com.vsnt.asset_onboarding.listeners;
 
-import com.vsnt.asset_onboarding.KeyCDNService;
+import com.vsnt.asset_onboarding.SecuredCDNService;
 import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;
@@ -19,13 +19,13 @@ import java.util.Base64;
 public class VideoUploadHandler implements AssetUploadHandler{
     private final KeyService keyService;
     private final MediaService mediaService;
-    private final KeyCDNService keyCDNService;
+    private final SecuredCDNService securedCDNService;
     private final TranscodingJobMessageProducer transcodingJobMessageProducer;
     private final ModerationJobProducer  moderationJobProducer;
-    public VideoUploadHandler(KeyService keyService, MediaService mediaService, KeyCDNService keyCDNService, TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationJobProducer moderationJobProducer) {
+    public VideoUploadHandler(KeyService keyService, MediaService mediaService, SecuredCDNService securedCDNService, TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationJobProducer moderationJobProducer) {
         this.keyService = keyService;
         this.mediaService = mediaService;
-        this.keyCDNService = keyCDNService;
+        this.securedCDNService = securedCDNService;
         this.transcodingJobMessageProducer = transcodingJobMessageProducer;
         this.moderationJobProducer = moderationJobProducer;
     }
@@ -49,7 +49,7 @@ public class VideoUploadHandler implements AssetUploadHandler{
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            byte[] encryptionKey = keyCDNService.fetchSecure(
+            byte[] encryptionKey = securedCDNService.fetchSecure(
                     assetKey.getKeyURL()
             );
             String encodedKey  = Base64.getEncoder().encodeToString(encryptionKey);

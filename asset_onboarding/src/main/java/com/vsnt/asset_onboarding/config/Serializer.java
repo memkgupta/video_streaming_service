@@ -1,7 +1,6 @@
 package com.vsnt.asset_onboarding.config;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;

@@ -1,6 +1,5 @@
 package com.vsnt.asset_onboarding.config;
 
-import com.vsnt.asset_onboarding.dtos.kvstore.moderation.ViolationCountKV;
 import com.vsnt.asset_onboarding.dtos.kvstore.segments.KVSegment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

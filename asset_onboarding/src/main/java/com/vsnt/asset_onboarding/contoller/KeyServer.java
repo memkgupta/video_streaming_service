@@ -3,8 +3,6 @@ package com.vsnt.asset_onboarding.contoller;
 import com.vsnt.asset_onboarding.CDNService;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.services.KeyService;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

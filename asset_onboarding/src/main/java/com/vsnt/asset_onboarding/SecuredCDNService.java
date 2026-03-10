@@ -1,5 +1,5 @@
 package com.vsnt.asset_onboarding;
 
-public interface KeyCDNService {
+public interface SecuredCDNService {
     byte[] fetchSecure(String path);
 }

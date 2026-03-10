@@ -66,5 +66,5 @@ build/
 **/*.mp4
 **/*.mkv
 
-cf_private.pem
+private_key.pem
 **/private_key.der

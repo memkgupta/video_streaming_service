@@ -1,6 +1,6 @@
 package com.vsnt.asset_onboarding.services;
 
-import com.vsnt.asset_onboarding.KeyCDNService;
+import com.vsnt.asset_onboarding.SecuredCDNService;
 //import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.dtos.*;
@@ -23,11 +23,11 @@ public class UploadService {
     private final S3Service s3Service;
     private final AssetRepository assetRepository;
     private final AssetService assetService;
-    private final KeyCDNService cdnService;
+    private final SecuredCDNService cdnService;
     private final KeyService keyService;
     private final ModerationJobProducer moderationJobProducer;
     private final AssetUploadFinishListener uploadFinishListener;
-    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, KeyCDNService cdnService, KeyService keyService, ModerationJobProducer moderationJobProducer, AssetUploadFinishListener uploadFinishListener) {
+    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, SecuredCDNService cdnService, KeyService keyService, ModerationJobProducer moderationJobProducer, AssetUploadFinishListener uploadFinishListener) {
         this.s3Service = s3Service;
         this.assetRepository = assetRepository;
         this.assetService = assetService;

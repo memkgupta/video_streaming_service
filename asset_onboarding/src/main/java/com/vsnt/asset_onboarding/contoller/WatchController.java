@@ -1,23 +1,15 @@
 package com.vsnt.asset_onboarding.contoller;
 
-import com.vsnt.asset_onboarding.config.Secrets;
-import com.vsnt.asset_onboarding.dtos.security.SignedCookie;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
-import com.vsnt.asset_onboarding.entities.enums.MediaAccessibility;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
-import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
-import com.vsnt.asset_onboarding.services.GroupMemberService;
-import com.vsnt.asset_onboarding.services.MediaService;
-import com.vsnt.asset_onboarding.services.SegmentService;
-import com.vsnt.asset_onboarding.utils.CookiesService;
-import jakarta.servlet.http.Cookie;
+import com.vsnt.asset_onboarding.services.*;
+import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
+
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import software.amazon.awssdk.services.cloudfront.cookie.CookiesForCannedPolicy;
 
 import java.util.Map;
 import java.util.UUID;
@@ -26,67 +18,42 @@ import java.util.UUID;
 @RequestMapping("/watch")
 public class WatchController {
     private final MediaService mediaService;
-    private final GroupMemberService groupMemberService;
-    private final SegmentService segmentService;
-    private final CookiesService cookiesService;
-    public WatchController(MediaService mediaService, GroupMemberService groupMemberService, SegmentService segmentService, CookiesService cookiesService) {
-        this.mediaService = mediaService;
-        this.groupMemberService = groupMemberService;
-        this.segmentService = segmentService;
-        this.cookiesService = cookiesService;
-    }
+    private final AuthorisationService authorisationService;
 
+    private final DeliverySecurityConfig deliverySecurityConfig;
+    private final WatchService watchService;
+
+    public WatchController(MediaService mediaService, AuthorisationService authorisationService, DeliverySecurityConfig deliverySecurityConfig, WatchService watchService) {
+        this.mediaService = mediaService;
+        this.authorisationService = authorisationService;
+         this.deliverySecurityConfig = deliverySecurityConfig;
+        this.watchService = watchService;
+    }
     @GetMapping("/{mediaId}")
     public ResponseEntity<?> watch(@PathVariable  UUID mediaId , @RequestHeader Map<String, String> headers , @RequestParam(
             defaultValue = "-1"
     ) long start , HttpServletResponse httpServletResponse)
     {
         Media media = mediaService.getMedia(mediaId);
-        ResponseEntity<?> responseEntity;
-//        if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
-//        {
-//            throw new EntityNotFoundException("Media");
-//        }
 
-//        boolean allowed = isAllowedToWatch(
-//                media , headers
-//        );
-        boolean allowed = true;
+        if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
+        {
+            throw new EntityNotFoundException("Media");
+        }
+        String userId = headers.get("X-USER-ID");
+        String pullKey = headers.get("X-PULL-KEY");
+        boolean allowed = authorisationService.authorise(media,userId,pullKey);
         if(!allowed)
         {
             throw new RuntimeException("Forbidden");
         }
-      if(media.getVideoAsset().getAssetType().equals(AssetType.LIVE_VIDEO))
-      {
-          String indexFile = null;
-          if(start<0)
-          {
-              // get live playlist
-            indexFile= segmentService.getLiveMasterPlaylist(media);
-          }
-          else {
-              // get playlist with offset
-              indexFile = segmentService.getPlaylist(start, media);
-          }
-          responseEntity = ResponseEntity.ok()
-                  .header(HttpHeaders.CONTENT_TYPE, "application/vnd.apple.mpegurl")
-                  .body(indexFile);
-      }
-      else if(media.getVideoAsset().getAssetType().equals(AssetType.VIDEO)){
-//           String signedURL =  cookiesService.generateSignedURLWildcard(
-//                   "transcoded/"+media.getVideoAsset().getId()
-//           );
-String indexFile = segmentService.getPlaylist(-1, media);
-           responseEntity = ResponseEntity.ok(Map.of("masterUrl", indexFile));
-      }
-      else {
-          throw new RuntimeException("Unsupported Media");
-      }
-
+        String content = watchService.watch(media , start);
+        ResponseEntity<?> responseEntity = ResponseEntity.ok().body(content);
+      deliverySecurityConfig.populateResponse(responseEntity, httpServletResponse,media,content);
       return responseEntity;
     }
-    @GetMapping("/live/{mediaId}/{resolution}/playlist.m3u8")
-    public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, HttpServletResponse httpServletResponse)
+    @GetMapping("/live/{mediaId}/{resolution}/playlist")
+    public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, @RequestParam(defaultValue = "-1") Long start , HttpServletResponse httpServletResponse)
     {
         Media media = mediaService.getMedia(mediaId);
         if(media== null)
@@ -97,49 +64,12 @@ String indexFile = segmentService.getPlaylist(-1, media);
         {
             throw new RuntimeException("Unsupported Media");
         }
-        String indexFile =  segmentService.getLiveVariantPlaylist(media,resolution);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, "application/vnd.apple.mpegurl")
-                .body(indexFile);
-    }
-    private boolean isAllowedToWatch(Media media , Map<String, String> headers)
-    {
-        if(media.getAccessibility().equals(MediaAccessibility.PUBLIC))
-        {
-           return true;
-        }
-        else if(media.getAccessibility().equals(MediaAccessibility.PRIVATE))
-        {
-            String pullKey = headers.get("x-pull-key");
-            //todo validate from security the pull key and media
-            if(pullKey != null )
-            {
-              return true;
-            }
-        }
-        else {
-            String userId = headers.get("x-user-id");
-            if(userId!=null )
-            {
-                //todo check for group membership status
-               return groupMemberService.isGroupMember(
-                        userId , media.getGroup()
-                );
-            }
-        }
-        return false;
-    }
-    private void addCookie(
-            HttpServletResponse response,
-            String name,
-            String value
-    ) {
-        Cookie cookie = new Cookie(name, value);
+        String content = watchService.watchLiveVariant(media,resolution,start);
 
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setDomain("duabp30ylgzsf.cloudfront.net");
-        response.addCookie(cookie);
+        ResponseEntity<?> res = ResponseEntity.ok().body(content);
+        deliverySecurityConfig.populateResponse(res, httpServletResponse,media,content);
+        return res;
     }
+
+
 }

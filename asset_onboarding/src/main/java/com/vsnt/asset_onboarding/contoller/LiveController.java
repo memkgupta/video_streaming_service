@@ -1,6 +1,6 @@
 package com.vsnt.asset_onboarding.contoller;
 
-import com.vsnt.asset_onboarding.KeyCDNService;
+import com.vsnt.asset_onboarding.SecuredCDNService;
 import com.vsnt.asset_onboarding.dtos.live.LiveStartResponseDTO;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
@@ -26,14 +26,14 @@ public class LiveController {
     private final LiveVideoAssetCreation liveVideoAssetCreation;
     private final AssetService assetService;
     private final KeyService keyService;
-    private final KeyCDNService keyCDNService;
+    private final SecuredCDNService securedCDNService;
     private final LiveMediaFinishHandler finishHandler;
-    public LiveController(MediaService mediaService, LiveVideoAssetCreation liveVideoAssetCreation, AssetService assetService, KeyService keyService, KeyCDNService keyCDNService, LiveMediaFinishHandler finishHandler) {
+    public LiveController(MediaService mediaService, LiveVideoAssetCreation liveVideoAssetCreation, AssetService assetService, KeyService keyService, SecuredCDNService securedCDNService, LiveMediaFinishHandler finishHandler) {
         this.mediaService = mediaService;
         this.liveVideoAssetCreation = liveVideoAssetCreation;
         this.assetService = assetService;
         this.keyService = keyService;
-        this.keyCDNService = keyCDNService;
+        this.securedCDNService = securedCDNService;
         this.finishHandler = finishHandler;
     }
 @PostMapping("/{mediaId}")
@@ -49,7 +49,7 @@ public ResponseEntity<?> startLive(@PathVariable UUID mediaId, @RequestBody Live
     );
 
    AssetAESKey assetKey = keyService.getKey(asset.getId().toString());
-    byte[] key = keyCDNService.fetchSecure(assetKey.getKeyURL());
+    byte[] key = securedCDNService.fetchSecure(assetKey.getKeyURL());
     media.setStatus(MediaStatus.LIVE);
     mediaService.save(media);
     LiveStartResponseDTO liveStartResponseDTO = LiveStartResponseDTO.builder()

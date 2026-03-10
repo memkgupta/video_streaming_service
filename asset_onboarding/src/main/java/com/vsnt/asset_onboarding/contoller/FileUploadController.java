@@ -1,14 +1,10 @@
 package com.vsnt.asset_onboarding.contoller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.vsnt.asset_onboarding.config.AuthenticateRequest;
-import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.*;
-import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.asset_onboarding.services.UploadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.ResponseEntity;
@@ -20,10 +16,10 @@ import java.util.Map;
 @RequestMapping("/")
 public class FileUploadController {
     private final UploadService uploadService;
-    private final TranscodingJobMessageProducer transcodingJobMessageProducer;
-    public FileUploadController(UploadService uploadService, AuthenticateRequest authenticateRequest, TranscodingJobMessageProducer transcodingJobMessageProducer, S3Service s3Service) {
+
+    public FileUploadController(UploadService uploadService) {
         this.uploadService = uploadService;
-        this.transcodingJobMessageProducer = transcodingJobMessageProducer;
+
     }
     @PostMapping("/upload-chunk")
     public ResponseEntity<Map<String, String>> uploadChunk(@RequestBody ChunkUploadRequest chunkUploadRequest, HttpServletRequest request) {

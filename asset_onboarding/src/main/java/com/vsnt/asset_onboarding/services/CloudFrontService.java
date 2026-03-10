@@ -5,36 +5,27 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 
 import com.vsnt.asset_onboarding.CDNService;
-import com.vsnt.asset_onboarding.KeyCDNService;
-import com.vsnt.asset_onboarding.config.Secrets;
+import com.vsnt.asset_onboarding.SecuredCDNService;
+import com.vsnt.asset_onboarding.config.CDNSecurityConfig;
 import com.vsnt.asset_onboarding.dtos.security.SignedCookie;
-import com.vsnt.asset_onboarding.utils.CookiesService;
+
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.cloudfront.CloudFrontUtilities;
-import software.amazon.awssdk.services.cloudfront.cookie.CookiesForCannedPolicy;
-import software.amazon.awssdk.services.cloudfront.model.CannedSignerRequest;
-import software.amazon.awssdk.services.cloudfront.model.CustomSignerRequest;
-import software.amazon.awssdk.services.cloudfront.url.SignedUrl;
 
 @Service
-public class CloudFrontService implements CookiesService , CDNService , KeyCDNService {
+public class CloudFrontService implements CDNService , SecuredCDNService {
+    public CloudFrontService(CDNSecurityConfig cdnSecurityConfig) {
+        this.cdnSecurityConfig = cdnSecurityConfig;
+    }
+
     @Override
     public byte[] fetchSecure(String path) {
         String signedURL = generateSignedURL(path);
-        System.out.println("Signing URL: " + signedURL);
         return fetch(signedURL);
     }
 
-    private final String keyPairId = Secrets.CLOUDFRONT_KEY_PAIR_ID;
-    private final String privateKeyPath = "private_key.pem";
-    private final String resourceURL = Secrets.CDN_RESOURCE_URL;
-    private static final CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
+    private final CDNSecurityConfig cdnSecurityConfig;
     private final HttpClient httpClient =
             HttpClient.newHttpClient();
 
@@ -62,64 +53,13 @@ public class CloudFrontService implements CookiesService , CDNService , KeyCDNSe
     }
     public String generateSignedURLWildcard(String path)
     {
-        return Secrets.CDN_RESOURCE_URL + path;
-//        Instant expirationDate = Instant.now().plus(1, ChronoUnit.DAYS);
-//        CustomSignerRequest request = null;
-//        try {
-//            request = CustomSignerRequest.builder()
-//                    .keyPairId(keyPairId)
-//                    .privateKey(Paths.get(privateKeyPath))
-//                    .resourceUrl(Secrets.CDN_RESOURCE_URL+path+"/*")
-//                    .expirationDate(expirationDate)
-//                    .build();
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//        return cloudFrontUtilities.getSignedUrlWithCustomPolicy(request).url();
+    return cdnSecurityConfig.generateSignedURL(path,true);
     }
     public SignedCookie generateCookies()  {
-
-
-
-        Date expiration = new Date(System.currentTimeMillis() + 3600000);
-
-
-        CannedSignerRequest request = null;
-        try {
-            request = CannedSignerRequest.builder()
-                    .keyPairId(keyPairId)
-                    .privateKey(Paths.get(privateKeyPath))
-                    .resourceUrl(resourceURL)
-                    .expirationDate(expiration.toInstant())
-                    .build();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-
-        CookiesForCannedPolicy cldCookie =  cloudFrontUtilities.getCookiesForCannedPolicy(request);
-        return SignedCookie.builder()
-                .expires(cldCookie.expiresHeaderValue())
-                .keyPairId(cldCookie.keyPairIdHeaderValue())
-                .signature(cldCookie.signatureHeaderValue())
-                .build();
+    return cdnSecurityConfig.generateSignedCookie();
     }
     private String generateSignedURL(String path)
     {
-        return Secrets.CDN_RESOURCE_URL + path;
-//        Instant expirationDate = Instant.now().plus(1, ChronoUnit.HOURS);
-//        CannedSignerRequest request = null;
-//        try {
-//            request = CannedSignerRequest.builder()
-//                    .keyPairId(keyPairId)
-//                    .privateKey(Paths.get(privateKeyPath))
-//                    .resourceUrl(resourceURL+path)
-//                    .expirationDate(expirationDate)
-//                    .build();
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//        SignedUrl signedUrl = cloudFrontUtilities.getSignedUrlWithCannedPolicy(request);
-//        return signedUrl.url();
+        return cdnSecurityConfig.generateSignedURL(path);
     }
 }
