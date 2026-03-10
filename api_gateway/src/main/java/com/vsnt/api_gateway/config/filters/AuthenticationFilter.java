@@ -30,8 +30,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     public GatewayFilter apply(Config config) {
         return (((exchange, chain) -> {
 
-
-
                 ServerHttpRequest request = null;
 //                if(routeValidator.isSecured.test(exchange.getRequest())) {
     if(false){
