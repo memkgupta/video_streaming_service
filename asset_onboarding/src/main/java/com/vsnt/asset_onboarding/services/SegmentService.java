@@ -6,9 +6,13 @@ import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.TranscodedSegment;
 import com.vsnt.asset_onboarding.entities.TranscodedSegmentId;
 
+import com.vsnt.asset_onboarding.entities.enums.ResolutionEnum;
 import com.vsnt.asset_onboarding.repositories.TranscodedSegmentRepository;
 import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -60,11 +64,31 @@ public class SegmentService {
     }
     public String getLiveVariantPlaylist(Media media,String resolution, Long start) {
         // todo fetch segment from db
-        List<KVSegment> segments =
-                segmentKVService.getLatestSegments(
-                        media.getVideoAsset().getId().toString(),
-                        resolution
+
+        Specification<TranscodedSegment> specification =
+                Specification.allOf(
+                        Specification.where(((root, query, criteriaBuilder) ->
+                        {
+                            return   criteriaBuilder.and(
+                                    criteriaBuilder.equal(root.get("media").get("id"),media.getId()),
+                                    criteriaBuilder.equal(root.get("id").get("resolution"), ResolutionEnum.valueOf("RESOLUTION_"+resolution.toUpperCase()))
+                            );
+                        })),
+                        Specification.where(((root, query, criteriaBuilder) ->
+                        {
+                           return criteriaBuilder.greaterThanOrEqualTo(root.get("start"), start);
+                        }))
                 );
+
+        List<KVSegment> segments =
+                transcodedSegmentRepository.getTranscodedSegments(specification).stream().map(ts->KVSegment.builder()
+                        .url(ts.getUrl())
+                        .resolution(ts.getId().getResolution().toResolutionString())
+                        .assetId(ts.getId().getAssetId())
+                        .sequenceNumber(ts.getId().getSequenceNumber())
+                        .duration(ts.getDuration())
+                        .build()
+                ).toList();
 
         StringBuilder sb = new StringBuilder();
         sb.append("#EXTM3U\n");

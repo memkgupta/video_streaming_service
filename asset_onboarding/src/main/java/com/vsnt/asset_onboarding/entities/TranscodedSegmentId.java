@@ -2,6 +2,8 @@ package com.vsnt.asset_onboarding.entities;
 
 import com.vsnt.asset_onboarding.entities.enums.ResolutionEnum;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,6 +17,7 @@ public class TranscodedSegmentId implements Serializable {
 
     private String assetId;
     private long sequenceNumber;
+    @Enumerated(EnumType.STRING)
     private ResolutionEnum resolution;
     public TranscodedSegmentId() {}
 
