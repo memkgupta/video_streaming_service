@@ -10,18 +10,19 @@ import java.util.function.Predicate;
 public class RouteValidator {
 
     public static final List<String> openApiEndpoints = List.of(
-            "/api/user/auth/register",
-            "/api/user/auth/login",
-            "/api/user/token/refresh-token",
+
             "/eureka",
             "/api/channel/v3/api-docs",
             "/api/user/v3/api-docs",
             "/api/transcoder/v3/api-docs",
             "/api/asset_onboarding/v3/api-docs",
             "/api/video/v3/api-docs",
-            "/api/aggregate/v3/api-docs"
+            "/api/aggregate/v3/api-docs",
+            "/api/watch", // logic for authorisation at the service level
+            "/api/live", // logic for authorisation at the service level
+            "/api/assets" // logic for authorisation at the service level
     );
-
+/*all the secured routes need a api key in there request */
     public Predicate<ServerHttpRequest> isSecured =
             request -> openApiEndpoints
                     .stream()

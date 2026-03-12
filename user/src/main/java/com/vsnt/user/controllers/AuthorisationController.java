@@ -7,6 +7,7 @@ import com.vsnt.user.services.AuthorisationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -26,16 +27,16 @@ public class AuthorisationController {
     }
 
     @GetMapping("/validate-key")
-    public ResponseEntity<?> apiKeyAuth(@RequestBody APIkeyAuthRequest  apikeyAuthRequest)
+    public ResponseEntity<?> apiKeyAuth(@RequestHeader("X-ACCESS-KEY") UUID accessKey ,@RequestHeader("X-ACCESS-SECRET") String secretKey)
     {
         /*this endpoint will be called by the api gateway for authorising request made by the org's product through sdk*/
         APIKey apiKey = apiKeyService.findByAccessKeyAndSecret(
-                apikeyAuthRequest.getAccessKey(), apikeyAuthRequest.getSecretKey()
+              accessKey, secretKey
         );
         if(apiKey == null){
             throw new RuntimeException("Invalid Access Key Or Secret Key");
         }
-        return ResponseEntity.ok(apiKey.getOrganisation().getId().toString());
+        return ResponseEntity.ok(Map.of("organisationId",apiKey.getOrganisation().getId().toString()));
     }
 
 

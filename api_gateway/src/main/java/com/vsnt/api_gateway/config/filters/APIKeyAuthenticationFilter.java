@@ -16,58 +16,56 @@ import com.vsnt.api_gateway.config.RouteValidator;
 import java.util.Map;
 
 @Component
-public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
+public class APIKeyAuthenticationFilter extends AbstractGatewayFilterFactory<APIKeyAuthenticationFilter.Config> {
 
-    public AuthenticationFilter() {
-        super(AuthenticationFilter.Config.class);
+    public APIKeyAuthenticationFilter() {
+        super(APIKeyAuthenticationFilter.Config.class);
     }
 
     @Autowired
     private RouteValidator routeValidator;
     @Autowired
     RestTemplate restTemplate;
+    private final String AUTHENTICATOR_URL = "http://localhost:8080/api/v1/authorise/validate-key";
     @Override
     public GatewayFilter apply(Config config) {
         return (((exchange, chain) -> {
 
                 ServerHttpRequest request = null;
-//                if(routeValidator.isSecured.test(exchange.getRequest())) {
-    if(false){
-                    if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                        throw new RuntimeException("missing authorization header");
-                    }
-                    String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
-                    System.out.println("Token"+authHeader);
+                if(routeValidator.isSecured.test(exchange.getRequest())) {
+                    String apiKey = exchange.getRequest()
+                            .getHeaders()
+                            .getFirst("X-ACCESS-KEY");
 
-                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                        authHeader = authHeader.substring(7);
-                    }
-                    else{
-                        throw new RuntimeException("missing authorization header");
-                    }
+                    String apiSecret = exchange.getRequest()
+                            .getHeaders()
+                            .getFirst("X-ACCESS-SECRET");
+                   if(apiSecret == null || apiSecret.isEmpty() || apiKey == null || apiKey.isEmpty())
+                   {
+                       throw new RuntimeException("Access key or Access secret not found");
+                   }
+
                     try {
 //                    REST call to AUTH service
-
                         HttpHeaders headers = new HttpHeaders();
-                        headers.set("Authorization", "Bearer "+authHeader);
+                       headers.set("X-ACCESS-KEY", apiKey);
+                       headers.set("X-ACCESS-SECRET", apiSecret);
                         HttpEntity<String> entity = new HttpEntity<>(headers);
-                        ResponseEntity<Map> response = restTemplate.exchange( "http://localhost:8080/auth/authenticate",
+                        ResponseEntity<Map> response = restTemplate.exchange( AUTHENTICATOR_URL,
                                 HttpMethod.GET,
                                 entity,
                                 Map.class);
 
-                        String userId = (String) response.getBody().get("id");
-                        request= exchange.getRequest().mutate().header("X-USER-ID", userId).build();
+                       String orgId = response.getBody().get("organisationId").toString();
+                        request= exchange.getRequest().mutate().header("X-ORG-ID", orgId).build();
                         exchange = exchange.mutate().request(request).build();
                     } catch (Exception e) {
-                        e.printStackTrace();
+
                         System.out.println("invalid access...!");
                         throw new RuntimeException("un-authorized access to application");
                     }
                 }
                 return chain.filter(exchange);
-
-
         }));
     }
 
