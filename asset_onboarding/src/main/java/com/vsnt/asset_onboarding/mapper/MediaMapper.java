@@ -15,7 +15,7 @@ public class MediaMapper {
     public MediaDTO toMediaDTO(Media media){
     MediaDTO mediaDTO  =  MediaDTO.builder()
             .id(media.getId())
-            .group(groupMapper.toGroupDTO(media.getGroup()))
+            .pushKey(media.getPushKey().getKey())
             .createdAt(media.getCreatedAt())
             .updatedAt(media.getUpdatedAt())
             .active(media.isActive())

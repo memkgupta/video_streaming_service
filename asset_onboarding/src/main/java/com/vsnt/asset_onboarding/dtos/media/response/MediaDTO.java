@@ -21,4 +21,5 @@ public class MediaDTO {
     private MediaAccessibility accessibility;
     private GroupDTO group;
     private MediaStatus status;
+    private String pushKey;
 }
