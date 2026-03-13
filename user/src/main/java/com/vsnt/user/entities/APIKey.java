@@ -12,8 +12,7 @@ public class APIKey {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID accessKey;
-    @ManyToOne
-    private Group group;
+
     @ManyToOne
     private Organisation organisation;
     private boolean isValid;

@@ -1,6 +1,5 @@
 package com.vsnt.user.controllers;
 
-import com.vsnt.user.config.KafkaProducer;
 import com.vsnt.user.payload.ChannelPayload;
 import com.vsnt.user.payload.auth.*;
 import com.vsnt.user.services.AuthService;
@@ -17,11 +16,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Authentication", description = "Endpoints for user login, registration, and token validation")
 public class AuthController {
     private final AuthService authService;
-    private final KafkaProducer kafkaProducer;
 
-    public AuthController(AuthService authService, KafkaProducer kafkaProducer) {
+
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.kafkaProducer = kafkaProducer;
+
     }
 
     @Operation(summary = "Login user", description = "Authenticates a user with email and password")
@@ -43,14 +42,7 @@ public class AuthController {
     public RegisterResponse register(@RequestBody RegisterRequest userDTO) {
         RegisterResponse response = authService.register(userDTO);
 
-        ChannelPayload payload = new ChannelPayload();
-        UserDTO created = response.getUser();
-        payload.setName(created.getName());
-        payload.setHandle(created.getId());
-        payload.setUserId(created.getId());
-        payload.setProfile(created.getAvatar());
 
-        kafkaProducer.produce(payload);
         return response;
     }
 

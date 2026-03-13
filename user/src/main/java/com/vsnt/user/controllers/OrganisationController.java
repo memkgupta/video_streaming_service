@@ -6,9 +6,16 @@ import com.vsnt.user.entities.APIKey;
 import com.vsnt.user.entities.Organisation;
 import com.vsnt.user.services.APIKeyService;
 import com.vsnt.user.services.OrganisationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Organisation",
+description = """
+        Endpoints for managing organisation
+        """)
 @RestController
 @RequestMapping("/api/v1/organisation")
 public class OrganisationController {
@@ -18,6 +25,10 @@ public class OrganisationController {
         this.organisationService = organisationService;
         this.apiKeyService = apiKeyService;
     }
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary="Create api keys"
+    )
     @PostMapping("/api-key")
     public ResponseEntity<APIKeyResponseDTO> generateAPIKey(@RequestHeader("X-USER-ID") String userId) {
 
@@ -30,6 +41,10 @@ public class OrganisationController {
         return ResponseEntity.ok(APIKeyResponseDTO.builder().accessKey(apiKey.getAccessKey().toString())
                 .secretKey(apiKey.getSecret()).build());
     }
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Create organisation"
+    )
     @PostMapping
     public ResponseEntity<OrganisationDTO> createOrganisation(@RequestBody OrganisationDTO organisationDTO,@RequestHeader("X-USER-ID") String userId) {
         if(organisationService.findByAdmin(userId)!=null)

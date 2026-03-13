@@ -14,6 +14,8 @@ import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.strategies.asset.LiveVideoAssetCreation;
 import com.vsnt.asset_onboarding.strategies.asset.LiveVideoAssetCreationRequestDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +23,13 @@ import java.nio.file.AccessDeniedException;
 import java.util.Base64;
 import java.util.UUID;
 
+@Tag(
+        name = "Live media End user endpoints",
+        description = """
+                Endpoints for the rtmp servers to start and manage the live media , requires the media push key in the form 
+                of header X-PUSH-KEY
+                """
+)
 @RestController
 @RequestMapping("/live")
 public class LiveController {
@@ -41,7 +50,15 @@ public class LiveController {
         this.authorisationService = authorisationService;
     }
 @PostMapping("/{mediaId}")
-public ResponseEntity<?> startLive(@PathVariable UUID mediaId, @RequestBody LiveVideoAssetCreationRequestDTO  metadata,@RequestHeader("X-PUSH-KEY") String pushKey)
+@Operation(
+summary = "Start the live",
+        hidden = true,
+        description = """
+                Generates the metadata like encryption key , is moderation enabled and gives them to the rtmp
+                server for spawning the container for live media transcoding
+                """
+)
+public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId, @RequestBody LiveVideoAssetCreationRequestDTO  metadata,@RequestHeader("X-PUSH-KEY") String pushKey)
 {
     Media media = mediaService.getMedia(mediaId);
     if(media == null)
@@ -61,13 +78,21 @@ public ResponseEntity<?> startLive(@PathVariable UUID mediaId, @RequestBody Live
     media.setStatus(MediaStatus.LIVE);
     mediaService.save(media);
     LiveStartResponseDTO liveStartResponseDTO = LiveStartResponseDTO.builder()
-            .encryptionKey(  Base64.getEncoder().encodeToString(key))
+            .encryptionKey(Base64.getEncoder().encodeToString(key))
             .assetId(asset.getId().toString())
             .isModerationEnabled(media.isModerationEnabled())
             .build();
     return ResponseEntity.ok().body(liveStartResponseDTO);
 }
+
 @PutMapping("/end/{mediaId}")
+@Operation(
+        summary = "End Stream",
+        description = """
+                End the live stream and starts the background process of final playlist generation , called by 
+                rtmp servers when the stream is ended
+                """
+)
     public ResponseEntity<?> endLive(@PathVariable UUID mediaId , @RequestHeader("X-PUSH-KEY") String pushKey)
 {
     Media media = mediaService.getMedia(mediaId);

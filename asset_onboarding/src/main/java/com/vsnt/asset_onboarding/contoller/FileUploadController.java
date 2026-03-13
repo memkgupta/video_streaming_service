@@ -6,6 +6,7 @@ import com.vsnt.asset_onboarding.services.AuthorisationService;
 import com.vsnt.asset_onboarding.services.UploadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 /*End user controller*/
+@Tag(
+        name = "File Upload Endpoints",
+        description = """
+                Endpoints related to the file uploading of the static video , all of these endpoints are available for the 
+                end user access so that the end user can directly upload the video to the service bypassing the platform
+                and for secure access to the resources while calling the endpoint , user requires to attach the push key for
+                that media given to them by the platform in the header by the name 'X-PUSH-KEY'
+                """
+)
 @RestController
 @RequestMapping("/")
 public class FileUploadController {
@@ -46,14 +56,14 @@ public class FileUploadController {
 
     @Operation(
             summary = "Finalize upload",
-            description = "Completes the multipart upload and triggers transcoding job."
+            description = "Completes the multipart upload."
     )
     @PostMapping("/complete-upload")
     public ResponseEntity<Void> completeUpload(
             @RequestBody FinalizeUploadRequest finalizeUploadRequest,
             @Parameter(hidden = true) HttpServletRequest request,
-            @RequestHeader("X-PUSH-KEY") String pushKey
-    ) throws JsonProcessingException {
+           @Parameter(name = "Push key" , required = true, description = "Media push key given to user by the platform") @RequestHeader("X-PUSH-KEY") String pushKey
+    ) {
 
 
         String userId = request.getHeader("X-USER-ID");
@@ -77,7 +87,7 @@ public class FileUploadController {
     public Boolean pauseUpload(
             @RequestBody UploadPauseToggleRequest uploadPauseToggleRequest,
             @Parameter(hidden = true) HttpServletRequest request,
-            @RequestHeader("X-PUSH-KEY") String pushKey
+            @Parameter(name = "Push key" , required = true,description = "Media push key given to user by the platform") @RequestHeader("X-PUSH-KEY") String pushKey
             ) {
 
         String userId = request.getHeader("X-USER-ID");
@@ -100,7 +110,7 @@ public class FileUploadController {
     public Boolean resumeUpload(
             @RequestBody UploadPauseToggleRequest uploadPauseToggleRequest,
             @Parameter(hidden = true) HttpServletRequest request,
-            @RequestHeader("X-PUSH-KEY") String pushKey
+            @Parameter(name = "Push key" , required = true,description = "Media push key given to user by the platform") @RequestHeader("X-PUSH-KEY") String pushKey
             ) {
 
         String userId = request.getHeader("X-USER-ID");

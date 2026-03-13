@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @ConditionalOnProperty(
         name = "app.delivery.security.enabled",
-        value = "false",
+        havingValue = "false",
         matchIfMissing = true
 )
 @Component

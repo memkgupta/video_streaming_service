@@ -15,9 +15,11 @@ import java.util.Map;
 import java.util.Objects;
 @Component
 public class UserAuthFilter extends AbstractGatewayFilterFactory<UserAuthFilter.Config> {
+
     private final RestTemplate restTemplate;
 private final UserRouteValidator routeValidator;
     public UserAuthFilter(RestTemplate restTemplate, UserRouteValidator routeValidator) {
+        super(Config.class);
         this.restTemplate = restTemplate;
         this.routeValidator = routeValidator;
     }

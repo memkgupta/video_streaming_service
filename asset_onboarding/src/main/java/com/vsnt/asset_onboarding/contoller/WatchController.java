@@ -7,6 +7,10 @@ import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.services.*;
 import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.kafka.common.errors.InvalidRequestException;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +19,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(
+        name = "Watch",
+        description = "Endpoints for watching the media for end users , requires access token in form of bearer auth"
+)
 @RestController
 @RequestMapping("/watch")
 public class WatchController {
@@ -30,8 +38,16 @@ public class WatchController {
          this.deliverySecurityConfig = deliverySecurityConfig;
         this.watchService = watchService;
     }
+    @SecurityRequirement(name="bearerAuth")
+    @Operation(
+            summary = "Watch Media",
+            description = "Get the content for the player to play the media"
+    )
     @GetMapping("/{mediaId}")
-    public ResponseEntity<?> watch(@PathVariable  UUID mediaId , @RequestHeader Map<String, String> headers , @RequestParam(
+    public ResponseEntity<?> watch(@PathVariable  UUID mediaId , @RequestHeader Map<String, String> headers , @Parameter(
+            name = "start",
+            description = "offset in milliseconds"
+    ) @RequestParam(
             defaultValue = "-1"
     ) long start , HttpServletResponse httpServletResponse)
     {
@@ -61,8 +77,15 @@ public class WatchController {
 
       return responseEntity;
     }
+    @Operation(
+            summary = "Watch resolution of live stream",
+            description = "Endpoint for getting playlist for particular resolution of media "
+    )
     @GetMapping("/live/{mediaId}/{resolution}/playlist")
-    public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, @RequestParam(defaultValue = "-1") Long start , HttpServletResponse httpServletResponse ,  @RequestHeader(value = "Authorisation",defaultValue = "") String authHeader)
+    public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, @Parameter(
+            name = "start",
+            description = "offset in milliseconds"
+    ) @RequestParam(defaultValue = "-1") Long start , HttpServletResponse httpServletResponse ,  @RequestHeader(value = "Authorisation",defaultValue = "") String authHeader)
     {
         Media media = mediaService.getMedia(mediaId);
         if(media== null)

@@ -81,7 +81,7 @@ public class SegmentService {
                 );
 
         List<KVSegment> segments =
-                transcodedSegmentRepository.getTranscodedSegments(specification).stream().map(ts->KVSegment.builder()
+                transcodedSegmentRepository.findAll(specification).stream().map(ts->KVSegment.builder()
                         .url(ts.getUrl())
                         .resolution(ts.getId().getResolution().toResolutionString())
                         .assetId(ts.getId().getAssetId())

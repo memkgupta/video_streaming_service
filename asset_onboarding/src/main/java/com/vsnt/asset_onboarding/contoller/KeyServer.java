@@ -4,12 +4,24 @@ import com.vsnt.asset_onboarding.CDNService;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.services.AuthorisationService;
 import com.vsnt.asset_onboarding.services.KeyService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 /*End user controller to be used by the player*/
+@Tag(
+        name="Key Server",
+        description = """
+                Endpoint related to fetching key for decrypting the segments in the index file
+                for the player , the player has to attach the header Authorisation with bearer 
+                token , and the token will be the Access token again given by the platform to the 
+                end user to access a particular media 
+                """
+)
 @RestController
 @RequestMapping("/v1/key")
 public class KeyServer {
@@ -22,14 +34,18 @@ public class KeyServer {
         this.authorisationService = authorisationService;
     }
 
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/{assetId}")
+    @Operation(
+            summary = "Fetch the key"
+    )
     public ResponseEntity<byte[]>
-        getKey(@PathVariable("assetId") String assetID , @RequestHeader("Authorisation") String authToken) throws Exception {
-
-        if(!authToken.startsWith("Bearer "))
+        getKey(@PathVariable("assetId") String assetID , @RequestHeader("Authorization") String authToken) throws Exception {
+        if(authToken == null || !authToken.startsWith("Bearer "))
         {
-            throw new Exception("Invalid Token");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header");
         }
+
         authToken = authToken.substring(7);
     if(!authorisationService.canWatch(assetID,authToken))
     {

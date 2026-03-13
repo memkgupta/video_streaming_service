@@ -23,5 +23,5 @@ public interface TranscodedSegmentRepository extends JpaRepository<
     s.mediaId = :mediaId and s.id.resolution = :resolution
 """)
     Optional<Long> getMaxDuration(@Param("mediaId") String mediaId , @Param("resolution")ResolutionEnum resolution);
-    List<TranscodedSegment> getTranscodedSegments(Specification<TranscodedSegment> specification);
+
 }
