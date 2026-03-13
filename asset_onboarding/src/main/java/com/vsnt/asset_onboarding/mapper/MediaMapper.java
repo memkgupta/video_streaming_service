@@ -6,11 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class MediaMapper {
-    private final GroupMapper groupMapper;
 
-    public MediaMapper(GroupMapper groupMapper) {
-        this.groupMapper = groupMapper;
-    }
 
     public MediaDTO toMediaDTO(Media media){
     MediaDTO mediaDTO  =  MediaDTO.builder()
