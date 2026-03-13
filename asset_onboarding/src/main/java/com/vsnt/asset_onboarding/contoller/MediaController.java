@@ -10,10 +10,12 @@ import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.mapper.MediaMapper;
 import com.vsnt.asset_onboarding.services.AssetService;
+import com.vsnt.asset_onboarding.services.AuthorisationService;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.asset_onboarding.strategies.asset.StaticVideoAssetCreation;
 import com.vsnt.asset_onboarding.strategies.asset.ThumbnailAssetCreation;
+import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -32,15 +35,18 @@ public class MediaController {
     private final AssetService assetService;
     private final ThumbnailAssetCreation  thumbnailAssetCreation;
     private final StaticVideoAssetCreation staticVideoAssetCreation;
+    private final DeliverySecurityConfig deliverySecurityConfig;
     private final S3Service s3Service;
-
-    public MediaController(MediaService mediaService, MediaMapper mediaMapper, AssetService assetService, ThumbnailAssetCreation thumbnailAssetCreation, StaticVideoAssetCreation staticVideoAssetCreation, S3Service s3Service) {
+    private final AuthorisationService authorisationService;
+    public MediaController(MediaService mediaService, MediaMapper mediaMapper, AssetService assetService, ThumbnailAssetCreation thumbnailAssetCreation, StaticVideoAssetCreation staticVideoAssetCreation, DeliverySecurityConfig deliverySecurityConfig, S3Service s3Service, AuthorisationService authorisationService) {
         this.mediaService = mediaService;
         this.mediaMapper = mediaMapper;
         this.assetService = assetService;
         this.thumbnailAssetCreation = thumbnailAssetCreation;
         this.staticVideoAssetCreation = staticVideoAssetCreation;
+        this.deliverySecurityConfig = deliverySecurityConfig;
         this.s3Service = s3Service;
+        this.authorisationService = authorisationService;
     }
     @PostMapping
     public ResponseEntity<MediaDTO> createMedia(@RequestBody MediaCreateRequestDTO request)
@@ -117,9 +123,21 @@ public class MediaController {
         Asset asset = assetService.createAsset(media ,staticVideoAssetCreation,metaData);
         FileUploadStartResponse res = new  FileUploadStartResponse();
         res.setKey(asset.getKey());
+        res.setPushKey(media.getPushKey().getKey());
         res.setUploadId(asset.getUploadId());
         res.setAssetId(asset.getId().toString());
         return ResponseEntity.ok(res);
+    }
+    @GetMapping("/{id}/generate-tokens")
+    public ResponseEntity<?> generateTokens(@PathVariable UUID id , @RequestParam("userId") String userId)
+    {
+        Media media = mediaService.getMedia(id);
+        if(media == null)
+        {
+            throw new EntityNotFoundException("Media");
+        }
+        String[] tokens = deliverySecurityConfig.generateTokens(userId,media.getVideoAsset().getId().toString());
+        return ResponseEntity.ok(Map.of("access_token",tokens[0],"refresh_token",tokens[1]));
     }
 
 

@@ -4,9 +4,12 @@ import com.vsnt.asset_onboarding.CDNService;
 import com.vsnt.asset_onboarding.dtos.kvstore.segments.KVSegment;
 import com.vsnt.asset_onboarding.dtos.security.SignedCookie;
 import com.vsnt.asset_onboarding.entities.Media;
+import com.vsnt.asset_onboarding.entities.MediaAccessToken;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
+import com.vsnt.asset_onboarding.repositories.MediaAccessTokenRepository;
 import com.vsnt.asset_onboarding.services.CloudFrontService;
 import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
+import com.vsnt.asset_onboarding.utils.JWTService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -21,9 +24,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class SignedCookieDeliverySecurityConfig implements DeliverySecurityConfig {
     private final CDNService cdnService;
+    private final MediaAccessTokenRepository mediaAccessTokenRepository;
     private final String DOMAIN_NAME = "${app.domain.name}";
-    public SignedCookieDeliverySecurityConfig(CloudFrontService cloudFrontService) {
+    private final JWTService jWTService;
+
+    public SignedCookieDeliverySecurityConfig(CloudFrontService cloudFrontService, MediaAccessTokenRepository mediaAccessTokenRepository, JWTService jWTService) {
         this.cdnService = cloudFrontService;
+        this.mediaAccessTokenRepository = mediaAccessTokenRepository;
+        this.jWTService = jWTService;
     }
 
     @Override
@@ -40,6 +48,15 @@ public class SignedCookieDeliverySecurityConfig implements DeliverySecurityConfi
          * stored is in the secured distribution
          * */
         return media.getVideoAsset().getCdnURL();
+    }
+
+    @Override
+    public boolean validateToken(String token, String assetId) {
+        if(jWTService.isTokenExpired(token)) {
+            throw new RuntimeException("Token is expired");
+        }
+        String extractedAssetId = jWTService.extractAssetId(token);
+        return extractedAssetId.equals(assetId);
     }
 
     @Override
@@ -63,13 +80,44 @@ public class SignedCookieDeliverySecurityConfig implements DeliverySecurityConfi
         addCookie(response, "CloudFront-Expires", cookies.getExpires());
         addCookie(response, "CloudFront-Signature", cookies.getSignature());
     }
+
+    @Override
+    public String[] generateTokens(String userId, String assetId) {
+        String access_token = jWTService.generateToken(userId ,assetId ,10*60*1000L);
+        MediaAccessToken token = new MediaAccessToken();
+        token.setUserId(userId);
+        token.setAssetId(assetId);
+        token.setRefreshToken(jWTService.generateToken(userId,assetId,24*60*60* 1000L));
+        token.setValidity(60*60* 1000L);
+        token = mediaAccessTokenRepository.save(token);
+       return new String[]{access_token,token.getRefreshToken()};
+    }
+
+    @Override
+    public String refreshToken(HttpServletResponse httpServletResponse, String userId, String assetId, String refreshToken) {
+        MediaAccessToken savedToken = mediaAccessTokenRepository.findByRefreshToken(refreshToken).orElse(null);
+        if(savedToken == null)
+        {
+            throw new IllegalArgumentException("Invalid token");
+        }
+        if(jWTService.isTokenExpired(savedToken.getRefreshToken()))
+        {
+            throw new RuntimeException("Token is expired");
+        }
+        if(!savedToken.getUserId().equals(userId) || !savedToken.getAssetId().equals(assetId))
+        {
+            throw new IllegalArgumentException("Invalid token");
+        }
+
+        return jWTService.generateToken(userId ,assetId ,10*60*1000L);
+    }
+
     private void addCookie(
             HttpServletResponse response,
             String name,
             String value
     ) {
         Cookie cookie = new Cookie(name, value);
-
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         cookie.setSecure(true);

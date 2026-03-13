@@ -19,9 +19,8 @@ public class MediaPushKey {
     private String key;
     private Timestamp createdAt;
     private boolean active;
-    private String userId;
-    private Timestamp updatedAt;
 
+    private Timestamp updatedAt;
     @PreUpdate
     public void preUpdate() {
         updatedAt = Timestamp.from(Instant.now());

@@ -16,5 +16,4 @@ public class Organisation {
     private String name;
     @OneToOne
     private User admin;
-
 }

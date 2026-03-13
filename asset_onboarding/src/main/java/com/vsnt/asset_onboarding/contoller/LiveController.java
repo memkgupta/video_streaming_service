@@ -9,6 +9,7 @@ import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.listeners.media.LiveMediaFinishHandler;
 import com.vsnt.asset_onboarding.services.AssetService;
+import com.vsnt.asset_onboarding.services.AuthorisationService;
 import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.strategies.asset.LiveVideoAssetCreation;
@@ -16,6 +17,7 @@ import com.vsnt.asset_onboarding.strategies.asset.LiveVideoAssetCreationRequestD
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -28,21 +30,27 @@ public class LiveController {
     private final KeyService keyService;
     private final SecuredCDNService securedCDNService;
     private final LiveMediaFinishHandler finishHandler;
-    public LiveController(MediaService mediaService, LiveVideoAssetCreation liveVideoAssetCreation, AssetService assetService, KeyService keyService, SecuredCDNService securedCDNService, LiveMediaFinishHandler finishHandler) {
+    private final AuthorisationService authorisationService;
+    public LiveController(MediaService mediaService, LiveVideoAssetCreation liveVideoAssetCreation, AssetService assetService, KeyService keyService, SecuredCDNService securedCDNService, LiveMediaFinishHandler finishHandler, AuthorisationService authorisationService) {
         this.mediaService = mediaService;
         this.liveVideoAssetCreation = liveVideoAssetCreation;
         this.assetService = assetService;
         this.keyService = keyService;
         this.securedCDNService = securedCDNService;
         this.finishHandler = finishHandler;
+        this.authorisationService = authorisationService;
     }
 @PostMapping("/{mediaId}")
-public ResponseEntity<?> startLive(@PathVariable UUID mediaId, @RequestBody LiveVideoAssetCreationRequestDTO  metadata)
+public ResponseEntity<?> startLive(@PathVariable UUID mediaId, @RequestBody LiveVideoAssetCreationRequestDTO  metadata,@RequestHeader("X-PUSH-KEY") String pushKey)
 {
     Media media = mediaService.getMedia(mediaId);
     if(media == null)
     {
         throw new EntityNotFoundException("Media");
+    }
+    if(!authorisationService.canPush(media , pushKey))
+    {
+        throw new RuntimeException("Access denied");
     }
     Asset asset = assetService.createAsset(
             media , liveVideoAssetCreation,metadata
@@ -60,14 +68,19 @@ public ResponseEntity<?> startLive(@PathVariable UUID mediaId, @RequestBody Live
     return ResponseEntity.ok().body(liveStartResponseDTO);
 }
 @PutMapping("/end/{mediaId}")
-    public ResponseEntity<?> endLive(@PathVariable UUID mediaId)
+    public ResponseEntity<?> endLive(@PathVariable UUID mediaId , @RequestHeader("X-PUSH-KEY") String pushKey)
 {
     Media media = mediaService.getMedia(mediaId);
     if(media == null)
     {
         throw new EntityNotFoundException("Media");
     }
+    if(!authorisationService.canPush(media , pushKey))
+    {
+        throw new RuntimeException("Access denied");
+    }
     finishHandler.handle(media);
     return ResponseEntity.ok().build();
 }
+
 }

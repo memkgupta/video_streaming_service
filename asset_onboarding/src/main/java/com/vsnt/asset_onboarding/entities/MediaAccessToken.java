@@ -13,13 +13,14 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
-public class GroupMember {
-    @Id
+public class MediaAccessToken {
+@Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    private UUID groupId;
-    private String userId;
+    private String refreshToken;
     private Timestamp createdAt;
-    private Timestamp updatedAt;
-    private boolean isActive;
+    private Long validity;
+
+private String userId;
+private String assetId;
 }

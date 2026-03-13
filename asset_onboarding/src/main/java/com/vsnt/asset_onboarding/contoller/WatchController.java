@@ -8,6 +8,7 @@ import com.vsnt.asset_onboarding.services.*;
 import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.kafka.common.errors.InvalidRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,14 +36,21 @@ public class WatchController {
     ) long start , HttpServletResponse httpServletResponse)
     {
         Media media = mediaService.getMedia(mediaId);
-
         if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
         {
             throw new EntityNotFoundException("Media");
         }
-        String userId = headers.get("X-USER-ID");
-        String pullKey = headers.get("X-PULL-KEY");
-        boolean allowed = authorisationService.authorise(media,userId,pullKey);
+    if(!headers.containsKey("Authorization"))
+    {
+        throw new InvalidRequestException("Authorization");
+    }
+        String token = headers.get("Authorization");
+    if(!token.startsWith("Bearer "))
+    {
+        throw new InvalidRequestException("Invalid Token");
+    }
+         token = token.substring(7);
+        boolean allowed = authorisationService.canWatch(media,token);
         if(!allowed)
         {
             throw new RuntimeException("Forbidden");
@@ -50,10 +58,11 @@ public class WatchController {
         String content = watchService.watch(media , start);
         ResponseEntity<?> responseEntity = ResponseEntity.ok().body(content);
       deliverySecurityConfig.populateResponse(responseEntity, httpServletResponse,media,content);
+
       return responseEntity;
     }
     @GetMapping("/live/{mediaId}/{resolution}/playlist")
-    public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, @RequestParam(defaultValue = "-1") Long start , HttpServletResponse httpServletResponse)
+    public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, @RequestParam(defaultValue = "-1") Long start , HttpServletResponse httpServletResponse ,  @RequestHeader(value = "Authorisation",defaultValue = "") String authHeader)
     {
         Media media = mediaService.getMedia(mediaId);
         if(media== null)
@@ -63,6 +72,18 @@ public class WatchController {
         if(!media.getVideoAsset().getAssetType().equals(AssetType.LIVE_VIDEO))
         {
             throw new RuntimeException("Unsupported Media");
+        }
+
+        if(!authHeader.startsWith("Bearer "))
+        {
+            throw new InvalidRequestException("Invalid Token");
+        }
+        String token  = authHeader.substring(7);
+        boolean allowed = authorisationService.canWatch(media,token);
+
+        if(!allowed)
+        {
+            throw new  RuntimeException("Forbidden");
         }
         String content = watchService.watchLiveVariant(media,resolution,start);
 

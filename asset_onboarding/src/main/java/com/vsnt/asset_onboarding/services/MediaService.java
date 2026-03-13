@@ -1,7 +1,6 @@
 package com.vsnt.asset_onboarding.services;
 
 import com.vsnt.asset_onboarding.dtos.media.request.MediaCreateRequestDTO;
-import com.vsnt.asset_onboarding.entities.Group;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.MediaPushKey;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
@@ -18,18 +17,17 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Service
 public class MediaService {
     private final MediaRepository mediaRepository;
-    private final GroupService groupService;
+
     private final MediaPushKeyRepository mediaPushKeyRepository;
     private final MediaBlockedProducer mediaBlockedProducer;
-    public MediaService(MediaRepository mediaRepository, GroupService groupService, MediaPushKeyRepository mediaPushKeyRepository, MediaBlockedProducer mediaBlockedProducer) {
+    public MediaService(MediaRepository mediaRepository, MediaPushKeyRepository mediaPushKeyRepository, MediaBlockedProducer mediaBlockedProducer) {
         this.mediaRepository = mediaRepository;
-        this.groupService = groupService;
+
         this.mediaPushKeyRepository = mediaPushKeyRepository;
         this.mediaBlockedProducer = mediaBlockedProducer;
     }
@@ -50,17 +48,11 @@ public class MediaService {
         media.setMediaType(request.getMediaType());
         media.setPushKey(mediaPushKey);
         media.setModerationEnabled(request.isModeration());
-        if(request.getGroupId() != null)
-        {
-
-           Group group = groupService.getGroup(UUID.fromString(request.getGroupId()));
-           if(group == null)
-           {
-               throw new EntityNotFoundException("Group");
-           }
-           media.setGroup(group);
-        }
         return mediaRepository.save(media);
+    }
+    public Media getMediaByAsset(Long assetId)
+    {
+        return mediaRepository.findByVideoAsset_Id(assetId).orElse(null);
     }
     public Media getMedia(UUID id)
     {

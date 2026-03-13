@@ -5,7 +5,6 @@ import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +17,11 @@ import org.springframework.stereotype.Component;
 )
 @Component
 public class DefaultDeliverySecurityConfig implements DeliverySecurityConfig {
+
+    public DefaultDeliverySecurityConfig() {
+
+    }
+
     /*Default Delivery Security Config
     * 1. No signed url and signed Cookie
     * 2.
@@ -30,6 +34,11 @@ public class DefaultDeliverySecurityConfig implements DeliverySecurityConfig {
     @Override
     public String getPlaylistURL(Media media) {
         return media.getVideoAsset().getCdnURL();
+    }
+
+    @Override
+    public boolean validateToken(String token, String assetId) {
+        return true;
     }
 
     @Override
@@ -46,5 +55,16 @@ public class DefaultDeliverySecurityConfig implements DeliverySecurityConfig {
             response.addHeader(HttpHeaders.LOCATION,url);
             response.setStatus(302);
         }
+    }
+
+    @Override
+    public String[] generateTokens(String userId, String assetId) {
+
+        return new String[]{};
+    }
+
+    @Override
+    public String refreshToken(HttpServletResponse httpServletResponse, String userId, String assetId, String token) {
+         return "";
     }
 }

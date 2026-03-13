@@ -27,8 +27,7 @@ public class Media {
     private boolean moderationEnabled;
     @OneToOne(cascade = CascadeType.ALL , fetch = FetchType.EAGER)
     private MediaPushKey pushKey;
-    @ManyToOne(fetch = FetchType.EAGER)
-    private Group group;
+
     @OneToOne
     @JoinColumn(name = "thumbnail_asset")
     private Asset thumbnailAsset;

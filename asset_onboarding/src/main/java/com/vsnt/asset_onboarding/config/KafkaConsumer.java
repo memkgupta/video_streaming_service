@@ -15,15 +15,12 @@ import org.springframework.stereotype.Component;
 public class KafkaConsumer {
 
 
-    private final MessageListener<GroupMemberCreateRequestDTO> messageListener;
-    private final MessageListener<GroupCreateRequestDTO> groupMemberListener;
     private final MessageListener<TranscodingSegmentUpdateDTO> transcodingSegmentUpdateListener;
     private final MessageListener<ModerationUpdateDTO> moderationUpdateListener;
     private final MessageListener<TranscodingFinishEventDTO>  transcodingFinishListener;
-    public KafkaConsumer( MessageListener<GroupMemberCreateRequestDTO> messageListener, MessageListener<GroupCreateRequestDTO> groupMemberListener, MessageListener<TranscodingSegmentUpdateDTO> transcodingSegmentUpdateListener, MessageListener<ModerationUpdateDTO> moderationUpdateListener, MessageListener<TranscodingFinishEventDTO> transcodingFinishListener) {
+    public KafkaConsumer(  MessageListener<TranscodingSegmentUpdateDTO> transcodingSegmentUpdateListener, MessageListener<ModerationUpdateDTO> moderationUpdateListener, MessageListener<TranscodingFinishEventDTO> transcodingFinishListener) {
 
-        this.messageListener = messageListener;
-        this.groupMemberListener = groupMemberListener;
+
         this.transcodingSegmentUpdateListener = transcodingSegmentUpdateListener;
         this.moderationUpdateListener = moderationUpdateListener;
         this.transcodingFinishListener = transcodingFinishListener;
@@ -48,20 +45,6 @@ public class KafkaConsumer {
     )
     public void listenModerationUpdate(ModerationUpdateDTO moderationUpdateDTO) {
         moderationUpdateListener.onMessage(moderationUpdateDTO);
-    }
-    @KafkaListener(
-            topics = "group-member-notification",
-            containerFactory = "groupMemberFactory"
-    )
-    public void listen(GroupMemberCreateRequestDTO member) {
-        messageListener.onMessage(member);
-    }
-    @KafkaListener(
-            topics = "group-creation",
-            containerFactory = "groupCreateFactory"
-    )
-    public void listen(GroupCreateRequestDTO group) {
-        groupMemberListener.onMessage(group);
     }
 
 }

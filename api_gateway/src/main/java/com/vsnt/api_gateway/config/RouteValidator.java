@@ -20,7 +20,8 @@ public class RouteValidator {
             "/api/aggregate/v3/api-docs",
             "/api/watch", // logic for authorisation at the service level
             "/api/live", // logic for authorisation at the service level
-            "/api/assets" // logic for authorisation at the service level
+            "/api/assets",
+            "/api/v1/key"// logic for authorisation at the service level
     );
 /*all the secured routes need a api key in there request */
     public Predicate<ServerHttpRequest> isSecured =
