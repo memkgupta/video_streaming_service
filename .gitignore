@@ -34,7 +34,9 @@ build/
 .env
 /rtmp_server/.env
 /rtmp_server/node_modules
-
+/sdk-js-server/node_modules
+/sample_application/node_modules
+/sample_application_frontend/node_modules
 ############################
 # Python (all subprojects)
 ############################
@@ -68,3 +70,4 @@ build/
 
 private_key.pem
 **/private_key.der
+cf_pub.pem

@@ -1,5 +1,9 @@
-package com.vsnt.user.services;
+package com.vsnt.api_gateway.utils;
 
+
+
+import com.vsnt.api_gateway.config.dtos.UserDetailsImpl;
+import com.vsnt.api_gateway.config.exceptions.InvalidTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -18,21 +22,7 @@ import java.util.function.Function;
 public class JWTService {
     private String secretKey = null;
 
-    public String generateToken(String username) {
-        Map<String, Object> claims
-                = new HashMap<>();
-        return Jwts
-                .builder()
-                .claims()
-                .add(claims)
-                .subject(username)
-                .issuer("DCB")
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis()+ 60*10*1000))
-                .and()
-                .signWith(generateKey())
-                .compact();
-    }
+
 
     private SecretKey generateKey() {
         byte[] decode
@@ -41,7 +31,7 @@ public class JWTService {
         return Keys.hmacShaKeyFor(decode);
     }
 
-
+    //todo replace the key fetching method
     public String getSecretKey() {
         return secretKey = "RqxPOuVfHoBA8Uq40MhJvfY6qEHOOWWvg6N9W9vt23s=";
     }
@@ -68,12 +58,12 @@ public class JWTService {
         final String userName = extractUserName(token);
         return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
-    public Mono<UserDetails> validate(String token)
-    {
-        if(isTokenExpired(token))
-        {
-            throw new
+    public Mono<UserDetails> validate(String token) {
+        if(isTokenExpired(token)) {
+           return Mono.error(new InvalidTokenException());
         }
+        UserDetails ud = new UserDetailsImpl(extractUserName(token));
+        return Mono.just(ud);
     }
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
@@ -82,4 +72,6 @@ public class JWTService {
     private Date extractExpiration(String token) {
         return extractClaims(token, Claims::getExpiration);
     }
+
+
 }
