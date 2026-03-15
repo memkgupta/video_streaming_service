@@ -29,7 +29,7 @@ export class HttpClient  {
     const url = `${this.baseUrl}${path}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeout);
-
+    console.log(this.headers)
     try {
       const res = await fetch(url, {
         method,

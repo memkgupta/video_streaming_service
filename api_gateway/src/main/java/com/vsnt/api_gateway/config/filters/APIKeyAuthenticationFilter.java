@@ -47,6 +47,8 @@ public class APIKeyAuthenticationFilter extends AbstractGatewayFilterFactory<API
 
                     try {
 //                    REST call to AUTH service
+                        System.out.println(apiKey);
+                        System.out.println(apiSecret);
                         HttpHeaders headers = new HttpHeaders();
                        headers.set("X-ACCESS-KEY", apiKey);
                        headers.set("X-ACCESS-SECRET", apiSecret);

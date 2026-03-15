@@ -22,7 +22,7 @@ public class APIKeyService {
         APIKey apiKey = new APIKey();
         apiKey.setValid(true);
         apiKey.setSecret(ApiKeyGenerator.generateApiKey(32));
-        apiKey.setAccessKey(UUID.randomUUID());
+
         apiKey.setOrganisation(org);
         return apiKeyRepository.save(apiKey);
     }

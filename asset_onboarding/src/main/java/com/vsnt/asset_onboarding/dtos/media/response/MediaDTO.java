@@ -19,7 +19,7 @@ public class MediaDTO {
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private MediaAccessibility accessibility;
-    private GroupDTO group;
+
     private MediaStatus status;
     private String pushKey;
 }

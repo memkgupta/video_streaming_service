@@ -6,7 +6,7 @@ export class StreamOpsClient
 
     
     private httpClient:HttpClient
-    constructor(access_key:string,access_secret:string,clientConfig?:ClientOptions)
+    constructor(access_key:string,access_secret:string,clientConfig?:{baseUrl:string})
     {
      
         this.httpClient = new HttpClient({
