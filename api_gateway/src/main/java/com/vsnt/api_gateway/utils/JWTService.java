@@ -21,30 +21,23 @@ import java.util.function.Function;
 @Service
 public class JWTService {
     private String secretKey = null;
-
-
-
     private SecretKey generateKey() {
         byte[] decode
                 = Decoders.BASE64.decode(getSecretKey());
 
         return Keys.hmacShaKeyFor(decode);
     }
-
     //todo replace the key fetching method
     public String getSecretKey() {
         return secretKey = "RqxPOuVfHoBA8Uq40MhJvfY6qEHOOWWvg6N9W9vt23s=";
     }
-
     public String extractUserName(String token) {
         return extractClaims(token, Claims::getSubject);
     }
-
-    private <T> T extractClaims(String token, Function<Claims,T> claimResolver) {
+    public  <T> T extractClaims(String token, Function<Claims,T> claimResolver) {
         Claims claims = extractClaims(token);
         return claimResolver.apply(claims);
     }
-
     private Claims extractClaims(String token) {
         return Jwts
                 .parser()
@@ -53,7 +46,6 @@ public class JWTService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
         return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
@@ -68,10 +60,7 @@ public class JWTService {
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
-
     private Date extractExpiration(String token) {
         return extractClaims(token, Claims::getExpiration);
     }
-
-
 }

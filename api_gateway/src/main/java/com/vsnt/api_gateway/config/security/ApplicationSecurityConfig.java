@@ -12,8 +12,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 @EnableWebFluxSecurity
 public class ApplicationSecurityConfig {
     @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, ApiKeyAuthenticationFilter apiKeyAuthenticationFilter , JWTFilter jwtFilter) {
-
+    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, ApiKeyAuthenticationFilter apiKeyAuthenticationFilter , JWTFilter jwtFilter , AccessTokenFilter accessTokenFilter) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
@@ -22,6 +21,7 @@ public class ApplicationSecurityConfig {
                 )
                 .addFilterAt(apiKeyAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .addFilterAfter(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .addFilterAfter(accessTokenFilter,SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 }
