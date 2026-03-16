@@ -9,6 +9,7 @@ import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,21 +28,26 @@ import java.util.UUID;
 @RequestMapping("/watch")
 public class WatchController {
     private final MediaService mediaService;
-    private final AuthorisationService authorisationService;
+
 
     private final DeliverySecurityConfig deliverySecurityConfig;
     private final WatchService watchService;
 
-    public WatchController(MediaService mediaService, AuthorisationService authorisationService, DeliverySecurityConfig deliverySecurityConfig, WatchService watchService) {
+    public WatchController(MediaService mediaService, DeliverySecurityConfig deliverySecurityConfig, WatchService watchService) {
         this.mediaService = mediaService;
-        this.authorisationService = authorisationService;
          this.deliverySecurityConfig = deliverySecurityConfig;
         this.watchService = watchService;
     }
     @SecurityRequirement(name="bearerAuth")
     @Operation(
             summary = "Watch Media",
-            description = "Get the content for the player to play the media"
+            description = "Get the content for the player to play the media",
+            parameters = {
+                    @Parameter(
+                            name = "X-ACCESS-TOKE",
+                            in = ParameterIn.HEADER
+                    )
+            }
     )
     @GetMapping("/{mediaId}")
     public ResponseEntity<?> watch(@PathVariable  UUID mediaId , @RequestHeader Map<String, String> headers , @Parameter(
@@ -49,24 +55,19 @@ public class WatchController {
             description = "offset in milliseconds"
     ) @RequestParam(
             defaultValue = "-1"
-    ) long start , HttpServletResponse httpServletResponse)
+    ) long start ,@RequestHeader("X-ASSET-ID") String assetId, @RequestHeader("X-USER-ID")String userId, HttpServletResponse httpServletResponse)
     {
         Media media = mediaService.getMedia(mediaId);
         if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
         {
             throw new EntityNotFoundException("Media");
         }
-    if(!headers.containsKey("Authorization"))
+    if(assetId == null || assetId.isEmpty())
     {
         throw new InvalidRequestException("Authorization");
     }
-        String token = headers.get("Authorization");
-    if(!token.startsWith("Bearer "))
-    {
-        throw new InvalidRequestException("Invalid Token");
-    }
-         token = token.substring(7);
-        boolean allowed = authorisationService.canWatch(media,token);
+
+        boolean allowed = media.getVideoAsset().getId().equals(Long.parseLong(assetId));
         if(!allowed)
         {
             throw new RuntimeException("Forbidden");
@@ -77,15 +78,23 @@ public class WatchController {
 
       return responseEntity;
     }
+
+
     @Operation(
             summary = "Watch resolution of live stream",
-            description = "Endpoint for getting playlist for particular resolution of media "
+            description = "Endpoint for getting playlist for particular resolution of media ",
+            parameters = {
+                    @Parameter(
+                            name = "X-ACCESS-TOKE",
+                            in = ParameterIn.HEADER
+                    )
+            }
     )
     @GetMapping("/live/{mediaId}/{resolution}/playlist")
     public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, @Parameter(
             name = "start",
             description = "offset in milliseconds"
-    ) @RequestParam(defaultValue = "-1") Long start , HttpServletResponse httpServletResponse ,  @RequestHeader(value = "Authorisation",defaultValue = "") String authHeader)
+    ) @RequestParam(defaultValue = "-1") Long start , HttpServletResponse httpServletResponse , @RequestHeader("X-ASSET-ID") String assetId )
     {
         Media media = mediaService.getMedia(mediaId);
         if(media== null)
@@ -97,12 +106,7 @@ public class WatchController {
             throw new RuntimeException("Unsupported Media");
         }
 
-        if(!authHeader.startsWith("Bearer "))
-        {
-            throw new InvalidRequestException("Invalid Token");
-        }
-        String token  = authHeader.substring(7);
-        boolean allowed = authorisationService.canWatch(media,token);
+        boolean allowed = media.getVideoAsset().getId().equals(Long.parseLong(assetId));
 
         if(!allowed)
         {

@@ -1,6 +1,7 @@
 package com.vsnt.api_gateway.config.security;
 
 import com.vsnt.api_gateway.utils.JWTService;
+import io.jsonwebtoken.Claims;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -56,9 +57,7 @@ public class AccessTokenFilter implements WebFilter {
                     String assetId = jwtService.extractClaims(token,(claims)->{
                         return claims.get("assetId",String.class);
                     });
-                    String userId = jwtService.extractClaims(token,(claims)->{
-                        return claims.get("userId",String.class);
-                    });
+                    String userId = jwtService.extractClaims(token, Claims::getSubject);
 
                     ServerHttpRequest mutatedRequest = exchange.getRequest()
                             .mutate()

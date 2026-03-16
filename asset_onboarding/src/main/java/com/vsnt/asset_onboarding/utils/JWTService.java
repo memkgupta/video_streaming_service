@@ -20,6 +20,7 @@ public class JWTService {
         Map<String, Object> claims
                 = new HashMap<>();
         claims.put("assetId", assetId);
+        claims.put("userId", userId);
         return Jwts
                 .builder()
                 .claims()
