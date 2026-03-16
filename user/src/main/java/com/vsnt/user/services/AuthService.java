@@ -1,6 +1,6 @@
 package com.vsnt.user.services;
 
-import com.vsnt.user.config.UserDetailsImpl;
+
 import com.vsnt.user.entities.Token;
 import com.vsnt.user.entities.User;
 import com.vsnt.user.exceptions.BadRequestException;
@@ -99,31 +99,6 @@ public class AuthService {
 
     }
 
-    public UserDTO authenticate(String token)
-    {
 
-            String email = jwtService.extractUserName(token);
-            User user = userRepository.findByEmail(email);
-            if (user == null) {
-            throw new UserNotFoundException(email);
-            }
-           if(jwtService.isTokenValid(token,new UserDetailsImpl(user)))
-           {
-               UserDTO userDTO = new UserDTO();
-               userDTO.setEmail(user.getEmail());
-               userDTO.setUsername(user.getUsername());
-               userDTO.setId(user.getId());
-               userDTO.setAvatar(user.getAvatar());
-               userDTO.setBio(user.getBio());
-               userDTO.setChannelId(user.getChannelId());
-               userDTO.setName(user.getName());
-                userDTO.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-               return userDTO;
-           }
-else{
-    throw new BadRequestException("Invalid token");
-           }
-
-    }
 
 }

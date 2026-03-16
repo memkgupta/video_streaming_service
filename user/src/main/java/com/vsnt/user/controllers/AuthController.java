@@ -1,9 +1,9 @@
 package com.vsnt.user.controllers;
 
-import com.vsnt.user.payload.ChannelPayload;
+
 import com.vsnt.user.payload.auth.*;
 import com.vsnt.user.services.AuthService;
-import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,14 +46,5 @@ public class AuthController {
         return response;
     }
 
-    @Operation(summary = "Authenticate token", description = "Returns user info based on the JWT provided")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Token valid"),
-            @ApiResponse(responseCode = "401", description = "Invalid or missing token")
-    })
-    @GetMapping("/authenticate")
-    public UserDTO authenticate(HttpServletRequest request) {
-        String token = request.getHeader("Authorization").split(" ")[1];
-        return authService.authenticate(token);
-    }
+
 }

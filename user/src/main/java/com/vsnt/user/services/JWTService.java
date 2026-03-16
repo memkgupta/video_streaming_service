@@ -64,17 +64,8 @@ public class JWTService {
                 .getPayload();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String userName = extractUserName(token);
-        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
-    public Mono<UserDetails> validate(String token)
-    {
-        if(isTokenExpired(token))
-        {
-            throw new
-        }
-    }
+
+
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }

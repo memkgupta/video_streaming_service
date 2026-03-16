@@ -26,7 +26,7 @@ import java.util.Arrays;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-private final UserDetailsService userDetailsService;
+
 
     @Bean
     UrlBasedCorsConfigurationSource corsConfigurationSource() {
@@ -37,50 +37,9 @@ private final UserDetailsService userDetailsService;
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter,JWTFilter jwtFilter) throws Exception {
-//        http.cors(AbstractHttpConfigurer::disable)
-//                .csrf(AbstractHttpConfigurer::disable)
-//                .authorizeHttpRequests(authorize->
-//                        authorize.
-//                                requestMatchers("/healthcheck","/auth/login","/auth/register","/token/refresh-token","/auth/authenticate","/*").permitAll()
-//                                .anyRequest().authenticated()
-//                        )
-//                .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//                .authenticationProvider(authenticationProvider())
-//                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-//                .addFilterAfter(jwtFilter,ApiKeyAuthFilter.class);
-//        return http.build();
-//
-//    }
-@Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiKeyAuthFilter apiKeyAuthFilter,JWTFilter jwtFilter) throws Exception {
-        http.cors(AbstractHttpConfigurer::disable)
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorize->
-                        authorize.
-                                anyRequest().permitAll()
-                        )
-                .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(jwtFilter,ApiKeyAuthFilter.class);
-        return http.build();
-
-    }
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
+
 }

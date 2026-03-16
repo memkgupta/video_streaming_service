@@ -8,13 +8,11 @@ import com.vsnt.user.payload.ResetPasswordDTO;
 
 import com.vsnt.user.payload.SimpleAPIResponse;
 import com.vsnt.user.payload.auth.UserDTO;
-import com.vsnt.user.services.CustomUserDetailsService;
 import com.vsnt.user.services.JWTService;
 import com.vsnt.user.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,14 +23,13 @@ public class UserController {
 
     private final UserService userService;
     private final JWTService jwtService;
-    private final CustomUserDetailsService customUserDetailsService;
-    private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserService userService, JWTService jwtService, CustomUserDetailsService customUserDetailsService, PasswordEncoder passwordEncoder) {
+
+    public UserController(UserService userService, JWTService jwtService) {
         this.userService = userService;
         this.jwtService = jwtService;
-        this.customUserDetailsService = customUserDetailsService;
-        this.passwordEncoder = passwordEncoder;
+
+
     }
 
     @GetMapping("/all")
