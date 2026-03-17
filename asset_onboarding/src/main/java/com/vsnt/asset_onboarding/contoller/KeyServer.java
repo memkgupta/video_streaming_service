@@ -1,7 +1,11 @@
 package com.vsnt.asset_onboarding.contoller;
 
 import com.vsnt.asset_onboarding.CDNService;
+import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
+import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
+import com.vsnt.asset_onboarding.exceptions.UnauthorisedException;
+import com.vsnt.asset_onboarding.services.AssetService;
 import com.vsnt.asset_onboarding.services.AuthorisationService;
 import com.vsnt.asset_onboarding.services.KeyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,10 +32,13 @@ public class KeyServer {
     private final CDNService cdnService;
     private final KeyService keyService;
     private final AuthorisationService authorisationService;
-    public KeyServer(CDNService cdnService, KeyService keyService, AuthorisationService authorisationService) {
+    private final AssetService assetService;
+
+    public KeyServer(CDNService cdnService, KeyService keyService, AuthorisationService authorisationService, AssetService assetService) {
         this.cdnService = cdnService;
         this.keyService = keyService;
         this.authorisationService = authorisationService;
+        this.assetService = assetService;
     }
 
     @SecurityRequirement(name = "bearerAuth")
@@ -40,17 +47,15 @@ public class KeyServer {
             summary = "Fetch the key"
     )
     public ResponseEntity<byte[]>
-        getKey(@PathVariable("assetId") String assetID , @RequestHeader("Authorization") String authToken) throws Exception {
-        if(authToken == null || !authToken.startsWith("Bearer "))
-        {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header");
+        getKey(@PathVariable("assetId") String assetID , @RequestHeader("X-ASSET-ID") String assetHeader) throws Exception {
+        Asset asset = assetService.getAssetById(Long.parseLong(assetID));
+        if(asset==null){
+            throw new EntityNotFoundException("Asset" , assetID);
         }
-
-        authToken = authToken.substring(7);
-    if(!authorisationService.canWatch(assetID,authToken))
-    {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-    }
+        boolean allowed = assetHeader!=null && !assetHeader.isEmpty() && assetHeader.equals(assetID);
+        if(!allowed){
+            throw new UnauthorisedException("Fetch key");
+        }
         AssetAESKey assetKey = keyService.getKey(assetID);
        byte[] key =cdnService.fetch(assetKey.getKeyURL());
        return  ResponseEntity.ok()
