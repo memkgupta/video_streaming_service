@@ -1,8 +1,9 @@
 package com.vsnt.asset_onboarding.exceptions;
 
+import org.springframework.http.HttpStatus;
+
 public class InternalServerError extends APIException{
-    public InternalServerError(String message) {
-        super(message);
-        super.status=500;
+    public InternalServerError() {
+       super("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
