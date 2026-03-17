@@ -1,5 +1,6 @@
 package com.vsnt.api_gateway.config.exceptions;
 
+import com.vsnt.api_gateway.config.APIResponse;
 import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
@@ -22,39 +23,58 @@ import java.util.Map;
 
 
 @Component
+
 public class CustomExceptionHandler extends AbstractErrorWebExceptionHandler {
-    public CustomExceptionHandler(ErrorAttributes errorAttributes, ApplicationContext applicationContext, ServerCodecConfigurer serverCodecConfigurer) {
+
+    public CustomExceptionHandler(ErrorAttributes errorAttributes,
+                                  ApplicationContext applicationContext,
+                                  ServerCodecConfigurer configurer) {
         super(errorAttributes, new WebProperties.Resources(), applicationContext);
-        super.setMessageWriters(serverCodecConfigurer.getWriters());
-        super.setMessageReaders(serverCodecConfigurer.getReaders());
+        super.setMessageReaders(configurer.getReaders());
+        super.setMessageWriters(configurer.getWriters());
     }
 
     @Override
     protected RouterFunction<ServerResponse> getRoutingFunction(ErrorAttributes errorAttributes) {
         return RouterFunctions.route(RequestPredicates.all(), this::renderErrorResponse);
     }
+
     private Mono<ServerResponse> renderErrorResponse(ServerRequest request) {
-        ErrorAttributeOptions options = ErrorAttributeOptions.of(ErrorAttributeOptions.Include.MESSAGE);
-        Map<String, Object> errorPropertiesMap = getErrorAttributes(request, options);
-        Throwable throwable = getError(request);
-       HttpStatusCode status = determineHttpStatusCode(throwable);
-        HttpStatus httpStatus = HttpStatus.resolve(status.value());
-        Map<String, Object> responseBody = new LinkedHashMap<>();
-        responseBody.put("success", false);
-        responseBody.put("status", status.value());
-        responseBody.put("error", httpStatus != null ? httpStatus.getReasonPhrase() : "Error");
-        responseBody.put("message", errorPropertiesMap.get("message"));
-        responseBody.put("path", request.path());
-        responseBody.put("timestamp", Instant.now().toString());
+
+        Throwable ex = getError(request);
+        HttpStatus status = resolveStatus(ex);
+
+        Map<String, Object> errorBody = new LinkedHashMap<>();
+        errorBody.put("message", ex.getMessage());
+        errorBody.put("status", status.value());
+        errorBody.put("path", request.path());
+        errorBody.put("timestamp", System.currentTimeMillis());
+
+        APIResponse apiResponse = APIResponse.error(errorBody);
+
         return ServerResponse.status(status)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(responseBody));
+                .body(BodyInserters.fromValue(apiResponse));
     }
-    private HttpStatusCode determineHttpStatusCode(Throwable throwable) {
-        if (throwable instanceof ResponseStatusException) {
-            return ((ResponseStatusException) throwable).getStatusCode();
-        }  else {
-            return HttpStatusCode.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+    private HttpStatus resolveStatus(Throwable ex) {
+
+        if (ex instanceof ResponseStatusException rse) {
+            return HttpStatus.valueOf(rse.getStatusCode().value());
         }
+
+        if (ex instanceof IllegalArgumentException) {
+            return HttpStatus.BAD_REQUEST;
+        }
+
+        if (ex instanceof SecurityException) {
+            return HttpStatus.UNAUTHORIZED;
+        }
+
+        if (ex instanceof RuntimeException) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

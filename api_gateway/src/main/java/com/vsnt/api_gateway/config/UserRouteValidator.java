@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.function.Predicate;
-
+@Deprecated
 @Component
 public class UserRouteValidator {
     public static final List<String> openApiEndpoints = List.of(

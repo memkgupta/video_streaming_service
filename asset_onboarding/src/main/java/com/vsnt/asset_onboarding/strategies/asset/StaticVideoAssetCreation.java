@@ -51,7 +51,7 @@ public class StaticVideoAssetCreation extends AssetCreationStrategy<FileMetaData
 
         media.setVideoAsset(asset);
         mediaRepository.save(media);
-        System.out.println("Video Asset Created");
+
         return asset;
     }
 }

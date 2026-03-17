@@ -13,6 +13,7 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.stereotype.Component;
@@ -43,63 +44,84 @@ public class ApiResponseTransformFilter extends AbstractGatewayFilterFactory<Api
     }
 
     @Override
+
     public GatewayFilter apply(Config config) {
         return new OrderedGatewayFilter((exchange, chain) -> {
+
             ServerHttpResponse originalResponse = exchange.getResponse();
             DataBufferFactory bufferFactory = originalResponse.bufferFactory();
 
             ServerHttpResponseDecorator decorator = new ServerHttpResponseDecorator(originalResponse) {
+
                 @Override
                 public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
-                    String originalResponseContentType = exchange.getAttribute(ORIGINAL_RESPONSE_CONTENT_TYPE_ATTR);
-                    HttpHeaders httpHeaders = new HttpHeaders();
-                    httpHeaders.add(HttpHeaders.CONTENT_TYPE, originalResponseContentType);
+
                     String path = exchange.getRequest().getPath().toString();
 
-                    // If the path is for swagger docs, don't transform the response.
-                    // Pass the original body through without modification.
+                    // Skip swagger
                     if (path.contains("/v3/api-docs")) {
                         return super.writeWith(body);
                     }
-                    Flux<? extends DataBuffer> fluxBody = Flux.from(body);
-                    int rawStatusCode = getStatusCode().value();
 
-                    // Don't transform error responses
-                    if (rawStatusCode >= 400) {
-                        return super.writeWith(fluxBody);
+                    HttpHeaders headers = getHeaders();
+                    MediaType contentType = headers.getContentType();
+
+                    // Only JSON responses
+                    if (contentType == null || !MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {
+                        return super.writeWith(body);
                     }
-                    if(httpHeaders.containsKey(HttpHeaders.CONTENT_TYPE) && !httpHeaders.get(
-                            HttpHeaders.CONTENT_TYPE
-                    ).equals("application/json")) {
-                        return super.writeWith(fluxBody);
-                    }
-                    return DataBufferUtils.join(fluxBody)
-                            .publishOn(Schedulers.boundedElastic())
-                            .flatMap(dataBuffer -> {
-                                byte[] content = new byte[dataBuffer.readableByteCount()];
-                                dataBuffer.read(content);
-                                DataBufferUtils.release(dataBuffer);
 
-                                String responseBody = new String(content, StandardCharsets.UTF_8);
-                                Map<String, Object> mapBody = JsonUtil.toMap(responseBody);
-                                APIResponse apiResponse = transform(mapBody, config);
+                    Flux<? extends DataBuffer> flux = Flux.from(body);
 
-                                try {
-                                    byte[] newContent = objectMapper.writeValueAsBytes(apiResponse);
-                                    DataBuffer buffer = bufferFactory.wrap(newContent);
-                                    return super.writeWith(Mono.just(buffer));
-                                } catch (JsonProcessingException e) {
-                                    e.printStackTrace();
-                                    return super.writeWith(Flux.error(e));
-                                }
-                            });
+                    return DataBufferUtils.join(flux).flatMap(dataBuffer -> {
+
+                        byte[] content = new byte[dataBuffer.readableByteCount()];
+                        dataBuffer.read(content);
+                        DataBufferUtils.release(dataBuffer);
+
+                        String responseBody = new String(content, StandardCharsets.UTF_8);
+
+                        Object parsedBody;
+
+                        try {
+                            parsedBody = objectMapper.readValue(responseBody, Object.class);
+                        } catch (Exception e) {
+                            parsedBody = responseBody; // fallback
+                        }
+
+
+                        if (parsedBody instanceof Map<?, ?> map && map.containsKey("success")) {
+                            DataBuffer buffer = bufferFactory.wrap(content);
+                            return super.writeWith(Mono.just(buffer));
+                        }
+
+                        int status = getStatusCode() != null ? getStatusCode().value() : 200;
+
+                        APIResponse apiResponse;
+
+                        if (status >= 400) {
+
+                            apiResponse = APIResponse.error(parsedBody);
+                        } else {
+                            // ✅ SUCCESS CASE
+                            apiResponse = APIResponse.success(parsedBody);
+                        }
+
+                        try {
+                            byte[] newContent = objectMapper.writeValueAsBytes(apiResponse);
+                            DataBuffer buffer = bufferFactory.wrap(newContent);
+                            return super.writeWith(Mono.just(buffer));
+                        } catch (JsonProcessingException e) {
+                            return Mono.error(e);
+                        }
+                    });
                 }
             };
 
             return chain.filter(exchange.mutate().response(decorator).build());
+
         }, NettyWriteResponseFilter.WRITE_RESPONSE_FILTER_ORDER - 1);
     }
-
     public static class Config {
         // Future config options
     }

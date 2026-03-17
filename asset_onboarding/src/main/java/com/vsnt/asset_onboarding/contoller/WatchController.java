@@ -4,6 +4,9 @@ import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
+import com.vsnt.asset_onboarding.exceptions.ForbiddenException;
+import com.vsnt.asset_onboarding.exceptions.InvalidArgumentException;
+import com.vsnt.asset_onboarding.exceptions.UnauthorisedException;
 import com.vsnt.asset_onboarding.services.*;
 import com.vsnt.asset_onboarding.strategies.delivery.DeliverySecurityConfig;
 
@@ -28,8 +31,6 @@ import java.util.UUID;
 @RequestMapping("/watch")
 public class WatchController {
     private final MediaService mediaService;
-
-
     private final DeliverySecurityConfig deliverySecurityConfig;
     private final WatchService watchService;
 
@@ -50,7 +51,7 @@ public class WatchController {
             }
     )
     @GetMapping("/{mediaId}")
-    public ResponseEntity<?> watch(@PathVariable  UUID mediaId , @RequestHeader Map<String, String> headers , @Parameter(
+    public ResponseEntity<?> watch(@PathVariable  UUID mediaId ,@Parameter(
             name = "start",
             description = "offset in milliseconds"
     ) @RequestParam(
@@ -60,17 +61,17 @@ public class WatchController {
         Media media = mediaService.getMedia(mediaId);
         if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
         {
-            throw new EntityNotFoundException("Media");
+            throw new EntityNotFoundException("Media",mediaId.toString());
         }
     if(assetId == null || assetId.isEmpty())
     {
-        throw new InvalidRequestException("Authorization");
+        throw new UnauthorisedException("Watch");
     }
 
         boolean allowed = media.getVideoAsset().getId().equals(Long.parseLong(assetId));
         if(!allowed)
         {
-            throw new RuntimeException("Forbidden");
+            throw new ForbiddenException("Watch media");
         }
         String content = watchService.watch(media , start);
         ResponseEntity<?> responseEntity = ResponseEntity.ok().body(content);
@@ -99,18 +100,16 @@ public class WatchController {
         Media media = mediaService.getMedia(mediaId);
         if(media== null)
         {
-            throw new EntityNotFoundException("Media Not Found");
+            throw new EntityNotFoundException("Media",mediaId.toString());
         }
         if(!media.getVideoAsset().getAssetType().equals(AssetType.LIVE_VIDEO))
         {
-            throw new RuntimeException("Unsupported Media");
+            throw new InvalidArgumentException("resolution",resolution,"valid resolution");
         }
-
         boolean allowed = media.getVideoAsset().getId().equals(Long.parseLong(assetId));
-
         if(!allowed)
         {
-            throw new  RuntimeException("Forbidden");
+            throw new ForbiddenException("Watch");
         }
         String content = watchService.watchLiveVariant(media,resolution,start);
 

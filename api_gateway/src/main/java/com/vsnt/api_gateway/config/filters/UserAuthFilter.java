@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 import java.util.Objects;
 @Component
+@Deprecated
 public class UserAuthFilter extends AbstractGatewayFilterFactory<UserAuthFilter.Config> {
 
     private final RestTemplate restTemplate;

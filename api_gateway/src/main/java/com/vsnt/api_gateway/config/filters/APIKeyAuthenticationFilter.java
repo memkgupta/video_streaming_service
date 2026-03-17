@@ -14,7 +14,7 @@ import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFac
 import com.vsnt.api_gateway.config.RouteValidator;
 
 import java.util.Map;
-
+@Deprecated
 @Component
 public class APIKeyAuthenticationFilter extends AbstractGatewayFilterFactory<APIKeyAuthenticationFilter.Config> {
 
