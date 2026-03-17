@@ -2,6 +2,7 @@ package com.vsnt.asset_onboarding.contoller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vsnt.asset_onboarding.dtos.*;
+import com.vsnt.asset_onboarding.exceptions.UnauthorisedException;
 import com.vsnt.asset_onboarding.services.AuthorisationService;
 import com.vsnt.asset_onboarding.services.UploadService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,18 +31,14 @@ public class FileUploadController {
     private final AuthorisationService authorisationService;
     public FileUploadController(UploadService uploadService, AuthorisationService authorisationService) {
         this.uploadService = uploadService;
-
         this.authorisationService = authorisationService;
     }
     @PostMapping("/upload-chunk")
     public ResponseEntity<Map<String, String>> uploadChunk(@RequestBody ChunkUploadRequest chunkUploadRequest, HttpServletRequest request, @RequestHeader("X-PUSH-KEY") String pushKey) {
-
-
-
         String userId = request.getHeader("X-USER-ID");
         if(!authorisationService.canPush(String.valueOf(chunkUploadRequest.getAssetId()), pushKey))
         {
-            throw new RuntimeException("Not Authorised");
+            throw new UnauthorisedException("Push content to media");
         }
         String url = uploadService.uploadChunk(
                 chunkUploadRequest.getUploadId(),
@@ -69,13 +66,11 @@ public class FileUploadController {
         String userId = request.getHeader("X-USER-ID");
         if(!authorisationService.canPush(String.valueOf(finalizeUploadRequest.getAssetId()), pushKey))
         {
-            throw new RuntimeException("Not Authorised");
+            throw new UnauthorisedException("Finalize uploading");
         }
-        try {
+
             uploadService.finishUpload(finalizeUploadRequest.getUploadId(),finalizeUploadRequest.getAssetId(),finalizeUploadRequest.getKey(),finalizeUploadRequest.getEtagMap(),userId);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
         return ResponseEntity.noContent().build();
     }
 
@@ -93,7 +88,7 @@ public class FileUploadController {
         String userId = request.getHeader("X-USER-ID");
         if(!authorisationService.canPush(String.valueOf(uploadPauseToggleRequest.getAssetId()), pushKey))
         {
-            throw new RuntimeException("Not Authorised");
+            throw new UnauthorisedException("Pause Upload");
         }
         return uploadService.pauseUpload(
                 uploadPauseToggleRequest.getAssetId(),
@@ -116,13 +111,11 @@ public class FileUploadController {
         String userId = request.getHeader("X-USER-ID");
         if(!authorisationService.canPush(String.valueOf(uploadPauseToggleRequest.getAssetId()), pushKey))
         {
-            throw new RuntimeException("Not Authorised");
+            throw new UnauthorisedException("Resume Upload");
         }
         return uploadService.resumeUpload(
                 uploadPauseToggleRequest.getAssetId(),
                 userId
         );
     }
-
-
 }

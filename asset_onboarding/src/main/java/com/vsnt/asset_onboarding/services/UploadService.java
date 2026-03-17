@@ -1,16 +1,16 @@
 package com.vsnt.asset_onboarding.services;
 
-import com.vsnt.asset_onboarding.SecuredCDNService;
-//import com.vsnt.asset_onboarding.config.ModerationJobProducer;
-import com.vsnt.asset_onboarding.config.ModerationJobProducer;
+
 import com.vsnt.asset_onboarding.dtos.*;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
+import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
+import com.vsnt.asset_onboarding.exceptions.InvalidStateException;
 import com.vsnt.asset_onboarding.listeners.AssetUploadFinishListener;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
-//import com.vsnt.common_lib.dtos.ModerationJob;
+
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -23,19 +23,13 @@ public class UploadService {
     private final S3Service s3Service;
     private final AssetRepository assetRepository;
     private final AssetService assetService;
-    private final SecuredCDNService cdnService;
-    private final KeyService keyService;
-    private final ModerationJobProducer moderationJobProducer;
+
     private final AssetUploadFinishListener uploadFinishListener;
-    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, SecuredCDNService cdnService, KeyService keyService, ModerationJobProducer moderationJobProducer, AssetUploadFinishListener uploadFinishListener) {
+    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService,  AssetUploadFinishListener uploadFinishListener) {
         this.s3Service = s3Service;
         this.assetRepository = assetRepository;
         this.assetService = assetService;
-        this.cdnService = cdnService;
 
-        this.keyService = keyService;
-//        this.moderationJobProducer = moderationJobProducer;
-        this.moderationJobProducer = moderationJobProducer;
         this.uploadFinishListener = uploadFinishListener;
     }
 
@@ -71,18 +65,18 @@ return res;
         Asset upload = assetService.getAssetById(assetId);
         if(upload==null){
 
-            throw new BadRequestException("Bad request , upload doesn't exist");
+            throw new EntityNotFoundException("Asset" , assetId.toString());
         }
 
         if(!upload.getUploadStatus().equals(UploadStatus.INITIATED) ){
-            throw new BadRequestException("Bad request");
+            throw new InvalidStateException("Not started" , "upload chunk");
         }
         return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
     }
-    public void finishUpload(String uploadId, Long assetId, String key, Map<Integer,String> etagMap, String userId) throws Exception {
+    public void finishUpload(String uploadId, Long assetId, String key, Map<Integer,String> etagMap, String userId) {
         Asset upload = assetService.getAssetById(assetId);
         if(upload==null){
-            throw new BadRequestException("Bad request , upload doesn't exist");
+            throw new EntityNotFoundException("Asset", assetId.toString());
         }
         upload.setUploadStatus(UploadStatus.COMPLETED);
         upload.setEndTime(new Timestamp(System.currentTimeMillis()));
@@ -99,11 +93,9 @@ return res;
     {
 
            Asset upload = assetService.getAssetById(assetId);
-            if(upload==null  )
-            {
-                throw new BadRequestException("Bad request , upload doesn't exist");
-            }
-
+        if(upload==null){
+            throw new EntityNotFoundException("Asset", assetId.toString());
+        }
             if(!upload.getUploadStatus().equals(UploadStatus.UPLOADING)){
                 throw new BadRequestException("Bad request");
             }
@@ -127,7 +119,7 @@ return res;
             Asset upload = assetService.getAssetById(assetId);
             if(upload==null)
             {
-                throw new BadRequestException("Bad request , upload doesn't exist");
+                throw new EntityNotFoundException("Asset", assetId.toString());
             }
             if(!upload.getUploadStatus().equals(UploadStatus.PAUSED)){
                 throw new BadRequestException("Bad request");
