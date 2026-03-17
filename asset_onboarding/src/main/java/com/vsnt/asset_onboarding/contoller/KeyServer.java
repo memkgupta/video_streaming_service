@@ -4,6 +4,7 @@ import com.vsnt.asset_onboarding.CDNService;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
+import com.vsnt.asset_onboarding.exceptions.ForbiddenException;
 import com.vsnt.asset_onboarding.exceptions.UnauthorisedException;
 import com.vsnt.asset_onboarding.services.AssetService;
 import com.vsnt.asset_onboarding.services.AuthorisationService;
@@ -31,13 +32,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class KeyServer {
     private final CDNService cdnService;
     private final KeyService keyService;
-    private final AuthorisationService authorisationService;
+
     private final AssetService assetService;
 
-    public KeyServer(CDNService cdnService, KeyService keyService, AuthorisationService authorisationService, AssetService assetService) {
+    public KeyServer(CDNService cdnService, KeyService keyService,  AssetService assetService) {
         this.cdnService = cdnService;
         this.keyService = keyService;
-        this.authorisationService = authorisationService;
+
         this.assetService = assetService;
     }
 
@@ -52,9 +53,13 @@ public class KeyServer {
         if(asset==null){
             throw new EntityNotFoundException("Asset" , assetID);
         }
-        boolean allowed = assetHeader!=null && !assetHeader.isEmpty() && assetHeader.equals(assetID);
-        if(!allowed){
+        if(assetHeader==null || assetHeader.isEmpty() )
+        {
             throw new UnauthorisedException("Fetch key");
+        }
+        boolean allowed =  assetHeader.equals(assetID);
+        if(!allowed){
+            throw new ForbiddenException("Fetch key");
         }
         AssetAESKey assetKey = keyService.getKey(assetID);
        byte[] key =cdnService.fetch(assetKey.getKeyURL());

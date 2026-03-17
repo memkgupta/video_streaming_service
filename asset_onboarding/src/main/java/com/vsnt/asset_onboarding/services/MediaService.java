@@ -4,10 +4,10 @@ import com.vsnt.asset_onboarding.dtos.media.request.MediaCreateRequestDTO;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.MediaPushKey;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
+import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.producers.MediaBlockedProducer;
 import com.vsnt.asset_onboarding.repositories.MediaPushKeyRepository;
 import com.vsnt.asset_onboarding.repositories.MediaRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -63,7 +63,7 @@ public class MediaService {
         Media media = getMedia(mediaId);
         if(media == null)
         {
-            throw new EntityNotFoundException("Media");
+            throw new EntityNotFoundException("Media",mediaId.toString());
         }
         media.setActive(false);
         mediaRepository.save(media);

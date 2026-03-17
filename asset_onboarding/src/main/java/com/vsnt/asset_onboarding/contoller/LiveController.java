@@ -7,6 +7,8 @@ import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
+import com.vsnt.asset_onboarding.exceptions.ForbiddenException;
+import com.vsnt.asset_onboarding.exceptions.UnauthorisedException;
 import com.vsnt.asset_onboarding.listeners.media.LiveMediaFinishHandler;
 import com.vsnt.asset_onboarding.services.AssetService;
 import com.vsnt.asset_onboarding.services.AuthorisationService;
@@ -63,11 +65,15 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
     Media media = mediaService.getMedia(mediaId);
     if(media == null)
     {
-        throw new EntityNotFoundException("Media");
+        throw new EntityNotFoundException("Media",mediaId.toString());
+    }
+    if(pushKey==null || pushKey.isEmpty())
+    {
+        throw new UnauthorisedException("Pause upload");
     }
     if(!authorisationService.canPush(media , pushKey))
     {
-        throw new RuntimeException("Access denied");
+        throw new ForbiddenException("Push content");
     }
     Asset asset = assetService.createAsset(
             media , liveVideoAssetCreation,metadata
@@ -98,11 +104,15 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
     Media media = mediaService.getMedia(mediaId);
     if(media == null)
     {
-        throw new EntityNotFoundException("Media");
+        throw new EntityNotFoundException("Media",mediaId.toString());
+    }
+    if(pushKey==null || pushKey.isEmpty())
+    {
+        throw new UnauthorisedException("Pause upload");
     }
     if(!authorisationService.canPush(media , pushKey))
     {
-        throw new RuntimeException("Access denied");
+        throw new ForbiddenException("Push content");
     }
     finishHandler.handle(media);
     return ResponseEntity.ok().build();

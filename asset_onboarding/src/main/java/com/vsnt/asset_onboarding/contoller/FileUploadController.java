@@ -2,6 +2,7 @@ package com.vsnt.asset_onboarding.contoller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vsnt.asset_onboarding.dtos.*;
+import com.vsnt.asset_onboarding.exceptions.ForbiddenException;
 import com.vsnt.asset_onboarding.exceptions.UnauthorisedException;
 import com.vsnt.asset_onboarding.services.AuthorisationService;
 import com.vsnt.asset_onboarding.services.UploadService;
@@ -36,9 +37,13 @@ public class FileUploadController {
     @PostMapping("/upload-chunk")
     public ResponseEntity<Map<String, String>> uploadChunk(@RequestBody ChunkUploadRequest chunkUploadRequest, HttpServletRequest request, @RequestHeader("X-PUSH-KEY") String pushKey) {
         String userId = request.getHeader("X-USER-ID");
+        if(pushKey==null || pushKey.isEmpty())
+        {
+            throw new UnauthorisedException("Pause upload");
+        }
         if(!authorisationService.canPush(String.valueOf(chunkUploadRequest.getAssetId()), pushKey))
         {
-            throw new UnauthorisedException("Push content to media");
+            throw new ForbiddenException("Push content to media");
         }
         String url = uploadService.uploadChunk(
                 chunkUploadRequest.getUploadId(),
@@ -61,12 +66,14 @@ public class FileUploadController {
             @Parameter(hidden = true) HttpServletRequest request,
            @Parameter(name = "Push key" , required = true, description = "Media push key given to user by the platform") @RequestHeader("X-PUSH-KEY") String pushKey
     ) {
-
-
         String userId = request.getHeader("X-USER-ID");
+        if(pushKey==null || pushKey.isEmpty())
+        {
+            throw new UnauthorisedException("Pause upload");
+        }
         if(!authorisationService.canPush(String.valueOf(finalizeUploadRequest.getAssetId()), pushKey))
         {
-            throw new UnauthorisedException("Finalize uploading");
+            throw new ForbiddenException("Finalize uploading");
         }
 
             uploadService.finishUpload(finalizeUploadRequest.getUploadId(),finalizeUploadRequest.getAssetId(),finalizeUploadRequest.getKey(),finalizeUploadRequest.getEtagMap(),userId);
@@ -86,9 +93,13 @@ public class FileUploadController {
             ) {
 
         String userId = request.getHeader("X-USER-ID");
+        if(pushKey==null || pushKey.isEmpty())
+        {
+            throw new UnauthorisedException("Pause upload");
+        }
         if(!authorisationService.canPush(String.valueOf(uploadPauseToggleRequest.getAssetId()), pushKey))
         {
-            throw new UnauthorisedException("Pause Upload");
+            throw new ForbiddenException("Pause Upload");
         }
         return uploadService.pauseUpload(
                 uploadPauseToggleRequest.getAssetId(),
@@ -109,6 +120,10 @@ public class FileUploadController {
             ) {
 
         String userId = request.getHeader("X-USER-ID");
+        if(pushKey==null || pushKey.isEmpty())
+        {
+            throw new UnauthorisedException("Pause upload");
+        }
         if(!authorisationService.canPush(String.valueOf(uploadPauseToggleRequest.getAssetId()), pushKey))
         {
             throw new UnauthorisedException("Resume Upload");

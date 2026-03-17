@@ -16,14 +16,14 @@ private final AESKeyGenerator aesKeyGenerator;
         this.aesKeyGenerator = aesKeyGenerator;
     }
 
-    public AssetAESKey generateKey(String assetId) throws Exception {
+    public void generateKey(String assetId) throws Exception {
     String keyURL = aesKeyGenerator.generateKey(assetId);
     AssetAESKey assetAESKey = new AssetAESKey();
     assetAESKey.setKeyURL(keyURL);
     assetAESKey.setAssetID(assetId);
-    return assetAESKeyRepository.save(assetAESKey);
-}
+        assetAESKeyRepository.save(assetAESKey);
+    }
 public AssetAESKey getKey(String assetID)  {
-        return assetAESKeyRepository.findByAssetID(assetID).orElseThrow(() -> new EntityNotFoundException("Key"));
+        return assetAESKeyRepository.findByAssetID(assetID).orElseThrow(() -> new EntityNotFoundException("Key",assetID));
 }
 }

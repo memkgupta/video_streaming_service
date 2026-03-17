@@ -79,11 +79,8 @@ public class MediaController {
     }
     @Operation(
             summary = "Delete media",
-            description = "Delete the media ",
-            parameters = {
-                    @Parameter(name = "X-ACCESS-SECRET" , required = true,in = ParameterIn.HEADER),
-                    @Parameter(name = "X-ACCESS-KEY" ,  required = true,in = ParameterIn.HEADER),
-            }
+            description = "Delete the media "
+
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMedia(@PathVariable UUID id)
@@ -93,11 +90,7 @@ public class MediaController {
     }
     @Operation(
             summary = "Fetch media",
-            description = "Fetch media by the id",
-            parameters = {
-                    @Parameter(name = "X-ACCESS-SECRET",required = true , in = ParameterIn.HEADER),
-                    @Parameter(name = "X-ACCESS-KEY" , required = true, in = ParameterIn.HEADER),
-            }
+            description = "Fetch media by the id"
     )
     @GetMapping("/{id}")
     public ResponseEntity<MediaDTO> getMedia(@PathVariable UUID id)
@@ -110,8 +103,7 @@ public class MediaController {
             summary = "Fetch all media",
             description = "Fetch all media in paginated way  ",
             parameters = {
-                    @Parameter(name = "X-ACCESS-SECRET",required = true , in = ParameterIn.HEADER),
-                    @Parameter(name = "X-ACCESS-KEY" , required = true, in = ParameterIn.HEADER),
+
                     @Parameter(name="page",required = true,in=ParameterIn.DEFAULT),
                     @Parameter(name = "limit",required = false ,in =  ParameterIn.DEFAULT),
             }
@@ -160,7 +152,7 @@ public class MediaController {
     Media media = mediaService.getMedia(id);
     if(media == null)
     {
-        throw new EntityNotFoundException("Media");
+        throw new EntityNotFoundException("Media",id.toString());
     }
     Asset asset = assetService.createAsset(media ,thumbnailAssetCreation,metaData);
     String preSignedURL = s3Service.startSingleUpload(asset.getKey(),asset.getFileType());
@@ -182,7 +174,7 @@ public class MediaController {
         Media media = mediaService.getMedia(id);
         if(media == null)
         {
-            throw new EntityNotFoundException("Media");
+            throw new EntityNotFoundException("Media",id.toString());
         }
         Asset asset = assetService.createAsset(media ,staticVideoAssetCreation,metaData);
         FileUploadStartResponse res = new  FileUploadStartResponse();
@@ -207,7 +199,7 @@ public class MediaController {
         Media media = mediaService.getMedia(id);
         if(media == null)
         {
-            throw new EntityNotFoundException("Media");
+            throw new EntityNotFoundException("Media",id.toString());
         }
         String[] tokens = deliverySecurityConfig.generateTokens(userId,media.getVideoAsset().getId().toString());
         return ResponseEntity.ok(Map.of("access_token",tokens[0],"refresh_token",tokens[1]));

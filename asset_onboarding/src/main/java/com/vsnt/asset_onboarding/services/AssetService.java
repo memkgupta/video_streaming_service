@@ -80,11 +80,6 @@ public class AssetService {
 //    }
     public <M> Asset createAsset(Media media , AssetCreationStrategy<M> strategy , M metadata)
     {
-
-        if(media==null)
-        {
-            throw new EntityNotFoundException("Media");
-        }
         return strategy.createAsset(media, metadata);
     }
 }
