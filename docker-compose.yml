@@ -1,10 +1,5 @@
-
-
 version: '3.8'
-
-
 services:
-
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper
@@ -86,7 +81,18 @@ services:
       - "8761:8761"
     networks:
       - app-net
-
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   api-gateway:
     build:
       context: ./api_gateway
@@ -100,55 +106,61 @@ services:
     networks:
       - app-net
 
-  channel-service:
-    build:
-      context: ./channel_service
-    ports:
-      - "8006:8006"
-    depends_on:
-      eureka-server:
-          condition: service_started
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
-      - DB_URL=jdbc:postgresql://postgres:5432/vsnt_channels
-      - KAFKA_URL=kafka:9092
-    networks:
-     - app-net
+
 
   asset-onboarding:
     build:
-      context: ./asset_onboarding
+      context: .
+      dockerfile: asset_onboarding/Dockerfile
     ports:
       - "8081:8081"
     depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       eureka-server:
         condition: service_started
     environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      # Eureka
+      - EUREKA_URL=http://eureka-server:8761/eureka
+
+      # DB (from postgres service)
       - DB_URL=jdbc:postgresql://postgres:5432/vsnt_assets
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=pass
+
+      # Kafka
       - KAFKA_URL=kafka:9092
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
-      - RABBITMQ_HOST=${RABBITMQ_HOST}
-      - RABBITMQ_PORT=${RABBITMQ_PORT}
-      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
 
-    networks:
-      - app-net
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
 
-  aggregator-service:
-    build:
-      context: ./aggregator-service
-    ports:
-      - "8008:8008"
-    depends_on:
-     eureka-server:
-       condition: service_started
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      # RabbitMQ (from service config)
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+
+      # AWS + CDN (⚠️ fill real values)
+      - AWS_ACCESS_KEY_ID=your_access_key
+      - AWS_SECRET_KEY=your_secret_key
+      - AWS_REGION=ap-south-1
+      - AWS_BUCKET_NAME=your_bucket
+      - AWS_SECURE_BUCKET=your_secure_bucket
+
+      - CLOUDFRONT_KEY_PAIR_ID=your_key_pair_id
+      - PRIVATE_KEY_PATH=/app/keys/private_key.pem
+      - CDN_RESOURCE_URL=https://your-cdn-url
+      - CDN_DOMAIN=your-domain
+
+    volumes:
+      - ./keys:/app/keys
+
     networks:
       - app-net
 
@@ -189,24 +201,12 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
       - DB_URL=jdbc:postgresql://postgres:5432/vsnt_user
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=pass
       - KAFKA_URL=kafka:9092
     networks:
       - app-net
 
-  video-service:
-    build:
-      context: ./videos_service
-    depends_on:
-     eureka-server:
-       condition: service_started
-    ports:
-      - "8007:8007"
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
-      - DB_URL=jdbc:postgresql://postgres:5432/vsnt_videos
-      - KAFKA_URL=kafka:9092
-    networks:
-      - app-net
 
 
 

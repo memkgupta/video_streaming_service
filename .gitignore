@@ -71,3 +71,4 @@ build/
 private_key.pem
 **/private_key.der
 cf_pub.pem
+keys/private_key.pem

@@ -15,4 +15,6 @@ public class Secrets {
             System.getenv("CDN_DOMAIN");
     public static final String AWS_SECURE_BUCKET =
     System.getenv("AWS_SECURE_BUCKET");
+    public static final String KAFKA_BOOTSTRAP_SERVERS =
+            System.getenv("KAFKA_URL");
 }

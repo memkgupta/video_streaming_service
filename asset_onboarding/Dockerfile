@@ -1,23 +1,22 @@
-# Stage 1: Build
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+
 WORKDIR /app
 
-# Copy pom.xml and download dependencies first (cache optimization)
-COPY pom.xml .
-COPY src ./src
+# copy both projects
+COPY common-lib ./common-lib
+COPY asset_onboarding ./asset_onboarding
 
-RUN mvn clean package -DskipTests
+# build common lib first
+RUN cd common-lib && mvn clean install
 
-# Stage 2: Run
-FROM eclipse-temurin:17-jdk-alpine
-VOLUME /tmp
+# then build main service
+RUN cd asset_onboarding && mvn clean package -DskipTests
+
+# runtime image
+FROM eclipse-temurin:17
+
 WORKDIR /app
 
-# Copy the fat JAR from builder stage
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/asset_onboarding/target/*.jar app.jar
 
-# Set timezone if you want
-ENV TZ=Asia/Kolkata
-
-# Run the Spring Boot app
-ENTRYPOINT ["java","-jar","app.jar"]
+CMD ["java", "-jar", "app.jar"]
