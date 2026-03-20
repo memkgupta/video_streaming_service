@@ -2,6 +2,7 @@ require('dotenv').config();
 const NodeMediaServer = require('node-media-server');
 const { Kafka } = require('kafkajs');
 const { spawnContainer } = require('./docker');
+const { default: axios } = require('axios');
 
 
 console.log(process.env)
@@ -37,7 +38,10 @@ async function startServer() {
     const streamId = StreamPath.split("/")[2];
    if(!containerMap.has(streamId))
    {
-    const container = await spawnContainer(streamId);
+    const req = await axios.post(`http://localhost:8081/live/${streamId}`,{mediaId:streamId});
+    const liveStart = req.data;
+    
+    const container = await spawnContainer(streamId,liveStart.assetId , liveStart.encryptionKey);
     containerMap.set(streamId,container)
    }
   console.log('[NodeEvent on postPublish]', `id=${id} StreamPath=${StreamPath}`);
@@ -51,6 +55,7 @@ nms.on('donePublish', async(id, StreamPath, args) => {
     {
       throw new Error("Container not found")
     }
+     const req = await axios.put(`http://localhost:8081/live/end/${streamId}`);
     containerMap.delete(streamId);
     await container.stop();
     

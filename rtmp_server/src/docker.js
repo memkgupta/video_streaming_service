@@ -2,13 +2,13 @@ const Docker = require('dockerode');
 const Secrets = require('./secrets');
 const docker = new Docker(); // connects to /var/run/docker.sock
 
-async function spawnContainer(streamId ) {
+async function spawnContainer(streamId,assetId,encryptionKey ) {
   // Pull image first
 
 
   // Create and start container
    const container = await docker.createContainer({
-        Image: 'live_transcoder:latest',
+        Image: 'transcoding_container:latest',
         name: `live_transcoder-${streamId}`,
 
         // VERY IMPORTANT
@@ -19,13 +19,19 @@ async function spawnContainer(streamId ) {
         Tty:          false,
 
         Env: [
-            `STREAM_KEY=${streamId}`,
-            `S3_BUCKET=${Secrets.AWS_TRANSCODED_BUCKET_NAME}`,
-            `AWS_ACCESS_KEY=${Secrets.AWS_ACCESS_KEY_ID}`,
-            `AWS_SECRET_KEY=${Secrets.AWS_SECRET_KEY}`,
-            `KAFKA_BOOTSTRAP=kafka:9092`,
-            `KAFKA_TOPIC=stream-chunk-updates`,
-            `CDN_BASE_URL=${Secrets.CLOUD_FRONT_URL}`,
+            `MEDIA_ID=${streamId}`,
+            `ENCRYPTION_KEY=${encryptionKey}`,
+            `MEDIA_TYPE=LIVE`,
+            `ASSET_ID=${assetId}`,
+            `BUCKET_NAME=springbucketdemo`,
+            `FILE_KEY=rtmp://host.docker.internal:1935/live/${streamId}`,
+            `TRANSCODED_BUCKET_NAME=${Secrets.AWS_TRANSCODED_BUCKET_NAME}`,
+            `ACCESS_KEY=${Secrets.AWS_ACCESS_KEY_ID}`,
+            `SECRET_KEY=${Secrets.AWS_SECRET_KEY}`,
+            `KAFKA_BROKERS=kafka:9092`,
+            `PUBLIC_KEY_URL=http://host.docker.internal:8081/v1/key/${assetId}`,
+            `UPDATE_TOPIC_NAME=asset-transcoding-updates`,
+            `CLOUDFRONT_URL=${Secrets.CLOUD_FRONT_URL}`,
         ],
 
         HostConfig: {
