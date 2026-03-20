@@ -222,6 +222,27 @@ services:
     networks:
       - app-net
 
+  rtmp_sever:
+    build:
+      context: .
+    depends_on:
+       kafka:
+        condition: service_healthy
+       eureka-server:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+      - "1935:1935"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_RAW_BUCKET_NAME: ${AWS_RAW_BUCKET_NAME}
+      AWS_TRANSCODED_BUCKET_NAME: ${AWS_TRANSCODED_BUCKET_NAME}
+      DOCKER_TRANSCODER_CONTAINER_IMAGE: ${DOCKER_TRANSCODER_CONTAINER_IMAGE}
+      CLOUD_FRONT_URL: ${CLOUD_FRONT_URL}
+
+
 networks:
   app-net:
     driver: bridge
