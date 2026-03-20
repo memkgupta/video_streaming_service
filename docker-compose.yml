@@ -1,15 +1,17 @@
 version: '3.8'
+name: 'q4-video'
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
-    container_name: zookeeper
+    container_name: zookeeper_q4
     networks:
       - app-net
     ports:
       - "2181:2181"
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
     healthcheck:
       test: echo srvr | nc zookeeper 2181 || exit 1
       interval: 10s
@@ -17,21 +19,21 @@ services:
       retries: 5
 
   kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: kafka
+    image: confluentinc/cp-kafka:7.2.1
+    container_name: kafka_q4
     networks:
       - app-net
     ports:
       - "9092:9092"
-      - "29092:29092"  # external access from host machine
+      - "29092:29092"
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:29092
-      KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:29092
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_LISTENERS: ${KAFKA_LISTENERS}
+      KAFKA_INTER_BROKER_LISTENER_NAME: ${KAFKA_INTER_BROKER_LISTENER_NAME}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -42,37 +44,64 @@ services:
       retries: 5
       start_period: 20s
 
+  redis:
+    image: redis:7
+    container_name: redis_q4
+    ports:
+      - "6379:6379"
+    networks:
+      - app-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_q4
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    networks:
+      - app-net
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   postgres:
     image: postgres:15
-    container_name: postgres
+    container_name: postgres_q4
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: default_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5431:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-
     networks:
       - app-net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
-      test: pg_isready -U postgres || exit 1
+      test: pg_isready -U ${POSTGRES_USER} || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"    # For messaging
-      - "15672:15672"  # For UI dashboard
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-    networks:
-      - app-net
 
   eureka-server:
     build:
@@ -81,18 +110,10 @@ services:
       - "8761:8761"
     networks:
       - app-net
-  redis:
-    image: redis:7
-    container_name: redis
-    ports:
-      - "6379:6379"
-    networks:
-      - app-net
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api-gateway:
     build:
       context: ./api_gateway
@@ -102,11 +123,9 @@ services:
       eureka-server:
         condition: service_started
     environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
     networks:
       - app-net
-
-
 
   asset-onboarding:
     build:
@@ -121,46 +140,34 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       eureka-server:
         condition: service_started
     environment:
-      # Eureka
-      - EUREKA_URL=http://eureka-server:8761/eureka
-
-      # DB (from postgres service)
-      - DB_URL=jdbc:postgresql://postgres:5432/vsnt_assets
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=pass
-
-      # Kafka
-      - KAFKA_URL=kafka:9092
-
-      # Redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=
-
-      # RabbitMQ (from service config)
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
-
-      # AWS + CDN (⚠️ fill real values)
-      - AWS_ACCESS_KEY_ID=your_access_key
-      - AWS_SECRET_KEY=your_secret_key
-      - AWS_REGION=ap-south-1
-      - AWS_BUCKET_NAME=your_bucket
-      - AWS_SECURE_BUCKET=your_secure_bucket
-
-      - CLOUDFRONT_KEY_PAIR_ID=your_key_pair_id
-      - PRIVATE_KEY_PATH=/app/keys/private_key.pem
-      - CDN_RESOURCE_URL=https://your-cdn-url
-      - CDN_DOMAIN=your-domain
-
+      EUREKA_URL: ${EUREKA_URL}
+      DB_URL: ${ASSET_DB_URL}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KAFKA_URL: ${KAFKA_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+      AWS_SECURE_BUCKET: ${AWS_SECURE_BUCKET}
+      CLOUDFRONT_KEY_PAIR_ID: ${CLOUDFRONT_KEY_PAIR_ID}
+      PRIVATE_KEY_PATH: ${PRIVATE_KEY_PATH}
+      CDN_RESOURCE_URL: ${CDN_RESOURCE_URL}
+      CDN_DOMAIN: ${CDN_DOMAIN}
     volumes:
       - ./keys:/app/keys
-
     networks:
       - app-net
 
@@ -170,23 +177,27 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
+      kafka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       eureka-server:
         condition: service_started
     ports:
       - "8082:8082"
     environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
-      - KAFKA_URL=kafka:9092
-      - RABBITMQ_HOST=${RABBITMQ_HOST}
-      - RABBITMQ_PORT=${RABBITMQ_PORT}
-      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
-      - AWS_RAW_BUCKET_NAME=${AWS_RAW_BUCKET_NAME}
-      - AWS_TRANSCODED_BUCKET_NAME=${AWS_TRANSCODED_BUCKET_NAME}
-      - DOCKER_TRANSCODER_CONTAINER_IMAGE=${DOCKER_TRANSCODER_CONTAINER_IMAGE}
-      - CLOUD_FRONT_URL=${CLOUD_FRONT_URL}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
+      KAFKA_URL: ${KAFKA_URL}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_RAW_BUCKET_NAME: ${AWS_RAW_BUCKET_NAME}
+      AWS_TRANSCODED_BUCKET_NAME: ${AWS_TRANSCODED_BUCKET_NAME}
+      DOCKER_TRANSCODER_CONTAINER_IMAGE: ${DOCKER_TRANSCODER_CONTAINER_IMAGE}
+      CLOUD_FRONT_URL: ${CLOUD_FRONT_URL}
     networks:
       - app-net
 
@@ -194,22 +205,22 @@ services:
     build:
       context: ./user
     depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
       eureka-server:
         condition: service_started
     ports:
       - "8080:8080"
     environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
-      - DB_URL=jdbc:postgresql://postgres:5432/vsnt_user
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=pass
-      - KAFKA_URL=kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
+      DB_URL: ${USER_DB_URL}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KAFKA_URL: ${KAFKA_URL}
     networks:
       - app-net
-
-
-
-
 
 networks:
   app-net:

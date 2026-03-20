@@ -1,5 +1,6 @@
 package com.vsnt.api_gateway.config.security;
 
+import com.vsnt.api_gateway.config.RouteValidator;
 import com.vsnt.api_gateway.utils.JWTService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -16,14 +17,19 @@ import reactor.core.publisher.Mono;
 @Component
 public class JWTFilter implements WebFilter {
     private final JWTService jwtService;
-    public JWTFilter(JWTService jwtService) {
+    private final RouteValidator routeValidator;
+
+    public JWTFilter(JWTService jwtService, RouteValidator routeValidator) {
         this.jwtService = jwtService;
+        this.routeValidator = routeValidator;
     }
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        if(!routeValidator.isSecured.test(exchange.getRequest())) {
+            return chain.filter(exchange);
+        }
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
-                .defaultIfEmpty(null)
                 .flatMap(authentication -> {
                     if(authentication!=null && authentication.isAuthenticated())
                     {

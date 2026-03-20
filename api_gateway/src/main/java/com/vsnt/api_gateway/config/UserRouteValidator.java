@@ -9,10 +9,7 @@ import java.util.function.Predicate;
 @Component
 public class UserRouteValidator {
     public static final List<String> openApiEndpoints = List.of(
-            "/api/user/auth/register",
-            "/api/user/auth/login",
-            "/api/user/v3/api-docs",
-            "/api/user/token/refresh-token"
+
     );
     /*all the secured routes need a access token in there request */
     public Predicate<ServerHttpRequest> isSecured =

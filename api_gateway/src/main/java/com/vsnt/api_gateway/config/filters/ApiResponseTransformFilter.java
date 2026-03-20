@@ -28,6 +28,7 @@ import java.util.Map;
 import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.ORIGINAL_RESPONSE_CONTENT_TYPE_ATTR;
 
 @Component
+@Deprecated
 public class ApiResponseTransformFilter extends AbstractGatewayFilterFactory<ApiResponseTransformFilter.Config> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -54,19 +55,20 @@ public class ApiResponseTransformFilter extends AbstractGatewayFilterFactory<Api
             ServerHttpResponseDecorator decorator = new ServerHttpResponseDecorator(originalResponse) {
 
                 @Override
+
                 public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
+
+                    getHeaders().remove(HttpHeaders.CONTENT_LENGTH);
 
                     String path = exchange.getRequest().getPath().toString();
 
-                    // Skip swagger
-                    if (path.contains("/v3/api-docs")) {
+                    if (path.contains("/v3/api-docs") || path.contains("/swagger-ui")) {
                         return super.writeWith(body);
                     }
 
                     HttpHeaders headers = getHeaders();
                     MediaType contentType = headers.getContentType();
 
-                    // Only JSON responses
                     if (contentType == null || !MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {
                         return super.writeWith(body);
                     }
@@ -82,34 +84,27 @@ public class ApiResponseTransformFilter extends AbstractGatewayFilterFactory<Api
                         String responseBody = new String(content, StandardCharsets.UTF_8);
 
                         Object parsedBody;
-
                         try {
                             parsedBody = objectMapper.readValue(responseBody, Object.class);
                         } catch (Exception e) {
-                            parsedBody = responseBody; // fallback
+                            parsedBody = responseBody;
                         }
-
 
                         if (parsedBody instanceof Map<?, ?> map && map.containsKey("success")) {
                             DataBuffer buffer = bufferFactory.wrap(content);
+                            DataBufferUtils.retain(buffer);
                             return super.writeWith(Mono.just(buffer));
                         }
 
                         int status = getStatusCode() != null ? getStatusCode().value() : 200;
-
-                        APIResponse apiResponse;
-
-                        if (status >= 400) {
-
-                            apiResponse = APIResponse.error(parsedBody);
-                        } else {
-                            // ✅ SUCCESS CASE
-                            apiResponse = APIResponse.success(parsedBody);
-                        }
+                        APIResponse apiResponse = status >= 400
+                                ? APIResponse.error(parsedBody)
+                                : APIResponse.success(parsedBody);
 
                         try {
                             byte[] newContent = objectMapper.writeValueAsBytes(apiResponse);
                             DataBuffer buffer = bufferFactory.wrap(newContent);
+                            DataBufferUtils.retain(buffer);
                             return super.writeWith(Mono.just(buffer));
                         } catch (JsonProcessingException e) {
                             return Mono.error(e);
