@@ -10,7 +10,7 @@ import java.util.Date;
 
 public abstract class CDNSecurityConfig {
     protected final String keyPairId = Secrets.CLOUDFRONT_KEY_PAIR_ID;
-    protected final String privateKeyPath = "private_key.pem";
+    protected final String privateKeyPath = Secrets.PRIVATE_KEY_PATH;
     protected final String resourceURL = Secrets.CDN_RESOURCE_URL;
     protected static final CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
     public abstract String generateSignedURL(String path , boolean wildcard);

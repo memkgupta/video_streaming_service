@@ -3,6 +3,7 @@ package com.vsnt.user.services;
 
 import com.vsnt.user.entities.Token;
 import com.vsnt.user.entities.User;
+import com.vsnt.user.exceptions.BadCredentialsException;
 import com.vsnt.user.exceptions.BadRequestException;
 import com.vsnt.user.exceptions.UserAlreadyExistsException;
 import com.vsnt.user.exceptions.UserNotFoundException;
@@ -14,10 +15,7 @@ import com.vsnt.user.payload.auth.UserDTO;
 import com.vsnt.user.repositories.TokenRepository;
 import com.vsnt.user.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,5 +1,6 @@
 package com.vsnt.api_gateway.config.security;
 
+import com.vsnt.api_gateway.config.RouteValidator;
 import com.vsnt.api_gateway.utils.JWTService;
 import io.jsonwebtoken.Claims;
 import org.springframework.http.HttpStatus;
@@ -23,14 +24,18 @@ import java.util.List;
 @Component
 public class AccessTokenFilter implements WebFilter {
     private final JWTService jwtService;
+    private final RouteValidator routeValidator;
 
-    public AccessTokenFilter(JWTService jwtService) {
+    public AccessTokenFilter(JWTService jwtService, RouteValidator routeValidator) {
         this.jwtService = jwtService;
+        this.routeValidator = routeValidator;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-
+        if(!routeValidator.isSecured.test(exchange.getRequest())) {
+            return chain.filter(exchange);
+        }
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
                 .defaultIfEmpty(null)

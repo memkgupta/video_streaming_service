@@ -1,5 +1,6 @@
 package com.vsnt.api_gateway.config.security;
 
+import com.vsnt.api_gateway.config.RouteValidator;
 import com.vsnt.api_gateway.config.dtos.ApiKeyValidationResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -24,13 +25,18 @@ public class ApiKeyAuthenticationFilter implements WebFilter {
     private final WebClient webClient;
     private static final String ACCESS_KEY_HEADER = "X-ACCESS-KEY";
     private static final String SECRET_KEY_HEADER = "X-SECRET-KEY";
+    private final RouteValidator routeValidator;
 
-    public ApiKeyAuthenticationFilter(WebClient webClient) {
+    public ApiKeyAuthenticationFilter(WebClient webClient, RouteValidator routeValidator) {
         this.webClient = webClient;
+        this.routeValidator = routeValidator;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        if(!routeValidator.isSecured.test(exchange.getRequest())) {
+            return chain.filter(exchange);
+        }
         String access_key =  exchange.getRequest().getHeaders().getFirst(ACCESS_KEY_HEADER);
         String secret_key =  exchange.getRequest().getHeaders().getFirst(SECRET_KEY_HEADER);
         if(access_key!=null && !access_key.isEmpty() && secret_key!=null && !secret_key.isEmpty()){
