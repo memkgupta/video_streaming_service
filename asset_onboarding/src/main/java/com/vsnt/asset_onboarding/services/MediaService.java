@@ -48,6 +48,7 @@ public class MediaService {
         media.setAccessibility(request.getMediaAccessibility());
         media.setMediaType(request.getMediaType());
         media.setPushKey(mediaPushKey);
+        media.setStatus(MediaStatus.CREATED);
         media.setModerationEnabled(request.isModeration());
         return mediaRepository.save(media);
     }

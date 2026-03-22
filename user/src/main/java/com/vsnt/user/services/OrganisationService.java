@@ -21,7 +21,8 @@ public class OrganisationService {
     public Organisation createOrganisation(String name , String adminId)
     {
         User admin = userService.getUserDetails(adminId);
-
+        System.out.println(adminId);
+        System.out.println(admin.getId());
         Organisation organisation = new Organisation();
         organisation.setName(name);
         organisation.setAdmin(admin);

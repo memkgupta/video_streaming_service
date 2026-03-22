@@ -27,8 +27,8 @@ public class ApiKeyAuthenticationFilter implements WebFilter {
     private static final String SECRET_KEY_HEADER = "X-SECRET-KEY";
     private final RouteValidator routeValidator;
 
-    public ApiKeyAuthenticationFilter(WebClient webClient, RouteValidator routeValidator) {
-        this.webClient = webClient;
+    public ApiKeyAuthenticationFilter(WebClient.Builder builder, RouteValidator routeValidator) {
+        this.webClient = builder.build();
         this.routeValidator = routeValidator;
     }
 
@@ -40,10 +40,12 @@ public class ApiKeyAuthenticationFilter implements WebFilter {
         String access_key =  exchange.getRequest().getHeaders().getFirst(ACCESS_KEY_HEADER);
         String secret_key =  exchange.getRequest().getHeaders().getFirst(SECRET_KEY_HEADER);
         if(access_key!=null && !access_key.isEmpty() && secret_key!=null && !secret_key.isEmpty()){
+            System.out.println(access_key);
+            System.out.println(secret_key);
           return validateAPIKey(access_key,secret_key)
                    .flatMap(res->
                    {
-                       if(res==null || res.isValid())
+                       if(res==null || !res.isValid())
                        {
                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                            return exchange.getResponse().setComplete();
@@ -64,6 +66,7 @@ public class ApiKeyAuthenticationFilter implements WebFilter {
 
                    })
                   .onErrorResume(err->{
+                      err.printStackTrace();
                       exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
                       return exchange.getResponse().setComplete();
                   })
@@ -75,7 +78,7 @@ public class ApiKeyAuthenticationFilter implements WebFilter {
         List<GrantedAuthority> authorities = new ArrayList<>();
   return webClient.get()
 
-                .uri("/auth/validate-key")
+                .uri("lb://user/v1/authorise/validate-key")
                 .header("X-ACCESS-KEY", accessKey)
                 .header("X-ACCESS-SECRET", secretKey)
                 .retrieve()

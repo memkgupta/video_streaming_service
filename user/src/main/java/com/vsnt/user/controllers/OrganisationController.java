@@ -52,10 +52,10 @@ public class OrganisationController {
             throw new  RuntimeException("Organisation Already Exists");
         }
         Organisation organisation = organisationService.createOrganisation(
-                organisationDTO.getName(),organisationDTO.getAdminId()
+                organisationDTO.getName(),userId
         );
         return ResponseEntity.ok(OrganisationDTO.builder()
-                .adminId(organisationDTO.getAdminId())
+                .adminId(organisation.getAdmin().getId())
                 .id(organisation.getId())
                 .name(organisation.getName())
                 .build());

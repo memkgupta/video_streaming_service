@@ -30,13 +30,13 @@ public class TokenService {
            throw new BadRequestException("Token is expired");
        }
 
-           return jwtService.generateToken(t.getUser().getEmail());
+           return jwtService.generateToken(t.getUser().getId());
 
 
     }
 
     public String generateToken(User user) {
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(user.getId());
         Token t= new Token();
         t.setUser(user);
         t.setToken(token);

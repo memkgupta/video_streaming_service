@@ -56,12 +56,9 @@ public class AccessTokenFilter implements WebFilter {
             return chain.filter(exchange);
         }
 
-        if (!raw.startsWith("Bearer ")) {
-            exchange.getResponse().setStatusCode(HttpStatus.NON_AUTHORITATIVE_INFORMATION);
-            return exchange.getResponse().setComplete();
-        }
 
-        String token = raw.substring(7); // ✅ strip prefix before use
+
+        String token = raw;
 
         if (jwtService.isTokenExpired(token)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);

@@ -15,7 +15,9 @@ public class RouteValidator {
             "/api/user/v3/api-docs",
 
             "/api/asset_onboarding/v3/api-docs",
-            "/api/asset_onboarding/v1/live" , //todo replace with a separate authentication filter
+            "/api/asset_onboarding/v1/live",
+            "/api/asset_onboarding/v1/file",
+             //todo replace with a separate authentication filter
             "/api/user/v1/auth/register",
             "/api/user/v1/auth/login",
             "/api/user/v1/token/refresh-token"

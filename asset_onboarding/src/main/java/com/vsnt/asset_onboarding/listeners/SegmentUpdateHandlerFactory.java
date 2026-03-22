@@ -8,14 +8,15 @@ import java.util.List;
 @Component
 public class SegmentUpdateHandlerFactory {
     private final List<SegmentUpdateHandler> handlers;
-
-    public SegmentUpdateHandlerFactory(List<SegmentUpdateHandler> handlers) {
+    private final StaticSegmentUpdateHandler staticSegmentUpdateHandler;
+    public SegmentUpdateHandlerFactory(List<SegmentUpdateHandler> handlers , StaticSegmentUpdateHandler staticSegmentUpdateHandler) {
         this.handlers = handlers;
+        this.staticSegmentUpdateHandler = staticSegmentUpdateHandler;
     }
 
     public SegmentUpdateHandler getSegmentUpdateHandler(MediaType mediaType){
-    return handlers.stream().filter(h -> h.support().equals(mediaType)).findFirst().orElseThrow(
-            ()-> new IllegalArgumentException("Segment update handler not found")
+    return handlers.stream().filter(h -> h.support().equals(mediaType)).findFirst().orElse(
+           staticSegmentUpdateHandler
     );
 }
 }

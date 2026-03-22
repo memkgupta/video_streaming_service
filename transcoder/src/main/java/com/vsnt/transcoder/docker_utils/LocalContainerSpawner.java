@@ -24,7 +24,7 @@ public class LocalContainerSpawner implements ContainerSpawner {
         CreateContainerResponse container = dockerClient.createContainerCmd(Secrets.DOCKER_TRANSCODER_CONTAINER_IMAGE)
 
                 .withName("transcoding_image-"+assetId)
-                .withNetworkMode("url_shortener_backend_app-net")
+                .withNetworkMode("q4-video_app-net")
                 .withEnv(
                         List.of(
                                 "ACCESS_KEY="+ACCESS_KEY,
@@ -33,6 +33,7 @@ public class LocalContainerSpawner implements ContainerSpawner {
                                 "TRANSCODED_BUCKET_NAME="+Secrets.AWS_TRANSCODED_BUCKET_NAME,
                                 "FILE_KEY="+assetKey,
                                 "MEDIA_ID="+mediaId,
+                                "MEDIA_TYPE="+"STATIC",
                                 "ASSET_ID="+assetId,
                                 "ENCRYPTION_KEY="+new String(encryptionKey),
                                 "CLOUDFRONT_URL="+Secrets.CLOUD_FRONT_URL,
