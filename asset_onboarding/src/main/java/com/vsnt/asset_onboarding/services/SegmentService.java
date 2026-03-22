@@ -138,7 +138,7 @@ public class SegmentService {
                     .append("\n");
 
             // URL to variant playlist endpoint
-            sb.append("http://localhost:8081/watch/live/")
+            sb.append("http://localhost:8081/v1/watch/live/")
                     .append(media.getId())
                     .append("/")
                     .append(resolution)
@@ -179,7 +179,7 @@ public class SegmentService {
                     .append("\n");
 
             // URL to variant playlist endpoint
-            sb.append("http://localhost:8081/watch/live/")
+            sb.append("http://localhost:8081/v1/watch/live/")
                     .append(media.getId())
                     .append("/")
                     .append(resolution)

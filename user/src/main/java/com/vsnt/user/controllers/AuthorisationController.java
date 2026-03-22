@@ -32,5 +32,4 @@ public class AuthorisationController {
         return ResponseEntity.ok(Map.of("organisationId",apiKey.getOrganisation().getId().toString()));
     }
 
-
 }

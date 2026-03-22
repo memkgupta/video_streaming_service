@@ -28,7 +28,7 @@ import java.util.UUID;
         description = "Endpoints for watching the media for end users , requires access token in form of bearer auth"
 )
 @RestController
-@RequestMapping("/watch")
+@RequestMapping("/v1/watch")
 public class WatchController {
     private final MediaService mediaService;
     private final DeliverySecurityConfig deliverySecurityConfig;
@@ -56,7 +56,7 @@ public class WatchController {
             description = "offset in milliseconds"
     ) @RequestParam(
             defaultValue = "-1"
-    ) long start ,@RequestHeader("X-ASSET-ID") String assetId, @RequestHeader("X-USER-ID")String userId, HttpServletResponse httpServletResponse)
+    ) long start ,@RequestHeader("X-ASSET-ID") String assetId, HttpServletResponse httpServletResponse)
     {
         Media media = mediaService.getMedia(mediaId);
         if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))

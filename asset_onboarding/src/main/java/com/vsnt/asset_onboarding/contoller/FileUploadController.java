@@ -26,7 +26,7 @@ import java.util.Map;
                 """
 )
 @RestController
-@RequestMapping("/")
+@RequestMapping("/v1/file")
 public class FileUploadController {
     private final UploadService uploadService;
     private final AuthorisationService authorisationService;

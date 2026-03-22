@@ -33,7 +33,7 @@ import java.util.UUID;
                 """
 )
 @RestController
-@RequestMapping("/live")
+@RequestMapping("/v1/live")
 public class LiveController {
     private final MediaService mediaService;
     private final LiveVideoAssetCreation liveVideoAssetCreation;

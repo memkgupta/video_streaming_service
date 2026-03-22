@@ -17,7 +17,7 @@ description = """
         Endpoints for managing organisation
         """)
 @RestController
-@RequestMapping("/api/v1/organisation")
+@RequestMapping("/v1/organisation")
 public class OrganisationController {
     private final OrganisationService organisationService;
     private final APIKeyService apiKeyService;
