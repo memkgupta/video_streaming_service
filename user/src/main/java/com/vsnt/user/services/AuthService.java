@@ -75,6 +75,7 @@ public class AuthService {
             if (user == null) {
                 throw new RuntimeException("User not found");
             }
+
             if (!bCryptPasswordEncoder.matches(password, user.getPassword())) {
 
                 throw new BadCredentialsException("Bad credentials");

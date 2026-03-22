@@ -56,7 +56,7 @@ public class WatchController {
             description = "offset in milliseconds"
     ) @RequestParam(
             defaultValue = "-1"
-    ) long start ,@RequestHeader("X-ASSET-ID") String assetId, HttpServletResponse httpServletResponse)
+    ) long start ,@RequestHeader("X-ACCESS-TOKEN") String assetId, HttpServletResponse httpServletResponse)
     {
         Media media = mediaService.getMedia(mediaId);
         if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))

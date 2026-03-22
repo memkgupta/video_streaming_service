@@ -30,6 +30,8 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequestPayload userDTO) {
+        System.out.println("Received login request ");
+        System.out.println(userDTO);
         return ResponseEntity.ok(authService.login(userDTO.getEmail(), userDTO.getPassword()));
     }
 

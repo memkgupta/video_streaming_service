@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/authorise")
+@RequestMapping("/v1/authorise")
 public class AuthorisationController {
 
     private final APIKeyService apiKeyService;

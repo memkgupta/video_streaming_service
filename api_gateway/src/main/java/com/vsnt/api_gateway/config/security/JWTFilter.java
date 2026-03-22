@@ -25,47 +25,55 @@ public class JWTFilter implements WebFilter {
     }
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        if(!routeValidator.isSecured.test(exchange.getRequest())) {
+        if (!routeValidator.isSecured.test(exchange.getRequest())) {
             return chain.filter(exchange);
         }
+
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
                 .flatMap(authentication -> {
-                    if(authentication!=null && authentication.isAuthenticated())
-                    {
+                    if (authentication != null && authentication.isAuthenticated()) {
                         return chain.filter(exchange);
                     }
-                    String authHeader = exchange.getRequest()
-                            .getHeaders()
-                            .getFirst("Authorization");
+                    return authenticateWithJwt(exchange, chain);
+                })
+                .switchIfEmpty(Mono.defer(() -> authenticateWithJwt(exchange, chain)));
+    }
 
-                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                        String token = authHeader.substring(7);
+    private Mono<Void> authenticateWithJwt(ServerWebExchange exchange, WebFilterChain chain) {
+        String authHeader = exchange.getRequest()
+                .getHeaders()
+                .getFirst("Authorization");
 
-                        return jwtService.validate(token)  // your own logic
-                                .flatMap(userDetails -> {
-                                    Authentication auth = new UsernamePasswordAuthenticationToken(
-                                            userDetails.getUsername(), null, userDetails.getAuthorities()
-                                    );
-                                    ServerHttpRequest mutatedRequest = exchange.getRequest()
-                                            .mutate()
-                                            .header("X-USER-ID", userDetails.getUsername())
-                                            .build();
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+        System.out.println("Auth header : " + authHeader);
+        String token = authHeader.substring(7);
+        System.out.println("token: " + token);
+        return jwtService.validate(token)
+                .flatMap(userDetails -> {
+                    Authentication auth = new UsernamePasswordAuthenticationToken(
+                            userDetails.getUsername(), null, userDetails.getAuthorities()
+                    );
+                    System.out.println("auth: " + auth);
+                    ServerHttpRequest mutatedRequest = exchange.getRequest()
+                            .mutate()
+                            .header("X-USER-ID", userDetails.getUsername())
+                            .build();
 
-                                    ServerWebExchange mutatedExchange = exchange.mutate()
-                                            .request(mutatedRequest)
-                                            .build();
-                                    return chain.filter(mutatedExchange)
-                                            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
-                                })
-                                .onErrorResume(e -> {
-                                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                                    return exchange.getResponse().setComplete();
-                                });
-                    }
+                    ServerWebExchange mutatedExchange = exchange.mutate()
+                            .request(mutatedRequest)
+                            .build();
 
-                    return chain.filter(exchange);
+                    return chain.filter(mutatedExchange)
+                            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
+                })
+                .onErrorResume(e -> {
+                    e.printStackTrace();
+                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                    return exchange.getResponse().setComplete();
                 });
-
     }
 }

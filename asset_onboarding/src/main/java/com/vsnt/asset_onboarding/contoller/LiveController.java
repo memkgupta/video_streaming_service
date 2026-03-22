@@ -62,6 +62,7 @@ summary = "Start the live",
 )
 public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId, @RequestBody LiveVideoAssetCreationRequestDTO  metadata,@RequestHeader("X-PUSH-KEY") String pushKey)
 {
+    System.out.println("Live start");
     Media media = mediaService.getMedia(mediaId);
     if(media == null)
     {
@@ -69,7 +70,7 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
     }
     if(pushKey==null || pushKey.isEmpty())
     {
-        throw new UnauthorisedException("Pause upload");
+        throw new UnauthorisedException("Push Content");
     }
     if(!authorisationService.canPush(media , pushKey))
     {
