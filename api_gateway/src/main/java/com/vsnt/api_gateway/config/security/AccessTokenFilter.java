@@ -33,50 +33,56 @@ public class AccessTokenFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        if(!routeValidator.isSecured.test(exchange.getRequest())) {
+        if (!routeValidator.isSecured.test(exchange.getRequest())) {
             return chain.filter(exchange);
         }
+
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
-                .defaultIfEmpty(null)
                 .flatMap(authentication -> {
-                    if(authentication!=null && authentication.isAuthenticated())
-                    {
+                    if (authentication != null && authentication.isAuthenticated()) {
                         return chain.filter(exchange);
                     }
-                    String token = exchange.getRequest().getHeaders().getFirst("X-ACCESS-TOKEN");
-                    if(token == null || token.isEmpty())
-                    {
-                        return chain.filter(exchange);
-                    }
-                    if(!token.startsWith("Bearer "))
-                    {
-                        exchange.getResponse().setStatusCode(HttpStatus.NON_AUTHORITATIVE_INFORMATION);
-                        return exchange.getResponse().setComplete();
-                    }
-                    if(jwtService.isTokenExpired(token))
-                    {
-                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        return exchange.getResponse().setComplete();
-                    }
-                    String assetId = jwtService.extractClaims(token,(claims)->{
-                        return claims.get("assetId",String.class);
-                    });
-                    String userId = jwtService.extractClaims(token, Claims::getSubject);
+                    return processAccessToken(exchange, chain);
+                })
+                .switchIfEmpty(Mono.defer(() -> processAccessToken(exchange, chain)));
+    }
 
-                    ServerHttpRequest mutatedRequest = exchange.getRequest()
-                            .mutate()
-                            .header("X-ASSET-ID",assetId)
-                            .header("X-USER-ID",userId)
-                            .build();
-                    ServerWebExchange mutatedExchange = exchange
-                            .mutate()
-                            .request(mutatedRequest).build();
-                    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-                    Authentication auth = new PreAuthenticatedAuthenticationToken(assetId,null,grantedAuthorities);
-                    return chain.filter(mutatedExchange)
-                            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
+    private Mono<Void> processAccessToken(ServerWebExchange exchange, WebFilterChain chain) {
+        String raw = exchange.getRequest().getHeaders().getFirst("X-ACCESS-TOKEN");
 
-                });
+        // No token — pass through, let other filters or security handle it
+        if (raw == null || raw.isEmpty()) {
+            return chain.filter(exchange);
+        }
+
+
+
+        String token = raw;
+
+        if (jwtService.isTokenExpired(token)) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+
+        String assetId = jwtService.extractClaims(token, claims -> claims.get("assetId", String.class));
+        String userId = jwtService.extractClaims(token, Claims::getSubject);
+
+        ServerHttpRequest mutatedRequest = exchange.getRequest()
+                .mutate()
+                .header("X-ASSET-ID", assetId)
+                .header("X-USER-ID", userId)
+                .build();
+
+        ServerWebExchange mutatedExchange = exchange.mutate()
+                .request(mutatedRequest)
+                .build();
+
+        Authentication auth = new PreAuthenticatedAuthenticationToken(
+                assetId, null, new ArrayList<>()
+        );
+
+        return chain.filter(mutatedExchange)
+                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
     }
 }

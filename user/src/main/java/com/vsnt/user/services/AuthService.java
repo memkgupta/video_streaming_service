@@ -52,7 +52,7 @@ public class AuthService {
             resUserDTO.setId(user.getId())
             ;
             resUserDTO.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-            String accessToken = jwtService.generateToken(userDTO.getEmail());
+            String accessToken = jwtService.generateToken(user.getId());
             String refreshToken = tokenService.generateToken(user);
             RegisterResponse response = new RegisterResponse();
             TokenResponse tr = TokenResponse.builder()
@@ -75,11 +75,12 @@ public class AuthService {
             if (user == null) {
                 throw new RuntimeException("User not found");
             }
+
             if (!bCryptPasswordEncoder.matches(password, user.getPassword())) {
 
                 throw new BadCredentialsException("Bad credentials");
             }
-            String accessToken = jwtService.generateToken(email);
+            String accessToken = jwtService.generateToken(user.getId());
             String refreshToken = tokenService.generateToken(user);
             UserDTO userDTO = new UserDTO();
             userDTO.setEmail(user.getEmail());

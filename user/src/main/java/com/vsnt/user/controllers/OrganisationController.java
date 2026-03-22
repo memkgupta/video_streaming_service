@@ -17,7 +17,7 @@ description = """
         Endpoints for managing organisation
         """)
 @RestController
-@RequestMapping("/api/v1/organisation")
+@RequestMapping("/v1/organisation")
 public class OrganisationController {
     private final OrganisationService organisationService;
     private final APIKeyService apiKeyService;
@@ -52,10 +52,10 @@ public class OrganisationController {
             throw new  RuntimeException("Organisation Already Exists");
         }
         Organisation organisation = organisationService.createOrganisation(
-                organisationDTO.getName(),organisationDTO.getAdminId()
+                organisationDTO.getName(),userId
         );
         return ResponseEntity.ok(OrganisationDTO.builder()
-                .adminId(organisationDTO.getAdminId())
+                .adminId(organisation.getAdmin().getId())
                 .id(organisation.getId())
                 .name(organisation.getName())
                 .build());

@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
-@RequestMapping("/token")
+@RequestMapping("/v1/token")
 @Tag(name = "Token Management", description = "Handles access token refresh operations")
 public class TokenController {
 

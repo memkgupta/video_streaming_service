@@ -39,6 +39,7 @@ public class MediaService {
     {
         MediaPushKey mediaPushKey = new MediaPushKey();
         mediaPushKey.setKey(UUID.randomUUID().toString());
+        mediaPushKey.setActive(true);
         mediaPushKey = mediaPushKeyRepository.save(mediaPushKey);
         Media media = new Media();
         media.setCreatedAt(Timestamp.from(Instant.now()));
@@ -47,6 +48,7 @@ public class MediaService {
         media.setAccessibility(request.getMediaAccessibility());
         media.setMediaType(request.getMediaType());
         media.setPushKey(mediaPushKey);
+        media.setStatus(MediaStatus.CREATED);
         media.setModerationEnabled(request.isModeration());
         return mediaRepository.save(media);
     }

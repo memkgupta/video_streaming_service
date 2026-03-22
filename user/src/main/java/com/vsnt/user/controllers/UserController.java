@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/v1/user")
 public class UserController {
 
     private final UserService userService;
@@ -61,7 +61,7 @@ public class UserController {
         if(user == null){
             throw new UserNotFoundException(resetPasswordDTO.getUserEmail());
         }
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(user.getId());
         // TODO send this token to mail id
         return ResponseEntity.ok(SimpleAPIResponse.builder().message("Reset password link has been sent to the registered mail id").build());
     }

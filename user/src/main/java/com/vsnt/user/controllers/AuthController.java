@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/v1/auth")
 @Tag(name = "Authentication", description = "Endpoints for user login, registration, and token validation")
 public class AuthController {
     private final AuthService authService;
@@ -30,6 +30,8 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequestPayload userDTO) {
+        System.out.println("Received login request ");
+        System.out.println(userDTO);
         return ResponseEntity.ok(authService.login(userDTO.getEmail(), userDTO.getPassword()));
     }
 

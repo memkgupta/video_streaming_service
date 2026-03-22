@@ -38,7 +38,8 @@ public class SinglePlaylistGenerationStrategy implements PlaylistGenerationStrat
 //            throw new RuntimeException("Max duration is null");
         }
         long targetDuration = (long) Math.ceil(maxDuration / 1000.0);
-
+        sb.append("#EXTM3U\n");
+        sb.append("#EXT-X-VERSION:3\n\n");
         sb.append("#EXT-X-TARGETDURATION:")
                 .append(targetDuration)
                 .append("\n");

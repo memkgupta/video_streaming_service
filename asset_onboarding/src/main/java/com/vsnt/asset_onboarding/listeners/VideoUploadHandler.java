@@ -58,6 +58,7 @@ public class VideoUploadHandler implements AssetUploadHandler{
                             .key(asset.getKey())
                             .encryptionKey(encodedKey)
                             .jobId(media.getId().toString())
+
                             .assetId(asset.getId().toString())
                             .build();
             transcodingJobMessageProducer.sendMessage(job);

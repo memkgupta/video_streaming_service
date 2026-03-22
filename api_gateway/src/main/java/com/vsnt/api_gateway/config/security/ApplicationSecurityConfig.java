@@ -44,7 +44,7 @@ public class ApplicationSecurityConfig {
                 }    )
                 .addFilterAt(apiKeyAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .addFilterAfter(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
-                .addFilterAfter(accessTokenFilter,SecurityWebFiltersOrder.AUTHENTICATION)
+
                 .build();
     }
 }
