@@ -17,9 +17,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.kafka.common.errors.InvalidRequestException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -74,24 +77,22 @@ public class WatchController {
             throw new ForbiddenException("Watch media");
         }
         String content = watchService.watch(media , start);
-        ResponseEntity<?> responseEntity = ResponseEntity.ok().body(content);
-      deliverySecurityConfig.populateResponse(responseEntity, httpServletResponse,media,content);
 
-      return responseEntity;
+
+        return deliverySecurityConfig.populateResponse( httpServletResponse,media,content);
     }
-
 
     @Operation(
             summary = "Watch resolution of live stream",
             description = "Endpoint for getting playlist for particular resolution of media ",
             parameters = {
                     @Parameter(
-                            name = "X-ACCESS-TOKE",
+                            name = "X-ACCESS-TOKEN",
                             in = ParameterIn.HEADER
                     )
             }
     )
-    @GetMapping("/live/{mediaId}/{resolution}/playlist")
+    @GetMapping("/live/{mediaId}/{resolution}/playlist.m3u8")
     public ResponseEntity<?> watchResolution(@PathVariable  UUID mediaId , @PathVariable  String resolution, @Parameter(
             name = "start",
             description = "offset in milliseconds"
@@ -112,10 +113,8 @@ public class WatchController {
             throw new ForbiddenException("Watch");
         }
         String content = watchService.watchLiveVariant(media,resolution,start);
+        return  deliverySecurityConfig.populateResponse( httpServletResponse,media,content);
 
-        ResponseEntity<?> res = ResponseEntity.ok().body(content);
-        deliverySecurityConfig.populateResponse(res, httpServletResponse,media,content);
-        return res;
     }
 
 

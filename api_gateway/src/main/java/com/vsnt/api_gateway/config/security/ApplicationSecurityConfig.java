@@ -3,6 +3,7 @@ package com.vsnt.api_gateway.config.security;
 import com.vsnt.api_gateway.config.RouteValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -30,12 +31,14 @@ public class ApplicationSecurityConfig {
 //                .addFilterAfter(accessTokenFilter,SecurityWebFiltersOrder.AUTHENTICATION)
 //                .build();
         return http
+
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> {
                     exchange.matchers(s->{
-                        System.out.println("Checking security for "+s.getRequest().getPath());
-                        if(!routeValidator.isSecured.test(s.getRequest()))
+                        System.out.println("Checking security for "+s.getRequest().getPath() + s.getRequest().getMethod());
+                        if(!routeValidator.isSecured.test(s.getRequest()) || s.getRequest().getMethod().equals(HttpMethod.OPTIONS))
                         {
+                            System.out.println("Pased security");
                             return ServerWebExchangeMatcher.MatchResult.match();
 
                         }

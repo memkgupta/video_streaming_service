@@ -9,7 +9,7 @@ public interface DeliverySecurityConfig {
     String getSegmentURL(KVSegment segment);
     String getPlaylistURL(Media media);
     boolean validateToken(String token , String assetId );
-    void populateResponse(ResponseEntity<?> responseEntity, HttpServletResponse response, Media media , Object content);
+    ResponseEntity<?> populateResponse( HttpServletResponse response, Media media , Object content);
     String[] generateTokens(String userId , String assetId);
     String refreshToken(HttpServletResponse httpServletResponse , String userId , String assetId , String token);
 }

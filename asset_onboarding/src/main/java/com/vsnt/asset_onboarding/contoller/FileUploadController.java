@@ -48,9 +48,9 @@ public class FileUploadController {
         String url = uploadService.uploadChunk(
                 chunkUploadRequest.getUploadId(),
                 chunkUploadRequest.getAssetId(),
-                chunkUploadRequest.getPartNumber(),
-                chunkUploadRequest.getKey(),
-                userId
+                chunkUploadRequest.getPartNumber()
+
+
         );
 
         return ResponseEntity.ok(Map.of("url", url));

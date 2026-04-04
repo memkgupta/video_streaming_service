@@ -50,9 +50,12 @@ public class SegmentService {
         sb.append("#EXTM3U\n");
         sb.append("#EXT-X-VERSION:3\n");
         sb.append("#EXT-X-TARGETDURATION:5\n");
-        sb.append("#EXT-X-MEDIA-SEQUENCE:")
-                .append(segments.get(0).getSequenceNumber())
-                .append("\n");
+        if(!segments.isEmpty()){
+            sb.append("#EXT-X-MEDIA-SEQUENCE:")
+                    .append(segments.get(0).getSequenceNumber())
+                    .append("\n");
+        }
+
         sb.append("#EXT-X-INDEPENDENT-SEGMENTS\n");
 
         for (KVSegment segment : segments) {
@@ -138,7 +141,7 @@ public class SegmentService {
                     .append("\n");
 
             // URL to variant playlist endpoint
-            sb.append("http://localhost:8081/v1/watch/live/")
+            sb.append("http://localhost:8001/api/asset_onboarding/v1/watch/live/")
                     .append(media.getId())
                     .append("/")
                     .append(resolution)

@@ -16,7 +16,7 @@ public class LiveSegmentUpdateHandler implements SegmentUpdateHandler{
     }
 
     @Override
-    public void handle(TranscodingSegmentUpdateDTO segmentUpdate, Media media) {
+    public void handle(TranscodingSegmentUpdateDTO segmentUpdate) {
         segmentKVService.addSegment(
                 KVSegment.builder()
                         .url(segmentUpdate.getUrl())

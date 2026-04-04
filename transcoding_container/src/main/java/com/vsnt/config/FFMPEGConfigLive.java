@@ -11,52 +11,34 @@ public class FFMPEGConfigLive extends FFMPEGCommand{
     public List<String> getFFMPEGCommands() {
         return List.of(
 
-                // 360p
                 String.format(
-                        "ffmpeg -i \"%s\" -vf \"scale=w=640:h=360\" " +
-                                "-c:v libx264 -preset veryfast -b:v 800k " +
-                                "-c:a aac -b:a 96k " +
-                                "-f hls -hls_time 4 -hls_list_size 6 " +
-//                                "-hls_flags delete_segments+append_list " +
-                                "-hls_segment_filename \"%s/360p/segment%%03d.ts\" " +
-                                "\"%s/360p/index.m3u8\"",
-                        filePath, outputPath, outputPath
-                ),
+                        "ffmpeg -i \"%s\" " +
+                                "-filter_complex \"" +
+                                "[0:v]split=4[v1][v2][v3][v4];" +
+                                "[v1]scale=640:360[v360];" +
+                                "[v2]scale=854:480[v480];" +
+                                "[v3]scale=1280:720[v720];" +
+                                "[v4]scale=1920:1080[v1080]" +
+                                "\" " +
 
-                // 480p
-                String.format(
-                        "ffmpeg -i \"%s\" -vf \"scale=w=854:h=480\" " +
-                                "-c:v libx264 -preset veryfast -b:v 1400k " +
-                                "-c:a aac -b:a 128k " +
-                                "-f hls -hls_time 4 -hls_list_size 6 " +
-//                                "-hls_flags delete_segments+append_list " +
-                                "-hls_segment_filename \"%s/480p/segment%%03d.ts\" " +
-                                "\"%s/480p/index.m3u8\"",
-                        filePath, outputPath, outputPath
-                ),
+                                "-map \"[v360]\" -map 0:a " +
+                                "-map \"[v480]\" -map 0:a " +
+                                "-map \"[v720]\" -map 0:a " +
+                                "-map \"[v1080]\" -map 0:a " +
 
-                // 720p
-                String.format(
-                        "ffmpeg -i \"%s\" -vf \"scale=w=1280:h=720\" " +
-                                "-c:v libx264 -preset veryfast -b:v 2800k " +
-                                "-c:a aac -b:a 128k " +
-                                "-f hls -hls_time 4 -hls_list_size 6 " +
-//                                "-hls_flags delete_segments+append_list " +
-                                "-hls_segment_filename \"%s/720p/segment%%03d.ts\" " +
-                                "\"%s/720p/index.m3u8\"",
-                        filePath, outputPath, outputPath
-                ),
+                                "-c:v libx264 -preset veryfast " +
+                                "-c:a aac " +
 
-                // 1080p
-                String.format(
-                        "ffmpeg -i \"%s\" -vf \"scale=w=1920:h=1080\" " +
-                                "-c:v libx264 -preset veryfast -b:v 5000k " +
-                                "-c:a aac -b:a 192k " +
                                 "-f hls -hls_time 4 -hls_list_size 6 " +
-//                                "-hls_flags delete_segments+append_list " +
-                                "-hls_segment_filename \"%s/1080p/segment%%03d.ts\" " +
-                                "\"%s/1080p/index.m3u8\"",
-                        filePath, outputPath, outputPath
+                                "-hls_flags temp_file+append_list " +
+
+                                "-var_stream_map \"v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3\" " +
+                                "-hls_segment_filename \"%s/%%v/segment%%03d.ts\" " +
+                                "%s/%%v/index.m3u8",
+
+                        filePath,
+                        outputPath,
+                        outputPath
                 )
         );
     }

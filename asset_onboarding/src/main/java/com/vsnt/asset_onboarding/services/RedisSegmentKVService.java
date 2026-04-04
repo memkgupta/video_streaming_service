@@ -4,9 +4,7 @@ import com.vsnt.asset_onboarding.dtos.kvstore.segments.KVSegment;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class RedisSegmentKVService extends SegmentKVService{
@@ -31,7 +29,12 @@ public class RedisSegmentKVService extends SegmentKVService{
         return  getSegments("stream:"+streamKey+":segments:"+resolution);
     }
     private List<KVSegment> getSegments(String key){
-        return redisTemplate.opsForList().range(key, 0, -1);
+      List<KVSegment> result = redisTemplate.opsForList().range(key, 0, -1);
+        if(result == null){
+            result = new ArrayList<>();
+        }
+        result.sort((s1, s2) -> Math.toIntExact(s1.getSequenceNumber() - s2.getSequenceNumber()));
+        return result;
     }
     public void clear(String streamKey)
     {

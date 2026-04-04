@@ -59,7 +59,7 @@ public class UploadService {
       res.setUploadId(uploadId);
 return res;
     }
-    public String uploadChunk(String uploadId,Long assetId,int partNumber,String key,String userId)
+    public String uploadChunk(String uploadId,Long assetId,int partNumber)
     {
 
         Asset upload = assetService.getAssetById(assetId);
@@ -71,7 +71,7 @@ return res;
         if(!upload.getUploadStatus().equals(UploadStatus.INITIATED) ){
             throw new InvalidStateException("Not started" , "upload chunk");
         }
-        return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,key);
+        return s3Service.getPreSignedURLForMultipartUploadChunk(uploadId,partNumber,upload.getKey());
     }
     public void finishUpload(String uploadId, Long assetId, String key, Map<Integer,String> etagMap, String userId) {
         Asset upload = assetService.getAssetById(assetId);

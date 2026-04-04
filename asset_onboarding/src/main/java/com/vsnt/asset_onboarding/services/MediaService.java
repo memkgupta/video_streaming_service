@@ -4,10 +4,12 @@ import com.vsnt.asset_onboarding.dtos.media.request.MediaCreateRequestDTO;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.MediaPushKey;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
+import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.exceptions.EntityNotFoundException;
 import com.vsnt.asset_onboarding.producers.MediaBlockedProducer;
 import com.vsnt.asset_onboarding.repositories.MediaPushKeyRepository;
 import com.vsnt.asset_onboarding.repositories.MediaRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,9 +58,20 @@ public class MediaService {
     {
         return mediaRepository.findByVideoAsset_Id(assetId).orElse(null);
     }
+//    @Cacheable(value = "mediaCache",key = "#id" )
     public Media getMedia(UUID id)
     {
         return mediaRepository.findById(id).orElse(null);
+    }
+    @Cacheable(value = "mediaTypeCache",key = "#id")
+    public String getMediaType(UUID id)
+    {
+        Media media =  mediaRepository.findById(id).orElse(null);
+        if(media == null)
+        {
+            throw new EntityNotFoundException("Media",id.toString());
+        }
+        return media.getMediaType().toString();
     }
     public void deleteMedia(UUID mediaId)
     {

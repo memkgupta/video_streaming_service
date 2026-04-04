@@ -8,22 +8,18 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class CorsConfig {
-
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOrigin("http://localhost:3000");
         config.setAllowCredentials(true);
-        config.addAllowedHeader("Content-Type");
-        config.addAllowedHeader("Authorization");
-        config.addAllowedHeader("X-Requested-With");
-        config.addAllowedHeader("X-REFRESH-TOKEN");
+        config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-
-
+        config.addExposedHeader("X-ACCESS-TOKEN");
+        config.addExposedHeader("X-REFRESH-TOKEN");
+        config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-
         return new CorsWebFilter(source);
     }
 }
