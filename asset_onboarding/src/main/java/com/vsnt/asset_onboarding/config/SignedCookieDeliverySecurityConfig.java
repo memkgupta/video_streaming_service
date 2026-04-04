@@ -17,6 +17,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+
 @ConditionalOnExpression(
         value =    "'${app.delivery.security.enabled:false}' == 'true' && " +
                 "'${app.delivery.security.type:}' == 'cookie'"
@@ -60,7 +62,7 @@ public class SignedCookieDeliverySecurityConfig implements DeliverySecurityConfi
     }
 
     @Override
-    public void populateResponse(ResponseEntity<?> responseEntity, HttpServletResponse response, Media media, Object content) {
+    public ResponseEntity<?> populateResponse( HttpServletResponse response, Media media, Object content) {
 
         if(media.getMediaType().equals(MediaType.LIVE))
         {
@@ -79,6 +81,15 @@ public class SignedCookieDeliverySecurityConfig implements DeliverySecurityConfi
         addCookie(response, "CloudFront-Key-Pair-Id", cookies.getKeyPairId());
         addCookie(response, "CloudFront-Expires", cookies.getExpires());
         addCookie(response, "CloudFront-Signature", cookies.getSignature());
+        if(media.getMediaType().equals(MediaType.LIVE))
+        {
+            return ResponseEntity.ok().body(content);
+        }
+        else {
+            HashMap<String,String> res = new HashMap<>();
+            res.put("url",(String)content);
+            return ResponseEntity.ok().body(res);
+        }
     }
 
     @Override

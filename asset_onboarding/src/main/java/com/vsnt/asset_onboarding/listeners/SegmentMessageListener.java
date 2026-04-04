@@ -3,6 +3,7 @@ package com.vsnt.asset_onboarding.listeners;
 import com.vsnt.asset_onboarding.MessageListener;
 import com.vsnt.asset_onboarding.dtos.TranscodingSegmentUpdateDTO;
 import com.vsnt.asset_onboarding.entities.Media;
+import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.services.SegmentService;
 import org.springframework.scheduling.annotation.Async;
@@ -23,16 +24,22 @@ public class SegmentMessageListener implements MessageListener<TranscodingSegmen
 
     @Override
     public void onMessage(TranscodingSegmentUpdateDTO message) {
-        System.out.println("Segment Update "+message);
-        segmentService.save(message);
         handleUpdate(message);
+        saveAsync(message);
+
+    }
+
+
+    @Async
+    public void saveAsync(TranscodingSegmentUpdateDTO message) {
+        segmentService.save(message);
     }
     @Async
     public void handleUpdate(TranscodingSegmentUpdateDTO updateRequestDTO) {
         try{
-            Media media = mediaService.getMedia(UUID.fromString(updateRequestDTO.getMediaId()));
-            updateHandlerFactory.getSegmentUpdateHandler(media.getMediaType())
-                    .handle(updateRequestDTO, media);
+            MediaType mediaType = MediaType.valueOf(mediaService.getMediaType(UUID.fromString(updateRequestDTO.getMediaId())));
+            updateHandlerFactory.getSegmentUpdateHandler(mediaType)
+                    .handle(updateRequestDTO);
         }
         catch (Exception e){
             e.printStackTrace();

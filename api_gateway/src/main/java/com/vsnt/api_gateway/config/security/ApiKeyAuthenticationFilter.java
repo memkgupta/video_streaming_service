@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class ApiKeyAuthenticationFilter implements WebFilter {
     private final WebClient webClient;
     private static final String ACCESS_KEY_HEADER = "X-ACCESS-KEY";
-    private static final String SECRET_KEY_HEADER = "X-SECRET-KEY";
+    private static final String SECRET_KEY_HEADER = "X-ACCESS-SECRET";
     private final RouteValidator routeValidator;
 
     public ApiKeyAuthenticationFilter(WebClient.Builder builder, RouteValidator routeValidator) {
@@ -34,9 +34,12 @@ public class ApiKeyAuthenticationFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+
         if(!routeValidator.isSecured.test(exchange.getRequest())) {
             return chain.filter(exchange);
         }
+        System.out.println("Checking API keys");
+        System.out.println("API key headers: " + exchange.getRequest().getHeaders());
         String access_key =  exchange.getRequest().getHeaders().getFirst(ACCESS_KEY_HEADER);
         String secret_key =  exchange.getRequest().getHeaders().getFirst(SECRET_KEY_HEADER);
         if(access_key!=null && !access_key.isEmpty() && secret_key!=null && !secret_key.isEmpty()){
@@ -76,6 +79,8 @@ public class ApiKeyAuthenticationFilter implements WebFilter {
     }
     private Mono<ApiKeyValidationResponse> validateAPIKey(String accessKey, String secretKey){
         List<GrantedAuthority> authorities = new ArrayList<>();
+        System.out.println(accessKey);
+        System.out.println(secretKey);
   return webClient.get()
 
                 .uri("lb://user/v1/authorise/validate-key")

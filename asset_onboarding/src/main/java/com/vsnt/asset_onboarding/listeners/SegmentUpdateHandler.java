@@ -5,6 +5,6 @@ import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 
 public interface SegmentUpdateHandler {
-    public void handle(TranscodingSegmentUpdateDTO segmentUpdate , Media media);
+    public void handle(TranscodingSegmentUpdateDTO segmentUpdate);
     public MediaType support();
 }

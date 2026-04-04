@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class StaticSegmentUpdateHandler implements SegmentUpdateHandler{
     @Override
-    public void handle(TranscodingSegmentUpdateDTO segmentUpdate, Media media) {
+    public void handle(TranscodingSegmentUpdateDTO segmentUpdate) {
         // eat 5 star do nothing
     }
 

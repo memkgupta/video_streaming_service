@@ -11,13 +11,15 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 import static java.nio.file.StandardWatchEventKinds.*;
-
 public class HlsDirectoryWatcher implements Runnable {
 
     private final WatchService watchService;
     private final Map<WatchKey, Path> keyDirectoryMap = new HashMap<>();
     private final SegmentEventFactory segmentEventFactory;
     private final SegmentEventProducer producer;
+
+    private final ExecutorService executor;
+
     private final CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 
     private volatile boolean running = false;
@@ -31,10 +33,19 @@ public class HlsDirectoryWatcher implements Runnable {
         this.producer = producer;
         this.watchService = FileSystems.getDefault().newWatchService();
 
-        String[] resolutions = {"360p", "480p", "720p", "1080p"};
+        // 🔥 Thread pool with backpressure
+        this.executor = new ThreadPoolExecutor(
+                4, 8,
+                60, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(1000),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
 
-        for (String resolution : resolutions) {
-            Path dir = Paths.get(basePath, resolution);
+        // IMPORTANT: use numeric folders (matches FFmpeg %v)
+        String[] variants = {"0", "1", "2", "3"};
+
+        for (String variant : variants) {
+            Path dir = Paths.get(basePath, variant);
             registerDirectory(dir);
         }
     }
@@ -65,31 +76,37 @@ public class HlsDirectoryWatcher implements Runnable {
             watchService.close();
         } catch (IOException ignored) {}
 
-
+        executor.shutdown();
     }
 
     private void processSegment(Path fullPath) {
 
-        System.out.println("Segment detected: " + fullPath);
+        executor.submit(() -> {
+            try {
+                // ✅ Ignore temp files
+                if (fullPath.toString().endsWith(".tmp")) return;
 
-        try {
-            TranscodingSegmentUpdateDTO update =
-                    segmentEventFactory.generate(fullPath);
+                // ✅ Only process final .ts
+                if (!fullPath.toString().endsWith(".ts")) return;
 
-            producer.sendEvent(update);
+                System.out.println("Processing: " + fullPath);
 
-            Files.deleteIfExists(fullPath);
+                TranscodingSegmentUpdateDTO update =
+                        segmentEventFactory.generate(fullPath);
 
-            System.out.println("Processed & deleted: " + fullPath);
+                producer.sendEvent(update);
 
-        } catch (Exception e) {
-            System.err.println("Failed to process segment: " + fullPath + " — " + e.getMessage());
-        }
+                Files.deleteIfExists(fullPath);
+
+            } catch (Exception e) {
+                System.err.println("Failed: " + fullPath + " — " + e.getMessage());
+            }
+        });
     }
 
     private void drainRemainingFiles() {
 
-        System.out.println("Draining remaining segments before shutdown...");
+        System.out.println("Draining remaining segments...");
 
         for (Path dir : keyDirectoryMap.values()) {
             try (DirectoryStream<Path> stream =
@@ -100,7 +117,7 @@ public class HlsDirectoryWatcher implements Runnable {
                 }
 
             } catch (IOException e) {
-                System.err.println("Failed to drain directory: " + dir);
+                System.err.println("Drain failed: " + dir);
             }
         }
     }
@@ -117,7 +134,6 @@ public class HlsDirectoryWatcher implements Runnable {
 
                 try {
                     key = watchService.poll(2, TimeUnit.SECONDS);
-
                     if (key == null) continue;
 
                 } catch (InterruptedException | ClosedWatchServiceException e) {
@@ -131,12 +147,9 @@ public class HlsDirectoryWatcher implements Runnable {
 
                     if (event.kind() == OVERFLOW) continue;
 
-                    Path fullPath =
-                            dir.resolve((Path) event.context());
+                    Path fullPath = dir.resolve((Path) event.context());
 
-                    if (fullPath.toString().endsWith(".ts")) {
-                        processSegment(fullPath);
-                    }
+                    processSegment(fullPath);
                 }
 
                 key.reset();
@@ -144,8 +157,12 @@ public class HlsDirectoryWatcher implements Runnable {
 
         } finally {
 
-            // 🔥 Important: final drain before exit
             drainRemainingFiles();
+
+            executor.shutdown();
+            try {
+                executor.awaitTermination(30, TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) {}
 
             completionFuture.complete(null);
 

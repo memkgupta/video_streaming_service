@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashMap;
 
 @ConditionalOnProperty(
         name = "app.delivery.security.enabled",
@@ -51,7 +52,8 @@ public class DefaultDeliverySecurityConfig implements DeliverySecurityConfig {
     }
 
     @Override
-    public void populateResponse(ResponseEntity<?> responseEntity, HttpServletResponse response, Media media, Object content) {
+    public ResponseEntity<?> populateResponse( HttpServletResponse response, Media media, Object content) {
+
         if(media.getMediaType().equals(MediaType.LIVE))
         {
             response.addHeader(HttpHeaders.CONTENT_TYPE,"application/vnd.apple.mpegurl");
@@ -62,7 +64,17 @@ public class DefaultDeliverySecurityConfig implements DeliverySecurityConfig {
                throw new IllegalArgumentException("Invalid content type");
             }
             response.addHeader(HttpHeaders.LOCATION,url);
+            response.addHeader(HttpHeaders.CACHE_CONTROL,"no-cache");
             response.setStatus(302);
+        }
+        if(media.getMediaType().equals(MediaType.LIVE))
+        {
+            return ResponseEntity.ok().body(content);
+        }
+        else {
+            HashMap<String,String> res = new HashMap<>();
+            res.put("url",(String)content);
+            return ResponseEntity.ok().body(res);
         }
     }
 

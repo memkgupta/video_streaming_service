@@ -54,7 +54,7 @@ public class App
 SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
         kafka_topic_segment_update,kafka_topic_finish
         );
-            String[] resolutions = {"360p", "480p", "720p", "1080p"};
+            String[] resolutions = {"0", "1", "2", "3"};
             Path basePath = Paths.get(mediaId);
 
             for (String resolution : resolutions) {

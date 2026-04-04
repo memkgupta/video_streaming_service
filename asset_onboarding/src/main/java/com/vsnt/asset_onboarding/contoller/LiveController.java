@@ -57,7 +57,7 @@ summary = "Start the live",
         hidden = true,
         description = """
                 Generates the metadata like encryption key , is moderation enabled and gives them to the rtmp
-                server for spawning the container for live media transcoding
+                server for spawning the container for live media transcoding to be called by the rtmp server
                 """
 )
 public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId, @RequestBody LiveVideoAssetCreationRequestDTO  metadata,@RequestHeader("X-PUSH-KEY") String pushKey)
