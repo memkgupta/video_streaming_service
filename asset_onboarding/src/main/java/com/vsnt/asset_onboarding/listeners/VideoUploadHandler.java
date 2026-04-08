@@ -2,6 +2,7 @@ package com.vsnt.asset_onboarding.listeners;
 
 import com.vsnt.asset_onboarding.SecuredCDNService;
 import com.vsnt.asset_onboarding.config.ModerationJobProducer;
+import com.vsnt.asset_onboarding.config.Secrets;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;
 import com.vsnt.asset_onboarding.entities.Asset;
@@ -10,6 +11,7 @@ import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.MediaService;
+import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.common_lib.dtos.ModerationJob;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +24,15 @@ public class VideoUploadHandler implements AssetUploadHandler{
     private final SecuredCDNService securedCDNService;
     private final TranscodingJobMessageProducer transcodingJobMessageProducer;
     private final ModerationJobProducer  moderationJobProducer;
-    public VideoUploadHandler(KeyService keyService, MediaService mediaService, SecuredCDNService securedCDNService, TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationJobProducer moderationJobProducer) {
+    private final S3Service s3Service;
+
+    public VideoUploadHandler(KeyService keyService, MediaService mediaService, SecuredCDNService securedCDNService, TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationJobProducer moderationJobProducer, S3Service s3Service) {
         this.keyService = keyService;
         this.mediaService = mediaService;
         this.securedCDNService = securedCDNService;
         this.transcodingJobMessageProducer = transcodingJobMessageProducer;
         this.moderationJobProducer = moderationJobProducer;
+        this.s3Service = s3Service;
     }
 
     @Override
@@ -37,10 +42,12 @@ public class VideoUploadHandler implements AssetUploadHandler{
         if(media.isModerationEnabled())
         {
             ModerationJob moderationJob = new ModerationJob();
-            moderationJob.setJobId(media.getId().toString());
-            moderationJob.setFileKey(asset.getKey());
+            moderationJob.setAsset_id(asset.getId().toString());
+            moderationJob.setContent_url(s3Service.generatePresignedUrl(Secrets.AWS_BUCKET_NAME, asset.getKey()));
             moderationJob.setSize(asset.getFileSize());
+            moderationJob.setJob_id(media.getId().toString());
             moderationJobProducer.sendMessage(moderationJob);
+            System.out.println("Moderation Job Sent "+asset.getMediaId()+" "+moderationJob);
         }
         else {
             AssetAESKey assetKey = null;
@@ -58,12 +65,10 @@ public class VideoUploadHandler implements AssetUploadHandler{
                             .key(asset.getKey())
                             .encryptionKey(encodedKey)
                             .jobId(media.getId().toString())
-
                             .assetId(asset.getId().toString())
                             .build();
             transcodingJobMessageProducer.sendMessage(job);
         }
-
         //todo add user auth check to upload the chunk
     }
 

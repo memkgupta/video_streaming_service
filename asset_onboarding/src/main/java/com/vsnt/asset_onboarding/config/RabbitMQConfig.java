@@ -11,7 +11,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 public class RabbitMQConfig {
     static final String QUEUE_NAME = "transcoding_jobs" ;
-    static final String MODERATION_JOBS = "moderation_jobs" ;
+    static final String MODERATION_JOBS = "moderation_queue" ;
     @Bean
     public Queue transcodingQueue() {
         return new Queue(QUEUE_NAME, false);

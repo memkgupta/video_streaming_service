@@ -2,7 +2,7 @@ package com.vsnt.asset_onboarding.dtos;
 
 
 
-import java.sql.Timestamp;
+import com.vsnt.asset_onboarding.moderation.ModerationResult;
 
 public class UpdateRequestDTO {
     private String videoId;

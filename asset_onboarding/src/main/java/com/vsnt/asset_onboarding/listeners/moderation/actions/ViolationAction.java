@@ -1,7 +1,7 @@
 package com.vsnt.asset_onboarding.listeners.moderation.actions;
 
 import com.vsnt.asset_onboarding.dtos.ModerationStatus;
-import com.vsnt.asset_onboarding.dtos.ModerationUpdateDTO;
+import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.services.ModerationKVService;
 import org.springframework.stereotype.Component;
@@ -22,15 +22,15 @@ public class ViolationAction implements ModerationAction{
     @Override
     public void act( ModerationUpdateDTO dto) {
     //todo maintain a violation counter and also notify the org admin , once max violation reach instantly block the media
-   long nc = moderationKVService.increment(dto.getMediaId(),dto.getViolationCount());
+   long nc = moderationKVService.increment(dto.getJobId(),dto.getViolationCount());
     if(nc>THRESHOLD){
         //block the video
-        mediaService.blockMedia(UUID.fromString(dto.getMediaId()),"Moderation violation");
+        mediaService.blockMedia(UUID.fromString(dto.getJobId()),"Moderation violation");
     }
     }
 
     @Override
     public ModerationStatus support() {
-        return ModerationStatus.VIOLATION;
+        return ModerationStatus.REJECTED;
     }
 }

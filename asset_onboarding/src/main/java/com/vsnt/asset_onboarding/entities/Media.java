@@ -18,7 +18,7 @@ public class Media {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private MediaType mediaType;
-    private String userId;
+    private String orgId;
     private MediaStatus status;
     private boolean active;
     private Timestamp createdAt;

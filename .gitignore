@@ -74,3 +74,5 @@ cf_pub.pem
 keys/private_key.pem
 testing/node_modules
 testing/.env
+
+moderation_worker/app/models/hindi_slangs.txt

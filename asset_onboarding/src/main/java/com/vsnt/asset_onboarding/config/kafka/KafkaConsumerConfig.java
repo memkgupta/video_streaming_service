@@ -1,6 +1,7 @@
-package com.vsnt.asset_onboarding.config;
+package com.vsnt.asset_onboarding.config.kafka;
 
-import com.vsnt.asset_onboarding.dtos.ModerationUpdateDTO;
+import com.vsnt.asset_onboarding.config.Secrets;
+import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.dtos.TranscodingSegmentUpdateDTO;
 import com.vsnt.asset_onboarding.dtos.media.events.TranscodingFinishEventDTO;
 import com.vsnt.asset_onboarding.dtos.media.request.GroupCreateRequestDTO;
@@ -12,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
@@ -20,7 +20,26 @@ import java.util.Map;
 
 @Configuration
 public class KafkaConsumerConfig {
-
+//    @Bean
+//    public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> kafkaTemplate) {
+//
+//        // Retry 3 times with 2s gap
+//        FixedBackOff backOff = new FixedBackOff(2000L, 3);
+//
+//        // Dead Letter Topic handler
+//        DeadLetterPublishingRecoverer recoverer =
+//                new DeadLetterPublishingRecoverer(kafkaTemplate);
+//
+//        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
+//
+//        // Retry only for certain exceptions
+//        handler.addRetryableExceptions(RuntimeException.class);
+//
+//        // Don't retry these
+//        handler.addNotRetryableExceptions(IllegalArgumentException.class);
+//
+//        return handler;
+//    }
     private Map<String, Object> baseConsumerProps(String groupId) {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, Secrets.KAFKA_BOOTSTRAP_SERVERS);

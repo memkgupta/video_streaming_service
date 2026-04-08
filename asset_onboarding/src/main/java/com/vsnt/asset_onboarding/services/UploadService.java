@@ -85,9 +85,6 @@ return res;
         s3Service.completeMultipartUpload(uploadId,etagMap,key);
         uploadFinishListener.listen(upload);
 
-
-
-
     }
     public boolean pauseUpload(Long assetId,String userId,Map<Integer,String> etagMap)
     {

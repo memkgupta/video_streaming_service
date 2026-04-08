@@ -1,13 +1,9 @@
-package com.vsnt.asset_onboarding.config;
+package com.vsnt.asset_onboarding.config.kafka.consumers;
 
 import com.vsnt.asset_onboarding.MessageListener;
 import com.vsnt.asset_onboarding.dtos.*;
 import com.vsnt.asset_onboarding.dtos.media.events.TranscodingFinishEventDTO;
-import com.vsnt.asset_onboarding.dtos.media.request.GroupCreateRequestDTO;
-import com.vsnt.asset_onboarding.dtos.media.request.GroupMemberCreateRequestDTO;
-import com.vsnt.asset_onboarding.dtos.media.response.GroupMemberDTO;
-import com.vsnt.asset_onboarding.entities.Asset;
-import com.vsnt.asset_onboarding.services.AssetService;
+import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +15,6 @@ public class KafkaConsumer {
     private final MessageListener<ModerationUpdateDTO> moderationUpdateListener;
     private final MessageListener<TranscodingFinishEventDTO>  transcodingFinishListener;
     public KafkaConsumer(  MessageListener<TranscodingSegmentUpdateDTO> transcodingSegmentUpdateListener, MessageListener<ModerationUpdateDTO> moderationUpdateListener, MessageListener<TranscodingFinishEventDTO> transcodingFinishListener) {
-
 
         this.transcodingSegmentUpdateListener = transcodingSegmentUpdateListener;
         this.moderationUpdateListener = moderationUpdateListener;
@@ -44,6 +39,7 @@ public class KafkaConsumer {
             containerFactory = "moderationUpdateFactory"
     )
     public void listenModerationUpdate(ModerationUpdateDTO moderationUpdateDTO) {
+        System.out.println("Message "+moderationUpdateDTO);
         moderationUpdateListener.onMessage(moderationUpdateDTO);
     }
 

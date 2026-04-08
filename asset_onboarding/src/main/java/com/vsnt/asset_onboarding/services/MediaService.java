@@ -37,7 +37,7 @@ public class MediaService {
     {
         return mediaRepository.save(media);
     }
-    public Media createMedia(MediaCreateRequestDTO request)
+    public Media createMedia(MediaCreateRequestDTO request , String orgId)
     {
         MediaPushKey mediaPushKey = new MediaPushKey();
         mediaPushKey.setKey(UUID.randomUUID().toString());
@@ -46,6 +46,7 @@ public class MediaService {
         Media media = new Media();
         media.setCreatedAt(Timestamp.from(Instant.now()));
         media.setActive(true);
+        media.setOrgId(orgId);
         media.setUpdatedAt(Timestamp.from(Instant.now()));
         media.setAccessibility(request.getMediaAccessibility());
         media.setMediaType(request.getMediaType());

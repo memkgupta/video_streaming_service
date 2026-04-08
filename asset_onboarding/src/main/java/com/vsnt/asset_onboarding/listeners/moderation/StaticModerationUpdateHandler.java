@@ -2,18 +2,25 @@ package com.vsnt.asset_onboarding.listeners.moderation;
 
 import com.vsnt.asset_onboarding.SecuredCDNService;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
+import com.vsnt.asset_onboarding.config.kafka.producers.NotificationMediaStatusUpdateProducer;
 import com.vsnt.asset_onboarding.dtos.ModerationStatus;
-import com.vsnt.asset_onboarding.dtos.ModerationUpdateDTO;
+import com.vsnt.asset_onboarding.dtos.media.notification.MediaStatusUpdate;
+import com.vsnt.asset_onboarding.dtos.notification.Notification;
+import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
+import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.listeners.moderation.actions.ModerationActionFactory;
 import com.vsnt.asset_onboarding.services.KeyService;
+import com.vsnt.asset_onboarding.services.MediaService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Base64;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 @Component
 public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
@@ -22,12 +29,17 @@ public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
     private final KeyService keyService;
     private final SecuredCDNService securedCDNService;
     private final Executor executor;
-    public StaticModerationUpdateHandler(TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationActionFactory moderationActionFactory, KeyService keyService, SecuredCDNService securedCDNService, @Qualifier("moderationExecutor") Executor executor) {
+    private final NotificationMediaStatusUpdateProducer notificationMediaStatusUpdateProducer;
+    private final MediaService mediaService;
+
+    public StaticModerationUpdateHandler(TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationActionFactory moderationActionFactory, KeyService keyService, SecuredCDNService securedCDNService, @Qualifier("moderationExecutor") Executor executor, NotificationMediaStatusUpdateProducer notificationMediaStatusUpdateProducer, MediaService mediaService) {
         this.transcodingJobMessageProducer = transcodingJobMessageProducer;
         this.moderationActionFactory = moderationActionFactory;
         this.keyService = keyService;
         this.securedCDNService = securedCDNService;
         this.executor = executor;
+        this.notificationMediaStatusUpdateProducer = notificationMediaStatusUpdateProducer;
+        this.mediaService = mediaService;
     }
 
     @Override
@@ -38,7 +50,8 @@ public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
     @Override
     public void handle(ModerationUpdateDTO update, Media media) {
         ModerationStatus status = update.getModerationStatus();
-        if(status.equals(ModerationStatus.SAFE) || status.equals(ModerationStatus.REVIEW))
+
+        if(status.equals(ModerationStatus.APPROVED) || status.equals(ModerationStatus.FLAGGED))
         {
             AssetAESKey assetKey = null;
             try {
@@ -54,11 +67,24 @@ public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
                     TranscodingJob.builder()
                             .key(media.getVideoAsset().getKey())
                             .encryptionKey(encodedKey)
+                            .assetId(media.getVideoAsset().getId().toString())
                             .jobId(media.getId().toString())
                             .build();
             transcodingJobMessageProducer.sendMessage(job);
 
         }
-
+        else {
+            notificationMediaStatusUpdateProducer.produceMessage(Notification.<MediaStatusUpdate>builder()
+                            .message(MediaStatusUpdate.builder()
+                                    .createdAt(Instant.now())
+                                    .mediaId(media.getId().toString())
+                                    .mediaStatus(MediaStatus.BLOCKED)
+                                    .build())
+                            .orgId(media.getOrgId())
+                            .notificationId(UUID.randomUUID().toString())
+                    .build());
+            media.setStatus(MediaStatus.BLOCKED);
+            mediaService.save(media);
+        }
     }
 }

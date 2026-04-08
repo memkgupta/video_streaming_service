@@ -1,7 +1,8 @@
 package com.vsnt.asset_onboarding.listeners.moderation;
 
 import com.vsnt.asset_onboarding.MessageListener;
-import com.vsnt.asset_onboarding.dtos.ModerationUpdateDTO;
+import com.vsnt.asset_onboarding.entities.enums.MediaType;
+import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.listeners.moderation.actions.ModerationActionFactory;
 import com.vsnt.asset_onboarding.services.MediaService;
@@ -17,7 +18,6 @@ public class ModerationUpdateListener implements MessageListener<ModerationUpdat
     private final ModerationUpdateHandlerFactory moderationUpdateHandlerFactory;
     private final MediaService mediaService;
     private final ModerationActionFactory moderationActionFactory;
-
     private final Executor executor;
     public ModerationUpdateListener(ModerationUpdateHandlerFactory moderationUpdateHandlerFactory, MediaService mediaService, ModerationActionFactory moderationActionFactory,   @Qualifier("moderationExecutor") Executor executor) {
         this.moderationUpdateHandlerFactory = moderationUpdateHandlerFactory;
@@ -25,24 +25,28 @@ public class ModerationUpdateListener implements MessageListener<ModerationUpdat
         this.moderationActionFactory = moderationActionFactory;
         this.executor = executor;
     }
-
     @Override
     public void onMessage(ModerationUpdateDTO message) {
-        Media media = mediaService.getMedia(UUID.fromString(message.getMediaId()));
-        CompletableFuture.runAsync(() ->
+
+        Media media = mediaService.getMedia(UUID.fromString(message.getJobId()));
+        if(media == null){
+            System.out.println("Media Not Found");
+            return;
+        }
+       CompletableFuture<Void> f1 = CompletableFuture.runAsync(() ->
                         moderationActionFactory
                                 .getModerationAction(message.getModerationStatus())
                                 .act(message),
                 executor
 
         );
-
-        CompletableFuture.runAsync(() ->
+        CompletableFuture<Void> f2 = CompletableFuture.runAsync(() ->
                         moderationUpdateHandlerFactory
-                                .getModerationUpdateHandler(media.getMediaType())
+                                .getModerationUpdateHandler(MediaType.STATIC)
                                 .handle(message, media),
                 executor
         );
-        //todo add persistance of moderation result
+        f1.join();
+        f2.join();
     }
 }

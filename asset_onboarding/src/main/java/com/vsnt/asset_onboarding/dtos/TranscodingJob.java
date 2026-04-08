@@ -1,16 +1,11 @@
 package com.vsnt.asset_onboarding.dtos;
 
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.vsnt.asset_onboarding.config.Serializer;
+import com.vsnt.asset_onboarding.moderation.ModerationResult;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 

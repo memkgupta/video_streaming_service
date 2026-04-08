@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  moderation_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moderation_worker
+    restart: unless-stopped
+    # Environment variables can be defined here or via an .env file
+    # env_file:
+    #   - .env
+    # environment:
+    #   - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    #   - KAFKA_BROKER=kafka:9092
+    networks:
+      - q4-video_app-net
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    ports:
+      - "9909:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    networks:
+      - q4-video_app-net
+
+networks:
+  q4-video_app-net:
+    external: true

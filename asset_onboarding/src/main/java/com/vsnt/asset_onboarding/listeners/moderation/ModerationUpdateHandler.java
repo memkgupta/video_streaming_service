@@ -1,6 +1,6 @@
 package com.vsnt.asset_onboarding.listeners.moderation;
 
-import com.vsnt.asset_onboarding.dtos.ModerationUpdateDTO;
+import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 

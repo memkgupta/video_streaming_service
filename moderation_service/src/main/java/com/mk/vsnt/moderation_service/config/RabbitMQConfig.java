@@ -5,7 +5,6 @@ package com.mk.vsnt.moderation_service.config;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.google.gson.Gson;
 import com.vsnt.common_lib.Secrets;
@@ -39,7 +38,7 @@ public class RabbitMQConfig {
         ModerationJob job = gson.fromJson(data, ModerationJob.class);
         Date expiration = new Date(System.currentTimeMillis() + 100 * 60 * 1000);
         GeneratePresignedUrlRequest request =
-                new GeneratePresignedUrlRequest(Secrets.AWS_RAW_BUCKET_NAME, job.getFileKey())
+                new GeneratePresignedUrlRequest(Secrets.AWS_RAW_BUCKET_NAME, job.getContent_url())
                         .withMethod(HttpMethod.GET)
                         .withExpiration(expiration);
         AmazonS3 client = S3Config.getS3Client();
@@ -50,7 +49,7 @@ request
         System.out.println("Received ModerationJob: " + job);
         spawner.spawn(Map.of(
                 "PRESIGNED_URL",pres,
-                "VIDEO_ID",job.getJobId(),
+                "VIDEO_ID",job.getJob_id(),
                 "ASSET_SIZE",job.getSize()
         ));
 

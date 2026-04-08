@@ -68,18 +68,24 @@ public class MediaController {
             parameters = {
                     @Parameter(name = "X-ACCESS-SECRET" , required = true,in = ParameterIn.HEADER),
                     @Parameter(name = "X-ACCESS-KEY" ,  required = true,in = ParameterIn.HEADER),
+
             }
     )
     @PostMapping
-    public ResponseEntity<MediaDTO> createMedia(@RequestBody MediaCreateRequestDTO request)
+    public ResponseEntity<MediaDTO> createMedia(@RequestBody MediaCreateRequestDTO request , @RequestHeader("X-Org-Id") String orgId)
     {
-        Media media = mediaService.createMedia(request);
+        Media media = mediaService.createMedia(request,orgId);
         MediaDTO dto = mediaMapper.toMediaDTO(media);
         return ResponseEntity.ok(dto);
     }
     @Operation(
             summary = "Delete media",
-            description = "Delete the media "
+            description = "Delete the media ",
+            parameters = {
+                    @Parameter(name = "X-ACCESS-SECRET" , required = true,in = ParameterIn.HEADER),
+                    @Parameter(name = "X-ACCESS-KEY" ,  required = true,in = ParameterIn.HEADER),
+
+            }
 
     )
     @DeleteMapping("/{id}")
@@ -90,7 +96,12 @@ public class MediaController {
     }
     @Operation(
             summary = "Fetch media",
-            description = "Fetch media by the id"
+            description = "Fetch media by the id",
+            parameters = {
+                    @Parameter(name = "X-ACCESS-SECRET" , required = true,in = ParameterIn.HEADER),
+                    @Parameter(name = "X-ACCESS-KEY" ,  required = true,in = ParameterIn.HEADER),
+
+            }
     )
     @GetMapping("/{id}")
     public ResponseEntity<MediaDTO> getMedia(@PathVariable UUID id)
@@ -103,7 +114,8 @@ public class MediaController {
             summary = "Fetch all media",
             description = "Fetch all media in paginated way  ",
             parameters = {
-
+                    @Parameter(name = "X-ACCESS-SECRET" , required = true,in = ParameterIn.HEADER),
+                    @Parameter(name = "X-ACCESS-KEY" ,  required = true,in = ParameterIn.HEADER),
                     @Parameter(name="page",required = true,in=ParameterIn.DEFAULT),
                     @Parameter(name = "limit",required = false ,in =  ParameterIn.DEFAULT),
             }

@@ -25,6 +25,13 @@ public class S3Service {
         this.s3 = s3;
     }
 
+    public String generatePresignedUrl(String bucketName, String key)
+    {
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucketName, key);
+
+        URL url = s3.generatePresignedUrl(request);
+        return url.toString();
+    }
     public String startSingleUpload(String key , String fileType)
     {
 
