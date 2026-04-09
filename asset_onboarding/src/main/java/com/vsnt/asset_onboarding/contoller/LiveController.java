@@ -68,6 +68,10 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
     {
         throw new EntityNotFoundException("Media",mediaId.toString());
     }
+    if(media.getStatus().equals(MediaStatus.BLOCKED))
+    {
+        throw new ForbiddenException("Media is blocked");
+    }
     if(pushKey==null || pushKey.isEmpty())
     {
         throw new UnauthorisedException("Push Content");

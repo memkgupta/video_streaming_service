@@ -14,8 +14,8 @@ public class ModerationActionFactory {
     }
 
     public  ModerationAction getModerationAction(ModerationStatus status){
-    return moderationActions.stream().filter(action -> action.support().equals(status)).findFirst().orElseThrow(
-            () -> new IllegalArgumentException("No ModerationAction found for status " + status)
+    return moderationActions.stream().filter(action -> action.support().equals(status)).findFirst().orElse(
+            moderationActions.stream().filter(s->s.support().equals(status)).findFirst().orElse(null)
     );
 
 }

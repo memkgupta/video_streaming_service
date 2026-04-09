@@ -1,10 +1,10 @@
 package com.vsnt.services;
 
+
 import com.vsnt.ModerationJobProducer;
 import com.vsnt.SegmentEventFactory;
 import com.vsnt.SegmentEventProducer;
 import com.vsnt.dtos.ModerationJob;
-import com.vsnt.dtos.ResolutionEnum;
 import com.vsnt.dtos.TranscodingSegmentUpdateDTO;
 
 import java.io.IOException;
@@ -14,32 +14,28 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 import static java.nio.file.StandardWatchEventKinds.*;
-public class HlsDirectoryWatcher implements Runnable {
+
+public class Mp4SegmentDirectoryWatcher implements Runnable {
 
     private final WatchService watchService;
     private final Map<WatchKey, Path> keyDirectoryMap = new HashMap<>();
     private final SegmentEventFactory segmentEventFactory;
-    private final SegmentEventProducer producer;
+    private final ModerationJobProducer producer;
 
     private final ExecutorService executor;
-
     private final CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 
     private volatile boolean running = false;
     private Thread watcherThread;
-    private final ModerationJobProducer moderationJobProducer;
-    private final boolean moderation;
-    public HlsDirectoryWatcher(String basePath,
-                               SegmentEventFactory segmentEventFactory,
-                               SegmentEventProducer producer, ModerationJobProducer moderationJobProducer, boolean moderation) throws IOException {
+
+    public Mp4SegmentDirectoryWatcher(String basePath,
+                                      SegmentEventFactory segmentEventFactory,
+                                      ModerationJobProducer producer) throws IOException {
 
         this.segmentEventFactory = segmentEventFactory;
         this.producer = producer;
-        this.moderationJobProducer = moderationJobProducer;
-        this.moderation = moderation;
         this.watchService = FileSystems.getDefault().newWatchService();
 
-        //  Thread pool with backpressure
         this.executor = new ThreadPoolExecutor(
                 4, 8,
                 60, TimeUnit.SECONDS,
@@ -47,13 +43,9 @@ public class HlsDirectoryWatcher implements Runnable {
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
 
-        // IMPORTANT: use numeric folders (matches FFmpeg %v)
-        String[] variants = {"0", "1", "2", "3"};
-
-        for (String variant : variants) {
-            Path dir = Paths.get(basePath, variant);
-            registerDirectory(dir);
-        }
+        //  For MP4 segmentation → usually single directory
+        Path dir = Paths.get(basePath);
+        registerDirectory(dir);
     }
 
     public CompletableFuture<Void> getCompletionFuture() {
@@ -71,7 +63,7 @@ public class HlsDirectoryWatcher implements Runnable {
 
         running = true;
         watcherThread = new Thread(this);
-        watcherThread.setName("hls-directory-watcher");
+        watcherThread.setName("mp4-segment-watcher");
         watcherThread.start();
     }
 
@@ -89,23 +81,23 @@ public class HlsDirectoryWatcher implements Runnable {
 
         executor.submit(() -> {
             try {
-                //  Ignore temp files
-                if (fullPath.toString().endsWith(".tmp")) return;
+                String file = fullPath.toString();
 
-                //  Only process final .ts
-                if (!fullPath.toString().endsWith(".ts")) return;
+                //  ignore temp / incomplete files
 
-                System.out.println("Processing: " + fullPath);
+                if (!file.endsWith(".mp4")) return;
 
-                TranscodingSegmentUpdateDTO update =
-                        segmentEventFactory.generate(fullPath);
+                // wait until file is fully written
+                waitUntilStable(fullPath);
 
-                producer.sendEvent(update);
-                if(moderation && update.getResolution().equals(ResolutionEnum.RESOLUTION_480P))
-                {
-                    ModerationJob moderationJob = segmentEventFactory.generateModerationJob(fullPath);
-                    moderationJobProducer.send(moderationJob);
-                }
+                System.out.println("Processing MP4: " + fullPath);
+
+                ModerationJob update =
+                        segmentEventFactory.generateModerationJob(fullPath);
+
+                producer.send(update);
+
+                //  delete after processing
                 Files.deleteIfExists(fullPath);
 
             } catch (Exception e) {
@@ -114,13 +106,30 @@ public class HlsDirectoryWatcher implements Runnable {
         });
     }
 
+    //  ensures FFmpeg finished writing
+    private void waitUntilStable(Path path) throws IOException, InterruptedException {
+
+        long prevSize = -1;
+
+        while (true) {
+            long size = Files.size(path);
+
+            if (size == prevSize) {
+                return; // stable → done writing
+            }
+
+            prevSize = size;
+            Thread.sleep(2000); // tune if needed
+        }
+    }
+
     private void drainRemainingFiles() {
 
-        System.out.println("Draining remaining segments...");
+        System.out.println("Draining remaining MP4 segments...");
 
         for (Path dir : keyDirectoryMap.values()) {
             try (DirectoryStream<Path> stream =
-                         Files.newDirectoryStream(dir, "*.ts")) {
+                         Files.newDirectoryStream(dir, "*.mp4")) {
 
                 for (Path file : stream) {
                     processSegment(file);
@@ -135,7 +144,7 @@ public class HlsDirectoryWatcher implements Runnable {
     @Override
     public void run() {
 
-        System.out.println("Watcher started: " + Thread.currentThread().getName());
+        System.out.println("MP4 Watcher started: " + Thread.currentThread().getName());
 
         try {
             while (running) {
@@ -176,7 +185,7 @@ public class HlsDirectoryWatcher implements Runnable {
 
             completionFuture.complete(null);
 
-            System.out.println("Watcher stopped cleanly.");
+            System.out.println("MP4 Watcher stopped cleanly.");
         }
     }
 }

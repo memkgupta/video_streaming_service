@@ -44,7 +44,7 @@ class ModerationJob(BaseModel):
     """Message consumed from RabbitMQ."""
     job_id: str 
     asset_id: str 
-    content_type: ContentType = ContentType.TEXT
+    content_type: ContentType = ContentType.VIDEO
     # Either inline content or a URL (one must be provided for text/image)
     content: str | None = None
     content_url: str | None = None

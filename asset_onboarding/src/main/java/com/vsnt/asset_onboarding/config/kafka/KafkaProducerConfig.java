@@ -1,12 +1,13 @@
 package com.vsnt.asset_onboarding.config.kafka;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StringSerializer;
+
 import com.vsnt.asset_onboarding.config.Secrets;
 import com.vsnt.asset_onboarding.dtos.media.notification.BlockMedia;
 import com.vsnt.asset_onboarding.dtos.media.notification.MediaStatusUpdate;
 import com.vsnt.asset_onboarding.dtos.notification.Notification;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;

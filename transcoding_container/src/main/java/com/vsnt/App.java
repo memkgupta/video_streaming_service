@@ -5,6 +5,7 @@ import com.vsnt.dtos.TranscodingFinishEventDTO;
 import com.vsnt.dtos.UpdateRequestDTO;
 import com.vsnt.services.APIService;
 import com.vsnt.services.HlsDirectoryWatcher;
+import com.vsnt.services.Mp4SegmentDirectoryWatcher;
 import com.vsnt.services.S3Service;
 import org.apache.kafka.common.protocol.types.Field;
 
@@ -26,6 +27,7 @@ public class App
         S3Service s3Service = new S3Service();
         String file_key = System.getenv("FILE_KEY");
         String mediaId = System.getenv("MEDIA_ID");
+        boolean moderation = System.getenv("MODERATION").equals("true");
         String encryptionKey = System.getenv("ENCRYPTION_KEY");
         MediaType mediaType = MediaType.valueOf(System.getenv("MEDIA_TYPE"));
         String bucket_name = System.getenv("BUCKET_NAME");
@@ -54,37 +56,44 @@ public class App
 SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,
         kafka_topic_segment_update,kafka_topic_finish
         );
+ModerationJobProducer moderationJobProducer = new ModerationJobProducer(
+
+);
             String[] resolutions = {"0", "1", "2", "3"};
             Path basePath = Paths.get(mediaId);
 
             for (String resolution : resolutions) {
                 Files.createDirectories(basePath.resolve(resolution));
             }
-            HlsDirectoryWatcher watcher = new HlsDirectoryWatcher(
-                    mediaId,new SegmentEventFactory(
-                            assetId ,
-                    mediaId ,
+            SegmentEventFactory segmentEventFactory = new SegmentEventFactory(
+                    assetId,
+                    mediaId,
                     mediaType,
                     cloudFrontURL,
                     4000,
                     s3Service,
-                    transcoded_bucket_name
-            ),
-    producer
+                    transcoded_bucket_name,
+                    bucket_name
             );
+            HlsDirectoryWatcher watcher = new HlsDirectoryWatcher(
+                    mediaId, segmentEventFactory,
+    producer,
+                    moderationJobProducer,
+                    moderation
+            );
+
+
             watcher.start();
            boolean transcoding =  transcoder.startTranscodingAsync(signedURL, mediaId, encryptionKey,mediaType, publicKeyURL);
         if(mediaType.equals(MediaType.STATIC) && transcoding){
             watcher.stop();
             watcher.getCompletionFuture().get();
                 TranscodingFinishEventDTO finishEventDTO = new TranscodingFinishEventDTO();
-//            finishEventDTO.setFinishedAt(Timestamp.valueOf(LocalDateTime.now()));
                 finishEventDTO.setMediaId(mediaId);
                 finishEventDTO.setMediaType(MediaType.STATIC);
                 producer.sendFinishEvent(finishEventDTO);
-
-
         }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

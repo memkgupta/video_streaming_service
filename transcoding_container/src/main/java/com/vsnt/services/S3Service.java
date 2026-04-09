@@ -75,12 +75,15 @@ public class S3Service {
             metadata.setContentType("application/vnd.apple.mpegurl");
         }
 
-        try (InputStream inputStream = Files.newInputStream(path)) {
+        try  {
 
-            PutObjectRequest putRequest =
-                    new PutObjectRequest(bucket, key, inputStream, metadata);
+            PutObjectRequest request = new PutObjectRequest(
+                    bucket,
+                    key,
+                    path.toFile()
+            );
 
-            client.putObject(putRequest);
+            client.putObject(request);
 
             System.out.println("Uploaded to S3: s3://" + bucket + "/" + key);
 

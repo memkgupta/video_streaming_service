@@ -42,7 +42,7 @@ public class ModerationUpdateListener implements MessageListener<ModerationUpdat
         );
         CompletableFuture<Void> f2 = CompletableFuture.runAsync(() ->
                         moderationUpdateHandlerFactory
-                                .getModerationUpdateHandler(MediaType.STATIC)
+                                .getModerationUpdateHandler(media.getMediaType())
                                 .handle(message, media),
                 executor
         );
