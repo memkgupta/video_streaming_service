@@ -3,6 +3,7 @@ package com.vsnt.asset_onboarding.services;
 
 import com.vsnt.asset_onboarding.dtos.*;
 import com.vsnt.asset_onboarding.entities.Asset;
+import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 
 import com.vsnt.asset_onboarding.exceptions.BadRequestException;
@@ -25,12 +26,15 @@ public class UploadService {
     private final AssetService assetService;
 
     private final AssetUploadFinishListener uploadFinishListener;
-    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService,  AssetUploadFinishListener uploadFinishListener) {
+    private final MediaService mediaService;
+
+    public UploadService(S3Service s3Service, AssetRepository assetRepository, AssetService assetService, AssetUploadFinishListener uploadFinishListener, MediaService mediaService) {
         this.s3Service = s3Service;
         this.assetRepository = assetRepository;
         this.assetService = assetService;
 
         this.uploadFinishListener = uploadFinishListener;
+        this.mediaService = mediaService;
     }
 
     public FileUploadStartResponse startUpload(FileMetaData obj,String userId)
@@ -67,6 +71,12 @@ return res;
 
             throw new EntityNotFoundException("Asset" , assetId.toString());
         }
+        Media media = mediaService.getMedia(upload.getMediaId());
+        if(media == null || !media.isActive())
+        {
+            throw new  BadRequestException("Invalid media id");
+        }
+
 
         if(!upload.getUploadStatus().equals(UploadStatus.INITIATED) ){
             throw new InvalidStateException("Not started" , "upload chunk");

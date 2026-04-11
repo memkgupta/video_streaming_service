@@ -60,7 +60,7 @@ public class SegmentEventFactory {
         try {
             //  Upload segment
             s3Service.uploadSegment(
-                    moderationBucketName,
+                    transcodedBucketName,
                     s3Key,
                     segmentPath
             );

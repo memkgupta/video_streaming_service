@@ -42,7 +42,7 @@ class ModerationWorker:
                 asset_id=job.asset_id,
                 content_type=job.content_type
             )
-            
+            # print("result", result)
             # Push to Kafka
             kafka_event = result.to_kafka_event()
             logger.info(f"Pushing result to Kafka for content {job.asset_id}")

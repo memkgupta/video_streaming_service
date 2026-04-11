@@ -62,11 +62,8 @@ public class WatchController {
     ) long start ,@RequestHeader("X-ASSET-ID") String assetId, HttpServletResponse httpServletResponse)
     {
         Media media = mediaService.getMedia(mediaId);
-        if(media == null || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
-        {
-            throw new EntityNotFoundException("Media",mediaId.toString());
-        }
-    if(assetId == null || assetId.isEmpty())
+        isMediaAvailableToWatch(mediaId, media);
+        if(assetId == null || assetId.isEmpty())
     {
         throw new UnauthorisedException("Watch");
     }
@@ -99,10 +96,7 @@ public class WatchController {
     ) @RequestParam(defaultValue = "-1") Long start , HttpServletResponse httpServletResponse , @RequestHeader("X-ASSET-ID") String assetId )
     {
         Media media = mediaService.getMedia(mediaId);
-        if(media== null)
-        {
-            throw new EntityNotFoundException("Media",mediaId.toString());
-        }
+        isMediaAvailableToWatch(mediaId, media);
         if(!media.getVideoAsset().getAssetType().equals(AssetType.LIVE_VIDEO))
         {
             throw new InvalidArgumentException("resolution",resolution,"valid resolution");
@@ -115,6 +109,13 @@ public class WatchController {
         String content = watchService.watchLiveVariant(media,resolution,start);
         return  deliverySecurityConfig.populateResponse( httpServletResponse,media,content);
 
+    }
+
+    private static void isMediaAvailableToWatch(UUID mediaId, Media media) {
+        if(media == null || !media.isActive() || !(media.getStatus().equals(MediaStatus.READY) || media.getStatus().equals(MediaStatus.LIVE)))
+        {
+            throw new EntityNotFoundException("Media", mediaId.toString());
+        }
     }
 
 

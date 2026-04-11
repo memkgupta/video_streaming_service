@@ -64,14 +64,11 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
 {
     System.out.println("Live start");
     Media media = mediaService.getMedia(mediaId);
-    if(media == null)
+    if(media == null || !media.isActive())
     {
         throw new EntityNotFoundException("Media",mediaId.toString());
     }
-    if(media.getStatus().equals(MediaStatus.BLOCKED))
-    {
-        throw new ForbiddenException("Media is blocked");
-    }
+
     if(pushKey==null || pushKey.isEmpty())
     {
         throw new UnauthorisedException("Push Content");
@@ -107,7 +104,7 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
     public ResponseEntity<?> endLive(@PathVariable UUID mediaId , @RequestHeader("X-PUSH-KEY") String pushKey)
 {
     Media media = mediaService.getMedia(mediaId);
-    if(media == null)
+    if(media == null || !media.isActive())
     {
         throw new EntityNotFoundException("Media",mediaId.toString());
     }

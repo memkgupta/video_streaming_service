@@ -9,6 +9,7 @@ import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
+import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.services.S3Service;
@@ -38,7 +39,7 @@ public class VideoUploadHandler implements AssetUploadHandler{
     @Override
     public void handle(Asset asset) {
         Media media = mediaService.getMedia(asset.getMediaId());
-
+        media.setStatus(MediaStatus.PROCESSING);
         if(media.isModerationEnabled())
         {
             ModerationJob moderationJob = new ModerationJob();

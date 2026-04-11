@@ -50,7 +50,10 @@ public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
     @Override
     public void handle(ModerationUpdateDTO update, Media media) {
         ModerationStatus status = update.getModerationStatus();
-
+        if(!media.isActive())
+        {
+            return;
+        }
         if(status.equals(ModerationStatus.APPROVED) || status.equals(ModerationStatus.FLAGGED))
         {
             AssetAESKey assetKey = null;
@@ -83,7 +86,7 @@ public class StaticModerationUpdateHandler implements ModerationUpdateHandler{
                             .orgId(media.getOrgId())
                             .notificationId(UUID.randomUUID().toString())
                     .build());
-            media.setStatus(MediaStatus.BLOCKED);
+            media.setActive(false);
             mediaService.save(media);
         }
     }

@@ -1,6 +1,7 @@
 package com.vsnt.asset_onboarding.listeners.moderation;
 
 import com.vsnt.asset_onboarding.MessageListener;
+import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.entities.Media;
@@ -9,6 +10,7 @@ import com.vsnt.asset_onboarding.services.MediaService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -29,24 +31,23 @@ public class ModerationUpdateListener implements MessageListener<ModerationUpdat
     public void onMessage(ModerationUpdateDTO message) {
 
         Media media = mediaService.getMedia(UUID.fromString(message.getJobId()));
-        if(media == null){
+        if(media == null || !media.isActive() ){
             System.out.println("Media Not Found");
             return;
         }
-       CompletableFuture<Void> f1 = CompletableFuture.runAsync(() ->
-                        moderationActionFactory
-                                .getModerationAction(message.getModerationStatus())
-                                .act(message),
-                executor
+        if(List.of(MediaStatus.BLOCKED , MediaStatus.ENDED , MediaStatus.FAILED).stream().anyMatch(s->s.equals(media.getStatus())))
+        {
+            return;
+        }
+                MediaStatus updatedStatus =  moderationActionFactory
+                .getModerationAction(message.getModerationStatus())
+                .act(message,media);
+                media.setStatus(updatedStatus);
+               moderationUpdateHandlerFactory
+               .getModerationUpdateHandler(media.getMediaType())
+                .handle(message, media);
 
-        );
-        CompletableFuture<Void> f2 = CompletableFuture.runAsync(() ->
-                        moderationUpdateHandlerFactory
-                                .getModerationUpdateHandler(media.getMediaType())
-                                .handle(message, media),
-                executor
-        );
-        f1.join();
-        f2.join();
+
+
     }
 }

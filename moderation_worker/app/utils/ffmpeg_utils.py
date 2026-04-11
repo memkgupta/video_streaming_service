@@ -65,4 +65,4 @@ def get_video_length(video_path: str) -> float:
         raise RuntimeError("Failed to get video length")
 
     data = json.loads(result.stdout)
-    return float(data["format"]["duration"])
+    return float(data["format"]["duration"])

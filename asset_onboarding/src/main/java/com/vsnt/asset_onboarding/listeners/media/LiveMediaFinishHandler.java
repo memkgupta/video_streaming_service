@@ -3,6 +3,7 @@ package com.vsnt.asset_onboarding.listeners.media;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
+import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.repositories.MediaRepository;
 import com.vsnt.asset_onboarding.services.AssetService;
@@ -28,7 +29,7 @@ public class LiveMediaFinishHandler implements MediaFinishHandler {
         Asset asset =media.getVideoAsset();
         asset.setAssetType(AssetType.VIDEO);
         asset.setCdnURL(playlist);
-        media.setMediaType(MediaType.STATIC);
+        media.setStatus(MediaStatus.ENDED);
         assetService.save(asset);
         mediaService.save(media);
     }

@@ -5,7 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: moderation_worker
+    deploy:
+      replicas: 2
     restart: unless-stopped
     # Environment variables can be defined here or via an .env file
     # env_file:

@@ -95,6 +95,7 @@ public class MediaService {
     {
         Media media = getMedia(mediaId);
         media.setStatus(MediaStatus.BLOCKED);
+        media.setActive(false);
         mediaBlockedProducer.send(mediaId.toString() , reason);
         mediaRepository.save(media);
     }

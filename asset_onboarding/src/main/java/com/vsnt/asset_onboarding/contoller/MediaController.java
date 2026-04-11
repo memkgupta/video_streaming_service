@@ -162,11 +162,8 @@ public class MediaController {
     public ResponseEntity<?> updateMediaThumbnail(@PathVariable UUID id, @RequestBody FileMetaData metaData)
     {
     Media media = mediaService.getMedia(id);
-    if(media == null)
-    {
-        throw new EntityNotFoundException("Media",id.toString());
-    }
-    Asset asset = assetService.createAsset(media ,thumbnailAssetCreation,metaData);
+        isMediaActive(id, media);
+        Asset asset = assetService.createAsset(media ,thumbnailAssetCreation,metaData);
     String preSignedURL = s3Service.startSingleUpload(asset.getKey(),asset.getFileType());
     return ResponseEntity.ok(Map.of("preSignedURL",preSignedURL));
     }
@@ -184,10 +181,7 @@ public class MediaController {
     )
     {
         Media media = mediaService.getMedia(id);
-        if(media == null)
-        {
-            throw new EntityNotFoundException("Media",id.toString());
-        }
+        isMediaActive(id, media);
         Asset asset = assetService.createAsset(media ,staticVideoAssetCreation,metaData);
         FileUploadStartResponse res = new  FileUploadStartResponse();
         res.setKey(asset.getKey());
@@ -209,12 +203,16 @@ public class MediaController {
     public ResponseEntity<?> generateTokens(@PathVariable UUID id , @RequestParam("userId") String userId)
     {
         Media media = mediaService.getMedia(id);
-        if(media == null)
-        {
-            throw new EntityNotFoundException("Media",id.toString());
-        }
+        isMediaActive(id, media);
         String[] tokens = deliverySecurityConfig.generateTokens(userId,media.getVideoAsset().getId().toString());
         return ResponseEntity.ok(Map.of("access_token",tokens[0],"refresh_token",tokens[1]));
+    }
+
+    private static void isMediaActive(UUID id, Media media) {
+        if(media == null || !media.isActive())
+        {
+            throw new EntityNotFoundException("Media", id.toString());
+        }
     }
 
 

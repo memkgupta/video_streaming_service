@@ -23,6 +23,7 @@ public class Asset {
     private long fileSize;
     private String storageURL;
     private String fileUploadId;
+    @Enumerated(EnumType.STRING)
     private AssetType assetType;
     @Enumerated(EnumType.STRING)
     private UploadStatus uploadStatus;

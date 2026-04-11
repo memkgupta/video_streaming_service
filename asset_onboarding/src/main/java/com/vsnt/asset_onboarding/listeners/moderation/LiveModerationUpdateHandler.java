@@ -6,6 +6,7 @@ import com.vsnt.asset_onboarding.dtos.ModerationStatus;
 import com.vsnt.asset_onboarding.dtos.media.notification.BlockMedia;
 import com.vsnt.asset_onboarding.dtos.media.notification.MediaStatusUpdate;
 import com.vsnt.asset_onboarding.dtos.notification.Notification;
+import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.entities.Media;
@@ -42,34 +43,33 @@ public class LiveModerationUpdateHandler implements ModerationUpdateHandler{
 
     @Override
     public void handle(ModerationUpdateDTO update, Media media) {
-        if(update.getModerationStatus().equals(ModerationStatus.REJECTED))
+        if(!media.isActive()) return;
+        if(media.getStatus().equals(MediaStatus.BLOCKED))
         {
-            moderationKVService.increment(media.getId().toString(),update.getViolationCount());
-         if(moderationKVService.getViolationCount(update.getJobId())>10)
-         {
-             media.setStatus(MediaStatus.BLOCKED);
-             blockMediaProducer.produceMessage(BlockMedia.builder()
-                     .mediaId(media.getId().toString())
-                     .timestamp(Instant.now())
-                     .build());
-             notificationMediaStatusUpdateProducer.produceMessage(
-                     Notification.<MediaStatusUpdate>builder()
-                             .orgId(media.getOrgId())
-                             .notificationId(UUID.randomUUID().toString())
-                             .message(MediaStatusUpdate.builder()
-                                     .mediaStatus(MediaStatus.BLOCKED)
-                                     .message(Map.of("message","Media blocked due to NSFW violation"))
-                                     .mediaType(MediaType.LIVE)
-                                     .createdAt(Instant.now())
-                                     .mediaId(media.getId().toString())
 
-                                     .build())
-                             .build()
-             );
-             mediaService.save(media);
-         }
+            blockMediaProducer.produceMessage(BlockMedia.builder()
+                    .mediaId(media.getId().toString())
+                    .timestamp(Instant.now())
+                    .build());
+            notificationMediaStatusUpdateProducer.produceMessage(
+                    Notification.<MediaStatusUpdate>builder()
+                            .orgId(media.getOrgId())
+                            .notificationId(UUID.randomUUID().toString())
+                            .message(MediaStatusUpdate.builder()
+                                    .mediaStatus(MediaStatus.BLOCKED)
+                                    .message(Map.of("message","Media blocked due to NSFW violation"))
+                                    .mediaType(MediaType.LIVE)
+                                    .createdAt(Instant.now())
+                                    .mediaId(media.getId().toString())
 
+                                    .build())
+                            .build()
+            );
+            media.setActive(false);
+            mediaService.save(media);
         }
+
+
 
     }
 }
