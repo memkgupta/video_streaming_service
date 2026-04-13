@@ -15,7 +15,7 @@
       <module>aggregator-service</module>
         <module>api_gateway</module>
         <module>common-lib</module>
-        <module>moderation_service</module>
+
         <module>transcoder</module>
         <module>ServiceDiscovery</module>
         <module>asset_onboarding</module>
