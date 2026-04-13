@@ -21,13 +21,13 @@ public class DeadLetterEvent {
     private String id;
 
     private String eventId;
-
+    private String eventType;
     private String callbackUrl;
 
     @Column(columnDefinition = "TEXT")
     private String payload;
 
     private String reason;
-
+    private int retryCount;
     private Instant failedAt;
 }
