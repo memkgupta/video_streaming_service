@@ -14,11 +14,12 @@ public class KafkaConsumer {
     private final MessageListener<TranscodingSegmentUpdateDTO> transcodingSegmentUpdateListener;
     private final MessageListener<ModerationUpdateDTO> moderationUpdateListener;
     private final MessageListener<TranscodingFinishEventDTO>  transcodingFinishListener;
-    public KafkaConsumer(  MessageListener<TranscodingSegmentUpdateDTO> transcodingSegmentUpdateListener, MessageListener<ModerationUpdateDTO> moderationUpdateListener, MessageListener<TranscodingFinishEventDTO> transcodingFinishListener) {
-
+    private final MessageListener<TranscodingFailedDTO>  transcodingFailedListener;
+    public KafkaConsumer(MessageListener<TranscodingSegmentUpdateDTO> transcodingSegmentUpdateListener, MessageListener<ModerationUpdateDTO> moderationUpdateListener, MessageListener<TranscodingFinishEventDTO> transcodingFinishListener, MessageListener<TranscodingFailedDTO> transcodingFailedListener) {
         this.transcodingSegmentUpdateListener = transcodingSegmentUpdateListener;
         this.moderationUpdateListener = moderationUpdateListener;
         this.transcodingFinishListener = transcodingFinishListener;
+        this.transcodingFailedListener = transcodingFailedListener;
     }
     @KafkaListener(
             topics = "asset-transcoding-updates",
@@ -26,6 +27,13 @@ public class KafkaConsumer {
     )
     public void listen(TranscodingSegmentUpdateDTO updateRequestDTO) {
         transcodingSegmentUpdateListener.onMessage(updateRequestDTO);
+    }
+    @KafkaListener(
+            topics = "asset-transcoding-fail",
+            containerFactory = "transcodingFinishFactory"
+    )
+    public void listen(TranscodingFailedDTO transcodingFailedDTO) {
+        transcodingFailedListener.onMessage(transcodingFailedDTO);
     }
     @KafkaListener(
             topics = "asset-transcoding-finish",

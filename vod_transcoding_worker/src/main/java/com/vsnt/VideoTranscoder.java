@@ -1,65 +1,55 @@
 package com.vsnt;
 
-import com.vsnt.config.FFMPEGCommand;
-import com.vsnt.config.FFMPEGCommandFactory;
+
 import com.vsnt.config.FFMPEGConfigVOD;
 import com.vsnt.dtos.MediaType;
 import com.vsnt.services.HlsKeyUtil;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class VideoTranscoder {
-
-    private final ExecutorService executor =
-            Executors.newFixedThreadPool(4); // 4 resolutions
-
+  private final ExecutorService executor;
+    public VideoTranscoder(ExecutorService executor) {
+        this.executor = executor;
+    }
     public boolean startTranscodingAsync(
             String url,
             String outputPath,
             String hexKey,
             MediaType mediaType,
-            String publicKeyURL) throws IOException {
-//        String[] resolutions = {"360p", "480p", "720p", "1080p"};
+            String publicKeyURL)throws IOException {
+
         Path basePath = Paths.get(outputPath);
-
-//        for (String resolution : resolutions) {
-//            Files.createDirectories(basePath.resolve(resolution));
-//        }
-
         // Generate key file
         Path keyFilePath =
                 HlsKeyUtil.createKeyFile(hexKey, outputPath );
-
         Path keyInfoPath = basePath.resolve("key_info.txt");
-
         String keyInfoContent =
                 publicKeyURL + "\n" +
-                        keyFilePath.toAbsolutePath();
-
+                        keyFilePath.toAbsolutePath() + "\n" +
+                        hexKey;
         Files.writeString(keyInfoPath, keyInfoContent);
-
         try {
-
-
-
-            FFMPEGCommand config = FFMPEGCommandFactory.getFFMPEGCommand(
-                    mediaType,
+            FFMPEGConfigVOD config = new FFMPEGConfigVOD (
                     url,
                     outputPath,
                     keyInfoPath.toAbsolutePath().toString()
             );
             List<String> commands = config.getFFMPEGCommands();
-
             // Run resolutions in parallel
             List<Future<Boolean>> results =
                     commands.stream()
-                            .map(cmd -> executor.submit(() -> executeFFmpeg(cmd)))
+                            .map(cmd -> executor.submit(() -> executeffmpeg(cmd)))
                             .toList();
 
             // Wait for all to complete
+
             for (Future<Boolean> future : results) {
                 if (!future.get()) {
                     return false;
@@ -75,7 +65,7 @@ public class VideoTranscoder {
         }
     }
 
-    private boolean executeFFmpeg(String command) {
+    private boolean executeffmpeg(String command) {
 
         try {
 

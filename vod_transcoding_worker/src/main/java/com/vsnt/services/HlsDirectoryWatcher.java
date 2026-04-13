@@ -1,10 +1,11 @@
 package com.vsnt.services;
 
 
-import com.vsnt.ModerationJobProducer;
 import com.vsnt.SegmentEventFactory;
 import com.vsnt.SegmentEventProducer;
+import com.vsnt.dtos.MediaType;
 import com.vsnt.dtos.ModerationJob;
+import com.vsnt.dtos.ResolutionEnum;
 import com.vsnt.dtos.TranscodingSegmentUpdateDTO;
 
 import java.io.IOException;
@@ -13,29 +14,38 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 
-import static java.nio.file.StandardWatchEventKinds.*;
-
-public class Mp4SegmentDirectoryWatcher implements Runnable {
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
+public class HlsDirectoryWatcher implements Runnable {
 
     private final WatchService watchService;
     private final Map<WatchKey, Path> keyDirectoryMap = new HashMap<>();
     private final SegmentEventFactory segmentEventFactory;
-    private final ModerationJobProducer producer;
+    private final SegmentEventProducer producer;
+    private final String assetId ;
+    private final String mediaId;
 
     private final ExecutorService executor;
+
     private final CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 
     private volatile boolean running = false;
     private Thread watcherThread;
 
-    public Mp4SegmentDirectoryWatcher(String basePath,
-                                      SegmentEventFactory segmentEventFactory,
-                                      ModerationJobProducer producer) throws IOException {
+
+    public HlsDirectoryWatcher(String basePath,
+                               SegmentEventFactory segmentEventFactory,
+                               SegmentEventProducer producer, String assetId, String mediaId) throws IOException {
 
         this.segmentEventFactory = segmentEventFactory;
         this.producer = producer;
+        this.assetId = assetId;
+        this.mediaId = mediaId;
+
+
         this.watchService = FileSystems.getDefault().newWatchService();
 
+        //  Thread pool with backpressure
         this.executor = new ThreadPoolExecutor(
                 4, 8,
                 60, TimeUnit.SECONDS,
@@ -43,9 +53,13 @@ public class Mp4SegmentDirectoryWatcher implements Runnable {
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
 
-        //  For MP4 segmentation → usually single directory
-        Path dir = Paths.get(basePath);
-        registerDirectory(dir);
+        // IMPORTANT: use numeric folders (matches FFmpeg %v)
+        String[] variants = {"0", "1", "2", "3"};
+
+        for (String variant : variants) {
+            Path dir = Paths.get(basePath,variant);
+            registerDirectory(dir);
+        }
     }
 
     public CompletableFuture<Void> getCompletionFuture() {
@@ -63,7 +77,7 @@ public class Mp4SegmentDirectoryWatcher implements Runnable {
 
         running = true;
         watcherThread = new Thread(this);
-        watcherThread.setName("mp4-segment-watcher");
+        watcherThread.setName("hls-directory-watcher");
         watcherThread.start();
     }
 
@@ -81,23 +95,19 @@ public class Mp4SegmentDirectoryWatcher implements Runnable {
 
         executor.submit(() -> {
             try {
-                String file = fullPath.toString();
+                //  Ignore temp files
+                if (fullPath.toString().endsWith(".tmp")) return;
 
-                //  ignore temp / incomplete files
+                //  Only process final .ts
+                if (!fullPath.toString().endsWith(".ts")) return;
 
-                if (!file.endsWith(".mp4")) return;
+                System.out.println("Processing: " + fullPath);
 
-                // wait until file is fully written
-                waitUntilStable(fullPath);
+                TranscodingSegmentUpdateDTO update =
+                        segmentEventFactory.generate(fullPath,assetId,mediaId, MediaType.STATIC);
 
-                System.out.println("Processing MP4: " + fullPath);
+                producer.sendEvent(update);
 
-                ModerationJob update =
-                        segmentEventFactory.generateModerationJob(fullPath);
-
-                producer.send(update);
-
-                //  delete after processing
                 Files.deleteIfExists(fullPath);
 
             } catch (Exception e) {
@@ -106,30 +116,13 @@ public class Mp4SegmentDirectoryWatcher implements Runnable {
         });
     }
 
-    //  ensures FFmpeg finished writing
-    private void waitUntilStable(Path path) throws IOException, InterruptedException {
-
-        long prevSize = -1;
-
-        while (true) {
-            long size = Files.size(path);
-
-            if (size == prevSize) {
-                return; // stable → done writing
-            }
-
-            prevSize = size;
-            Thread.sleep(2000); // tune if needed
-        }
-    }
-
     private void drainRemainingFiles() {
 
-        System.out.println("Draining remaining MP4 segments...");
+        System.out.println("Draining remaining segments...");
 
         for (Path dir : keyDirectoryMap.values()) {
             try (DirectoryStream<Path> stream =
-                         Files.newDirectoryStream(dir, "*.mp4")) {
+                         Files.newDirectoryStream(dir, "*.ts")) {
 
                 for (Path file : stream) {
                     processSegment(file);
@@ -143,14 +136,10 @@ public class Mp4SegmentDirectoryWatcher implements Runnable {
 
     @Override
     public void run() {
-
-        System.out.println("MP4 Watcher started: " + Thread.currentThread().getName());
-
+        System.out.println("Watcher started: " + Thread.currentThread().getName());
         try {
             while (running) {
-
                 WatchKey key;
-
                 try {
                     key = watchService.poll(2, TimeUnit.SECONDS);
                     if (key == null) continue;
@@ -158,24 +147,16 @@ public class Mp4SegmentDirectoryWatcher implements Runnable {
                 } catch (InterruptedException | ClosedWatchServiceException e) {
                     break;
                 }
-
                 Path dir = keyDirectoryMap.get(key);
                 if (dir == null) continue;
-
                 for (WatchEvent<?> event : key.pollEvents()) {
-
                     if (event.kind() == OVERFLOW) continue;
-
                     Path fullPath = dir.resolve((Path) event.context());
-
                     processSegment(fullPath);
                 }
-
                 key.reset();
             }
-
         } finally {
-
             drainRemainingFiles();
 
             executor.shutdown();
@@ -185,7 +166,7 @@ public class Mp4SegmentDirectoryWatcher implements Runnable {
 
             completionFuture.complete(null);
 
-            System.out.println("MP4 Watcher stopped cleanly.");
+            System.out.println("Watcher stopped cleanly.");
         }
     }
 }

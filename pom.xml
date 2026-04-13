@@ -20,6 +20,7 @@
         <module>ServiceDiscovery</module>
         <module>asset_onboarding</module>
         <module>user</module>
+        <module>vod_transcoding_worker</module>
 
     </modules>
 

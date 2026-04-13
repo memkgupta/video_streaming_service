@@ -1,5 +1,4 @@
 package com.vsnt.asset_onboarding.listeners.moderation;
-
 import com.vsnt.asset_onboarding.SecuredCDNService;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
 import com.vsnt.asset_onboarding.config.kafka.producers.NotificationMediaStatusUpdateProducer;

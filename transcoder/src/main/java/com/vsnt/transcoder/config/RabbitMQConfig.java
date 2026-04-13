@@ -27,7 +27,7 @@ import java.util.Map;
 @Configuration
 public class RabbitMQConfig {
 
-    static final String QUEUE_NAME = "transcoding_jobs" ;
+    static final String QUEUE_NAME = "transcoding_jobs_premium" ;
     private final JobAssigner jobAssigner;
     public RabbitMQConfig(JobAssigner jobAssigner) {
         this.jobAssigner = jobAssigner;

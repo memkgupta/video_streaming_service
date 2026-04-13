@@ -5,7 +5,7 @@ import com.vsnt.dtos.TranscodingFinishEventDTO;
 import com.vsnt.dtos.UpdateRequestDTO;
 import com.vsnt.services.APIService;
 import com.vsnt.services.HlsDirectoryWatcher;
-import com.vsnt.services.Mp4SegmentDirectoryWatcher;
+
 import com.vsnt.services.S3Service;
 import org.apache.kafka.common.protocol.types.Field;
 

@@ -1,7 +1,8 @@
-version: '3.8'
-name: 'q4-video'
+version: "3.9"
+name: "q4-video"
 
 services:
+
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper_q4
@@ -38,7 +39,7 @@ services:
       zookeeper:
         condition: service_healthy
     healthcheck:
-      test: kafka-topics --bootstrap-server kafka:9092 --list || exit 1
+      test: kafka-topics --bootstrap-server ${KAFKA_BOOTSTRAP_SERVERS} --list || exit 1
       interval: 10s
       timeout: 10s
       retries: 5
@@ -51,9 +52,6 @@ services:
       - "6379:6379"
     networks:
       - app-net
-    depends_on:
-      kafka:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -71,9 +69,6 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     networks:
       - app-net
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
@@ -94,155 +89,87 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
     healthcheck:
       test: pg_isready -U ${POSTGRES_USER} || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
 
-  eureka-server:
-    build:
-      context: ./ServiceDiscovery
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui_q4
     ports:
-      - "8761:8761"
+      - "9909:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      DYNAMIC_CONFIG_ENABLED: "true"
     networks:
       - app-net
     depends_on:
-      postgres:
-        condition: service_healthy
+      - kafka
 
-  api-gateway:
+  moderation_worker:
     build:
-      context: ./api_gateway
-    ports:
-      - "8001:8001"
+      context: ./moderation_worker
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 2
+    restart: unless-stopped
     depends_on:
-      eureka-server:
-        condition: service_started
+      - kafka
+      - rabbitmq
     environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
-    networks:
-      - app-net
-
-  asset-onboarding:
-    build:
-      context: .
-      dockerfile: asset_onboarding/Dockerfile
-    ports:
-      - "8081:8081"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-    environment:
-      EUREKA_URL: ${EUREKA_URL}
-      DB_URL: ${ASSET_DB_URL}
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KAFKA_URL: ${KAFKA_URL}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    networks:
+      - app-net
+
+  vod_transcoding_worker:
+    build:
+      context: ./vod_transcoding_worker
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 2
+    restart: unless-stopped
+    depends_on:
+      - kafka
+      - rabbitmq
+    networks:
+      - app-net
+    environment:
+      # Kafka
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+
+      # Topics
+      TRANSCODING_UPDATE_TOPIC: ${TRANSCODING_UPDATE_TOPIC}
+      TRANSCODING_FINISH_TOPIC: ${TRANSCODING_FINISH_TOPIC}
+      TRANSCODING_FAIL_TOPIC: ${TRANSCODING_FAIL_TOPIC}
+
+      # AWS
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${AWS_REGION}
-      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
-      AWS_SECURE_BUCKET: ${AWS_SECURE_BUCKET}
-      CLOUDFRONT_KEY_PAIR_ID: ${CLOUDFRONT_KEY_PAIR_ID}
-      PRIVATE_KEY_PATH: ${PRIVATE_KEY_PATH}
-      CDN_RESOURCE_URL: ${CDN_RESOURCE_URL}
-      CDN_DOMAIN: ${CDN_DOMAIN}
-    volumes:
-      - ./keys:/app/keys
-    networks:
-      - app-net
+      AWS_RAW_BUCKET: ${AWS_RAW_BUCKET}
+      AWS_TRANSCODED_BUCKET: ${AWS_TRANSCODED_BUCKET}
 
-  transcoder:
-    build:
-      context: ./transcoder
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      kafka:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-    ports:
-      - "8082:8082"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
-      KAFKA_URL: ${KAFKA_URL}
+      # CDN
+      CDN_BASE_URL: ${CDN_BASE_URL}
+
+      # Key service
+      PUBLIC_KEY_SERVER_URL: ${PUBLIC_KEY_SERVER_URL}
+
+      # RabbitMQ
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
-      AWS_RAW_BUCKET_NAME: ${AWS_RAW_BUCKET_NAME}
-      AWS_TRANSCODED_BUCKET_NAME: ${AWS_TRANSCODED_BUCKET_NAME}
-      DOCKER_TRANSCODER_CONTAINER_IMAGE: ${DOCKER_TRANSCODER_CONTAINER_IMAGE}
-      CLOUD_FRONT_URL: ${CLOUD_FRONT_URL}
-    networks:
-      - app-net
-
-  user:
-    build:
-      context: ./user
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-    ports:
-      - "8080:8080"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
-      DB_URL: ${USER_DB_URL}
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KAFKA_URL: ${KAFKA_URL}
-    networks:
-      - app-net
-
-#  rtmp_sever:
-#    build:
-#      context: .
-#      dockerfile: rtmp_server/Dockerfile
-#    depends_on:
-#       kafka:
-#        condition: service_healthy
-#       eureka-server:
-#        condition: service_healthy
-#    ports:
-#      - "8000:8000"
-#      - "1935:1935"
-#    environment:
-#      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URL}
-#      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
-#      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-#      AWS_RAW_BUCKET_NAME: ${AWS_RAW_BUCKET_NAME}
-#      AWS_TRANSCODED_BUCKET_NAME: ${AWS_TRANSCODED_BUCKET_NAME}
-#      DOCKER_TRANSCODER_CONTAINER_IMAGE: ${DOCKER_TRANSCODER_CONTAINER_IMAGE}
-#      CLOUD_FRONT_URL: ${CLOUD_FRONT_URL}
-
+      RABBITMQ_QUEUE: transcoding_jobs
+      # Worker tuning
+      MAX_CONCURRENT_JOBS: ${MAX_CONCURRENT_JOBS}
 
 networks:
   app-net:
