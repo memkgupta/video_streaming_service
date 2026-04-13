@@ -9,8 +9,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class KafkaConsumer {
-
-
     private final MessageListener<TranscodingSegmentUpdateDTO> transcodingSegmentUpdateListener;
     private final MessageListener<ModerationUpdateDTO> moderationUpdateListener;
     private final MessageListener<TranscodingFinishEventDTO>  transcodingFinishListener;
