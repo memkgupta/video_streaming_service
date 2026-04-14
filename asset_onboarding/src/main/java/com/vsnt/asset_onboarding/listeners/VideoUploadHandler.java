@@ -16,6 +16,7 @@ import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.common_lib.dtos.ModerationJob;
 import com.vsnt.common_lib.dtos.events.media.processing.MediaProcessingEvent;
+import com.vsnt.common_lib.dtos.events.media.processing.MediaProcessingPayload;
 import com.vsnt.common_lib.dtos.events.media.publish.MediaPublishPayload;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +52,7 @@ public class VideoUploadHandler implements AssetUploadHandler{
                         media.getId().toString(),
                         Instant.now(),
                         media.getOrgId(),
-                        MediaPublishPayload.builder()
+                        MediaProcessingPayload.builder()
                                 .assetId(asset.getId().toString())
                                 .assetType(com.vsnt.common_lib.enums.AssetType.VIDEO)
                                 .build()

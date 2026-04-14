@@ -1,5 +1,4 @@
 package com.vsnt.asset_onboarding.config.kafka.producers;
-
 import com.vsnt.common_lib.dtos.events.live.LiveEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;

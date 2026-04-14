@@ -71,6 +71,7 @@ public class WatchController {
         boolean allowed = media.getVideoAsset().getId().equals(Long.parseLong(assetId));
         if(!allowed)
         {
+            System.out.println("Asset Id received : " + assetId + "Required AssetId " + media.getVideoAsset().getId() + " for Media "+media.getId().toString());
             throw new ForbiddenException("Watch media");
         }
         String content = watchService.watch(media , start);

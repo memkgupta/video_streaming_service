@@ -14,6 +14,6 @@ public class MediaProcessingEventHandler implements MediaEventHandler<MediaProce
 
     @Override
     public void handle(MediaEvent<MediaProcessingPayload> event) {
-
+        System.out.println("Media Processing "+event.getMediaId());
     }
 }

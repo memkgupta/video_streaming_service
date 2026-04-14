@@ -85,6 +85,7 @@ public class HlsDirectoryWatcher implements Runnable {
     }
 
     public synchronized void stop() {
+
         running = false;
 
         try {
@@ -108,31 +109,31 @@ public class HlsDirectoryWatcher implements Runnable {
 
                 TranscodingSegmentUpdateDTO update =
                         segmentEventFactory.generate(fullPath,assetId,mediaId, MediaType.STATIC);
+                producer.sendEvent(update);
+                Files.deleteIfExists(fullPath);
+//                if(eventSent)
+//                {
+//                    String segmentKey = getSegmentKey(fullPath);
+//
+//                    segmentTracker.putIfAbsent(segmentKey, new AtomicInteger(0));
+//
+//                    int count = segmentTracker.get(segmentKey).incrementAndGet();
+//
+//                    if (count == totalVariants) {
+//                        int done = completedSegments.incrementAndGet();
+//
+//                        double progress = ((double) done / totalSegments) * 100;
+//
+//                        System.out.println("Progress: " + progress + "% (" + done + "/" + totalSegments + ")");
+//
+//                        // send progress update
+//                        producer.sendProgress(new AssetTranscodingProgressEvent(
+//                                assetId, Instant.now(), new AssetTranscodingProgressPayload(progress)
+//                        ));
+//                        Files.deleteIfExists(fullPath);
+//                    }
 
-                boolean eventSent =  producer.sendEvent(update);
-                if(eventSent)
-                {
-                    String segmentKey = getSegmentKey(fullPath);
-
-                    segmentTracker.putIfAbsent(segmentKey, new AtomicInteger(0));
-
-                    int count = segmentTracker.get(segmentKey).incrementAndGet();
-
-                    if (count == totalVariants) {
-                        int done = completedSegments.incrementAndGet();
-
-                        double progress = ((double) done / totalSegments) * 100;
-
-                        System.out.println("Progress: " + progress + "% (" + done + "/" + totalSegments + ")");
-
-                        // send progress update
-                        producer.sendProgress(new AssetTranscodingProgressEvent(
-                                assetId, Instant.now(), new AssetTranscodingProgressPayload(progress)
-                        ));
-                        Files.deleteIfExists(fullPath);
-                    }
-
-                }
+//                }
 
 
             } catch (Exception e) {

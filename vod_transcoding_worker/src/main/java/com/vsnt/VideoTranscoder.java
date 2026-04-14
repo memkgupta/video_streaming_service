@@ -73,7 +73,7 @@ public class VideoTranscoder {
 
             ProcessBuilder pb = new ProcessBuilder("sh", "-c", command);
             pb.redirectErrorStream(true);
-            pb.inheritIO();
+//            pb.inheritIO();
             Process process = pb.start();
             int exitCode = process.waitFor();
             return exitCode == 0;

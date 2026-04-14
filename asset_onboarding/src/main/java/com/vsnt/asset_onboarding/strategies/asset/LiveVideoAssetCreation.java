@@ -5,6 +5,7 @@ import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
+import com.vsnt.asset_onboarding.repositories.MediaRepository;
 import com.vsnt.asset_onboarding.services.AssetService;
 import com.vsnt.asset_onboarding.services.KeyService;
 import org.springframework.stereotype.Component;
@@ -16,10 +17,13 @@ import java.time.Instant;
 public class LiveVideoAssetCreation extends AssetCreationStrategy<LiveVideoAssetCreationRequestDTO> {
 
    private final AssetRepository assetRepository;
-    protected LiveVideoAssetCreation(KeyService keyService, AssetRepository assetRepository) {
-        super(keyService,true);
+    private final MediaRepository mediaRepository;
+
+    protected LiveVideoAssetCreation(KeyService keyService, AssetRepository assetRepository, MediaRepository mediaRepository) {
+        super(keyService,true,mediaRepository);
 
         this.assetRepository = assetRepository;
+        this.mediaRepository = mediaRepository;
     }
 
     @Override

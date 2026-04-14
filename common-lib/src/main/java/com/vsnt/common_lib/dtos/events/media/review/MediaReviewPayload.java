@@ -1,8 +1,12 @@
 package com.vsnt.common_lib.dtos.events.media.review;
 
 import com.vsnt.common_lib.enums.AssetType;
-import lombok.Builder;
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class MediaReviewPayload {
     private String assetId;

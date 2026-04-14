@@ -14,6 +14,6 @@ public class AssetTranscodingFailedHandler implements AssetEventHandler<AssetTra
 
     @Override
     public void handle(AssetEvent<AssetTranscodingFailurePayload> event) {
-
+        System.out.println("Asset transcoding failed "+ event.getAssetId());
     }
 }

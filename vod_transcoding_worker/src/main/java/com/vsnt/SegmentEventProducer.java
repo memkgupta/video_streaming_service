@@ -1,10 +1,12 @@
 package com.vsnt;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedEvent;
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedPayload;
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingFailureEvent;
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingProgressEvent;
+import com.vsnt.config.InstantAdapter;
 import com.vsnt.dtos.TranscodingFailedDTO;
 import com.vsnt.dtos.TranscodingFinishEventDTO;
 import com.vsnt.dtos.TranscodingSegmentUpdateDTO;
@@ -12,6 +14,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
+import java.time.Instant;
 import java.util.Properties;
 
 public class SegmentEventProducer {
@@ -20,7 +23,9 @@ public class SegmentEventProducer {
     private final String update_topic;
     private final String finish_topic;
     private final String fail_topic;
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(Instant.class, new InstantAdapter())
+            .create();
 
     public SegmentEventProducer(String bootstrapServers, String update_topic , String finish_topic, String failTopic)  {
 

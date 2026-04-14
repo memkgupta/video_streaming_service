@@ -14,6 +14,6 @@ public class LiveStartEventHandler implements LiveEventHandler<LiveStartedPayloa
 
     @Override
     public void handle(LiveEvent<LiveStartedPayload> event) {
-
+        System.out.println("Live started "+event.getLiveAssetId());
     }
 }

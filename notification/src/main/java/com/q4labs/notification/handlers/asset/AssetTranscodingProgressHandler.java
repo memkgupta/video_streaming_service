@@ -13,6 +13,6 @@ public class AssetTranscodingProgressHandler implements AssetEventHandler<AssetT
 
     @Override
     public void handle(AssetEvent<AssetTranscodingProgressPayload> event) {
-
+        System.out.println("Asset transcoding completed "+ event.getAssetId()+ "-> "+event.getData().getProgressPercentage());
     }
 }

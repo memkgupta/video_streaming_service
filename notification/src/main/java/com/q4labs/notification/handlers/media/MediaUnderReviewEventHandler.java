@@ -14,6 +14,6 @@ public class MediaUnderReviewEventHandler implements MediaEventHandler<MediaRevi
 
     @Override
     public void handle(MediaEvent<MediaReviewPayload> event) {
-
+        System.out.println("Media under review"+ event.getMediaId());
     }
 }

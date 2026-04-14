@@ -1,11 +1,11 @@
 package com.vsnt.common_lib.dtos.events.live.end;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 @Builder
 @Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class LiveEndPayload {
     private long durationSeconds;

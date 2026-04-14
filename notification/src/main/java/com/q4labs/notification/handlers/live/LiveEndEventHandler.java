@@ -12,6 +12,6 @@ public class LiveEndEventHandler implements LiveEventHandler<LiveEndPayload> {
 
     @Override
     public void handle(LiveEvent<LiveEndPayload> event) {
-
+        System.out.println("Live end "+event.getLiveAssetId());
     }
 }

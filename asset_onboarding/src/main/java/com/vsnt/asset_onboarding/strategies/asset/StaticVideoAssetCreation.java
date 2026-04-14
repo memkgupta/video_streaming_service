@@ -23,7 +23,7 @@ public class StaticVideoAssetCreation extends AssetCreationStrategy<FileMetaData
     private final S3Service s3Service;
     private final MediaRepository mediaRepository;
     protected StaticVideoAssetCreation(KeyService keyService, MediaRepository mediaService, AssetRepository assetRepository, S3Service s3Service) {
-        super(keyService,true);
+        super(keyService,true,mediaService);
         this.assetRepository = assetRepository;
         this.s3Service = s3Service;
         this.mediaRepository = mediaService;

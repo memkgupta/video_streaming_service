@@ -14,6 +14,6 @@ public class MediaPublishedEventHandler implements MediaEventHandler<MediaPublis
 
     @Override
     public void handle(MediaEvent<MediaPublishPayload> event) {
-
+        System.out.println("Media Published "+event.getMediaId());
     }
 }

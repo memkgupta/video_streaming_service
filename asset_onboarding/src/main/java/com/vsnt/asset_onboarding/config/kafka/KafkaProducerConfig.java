@@ -6,6 +6,8 @@ import com.vsnt.asset_onboarding.config.Secrets;
 import com.vsnt.asset_onboarding.dtos.media.notification.BlockMedia;
 import com.vsnt.asset_onboarding.dtos.media.notification.MediaStatusUpdate;
 import com.vsnt.asset_onboarding.dtos.notification.Notification;
+import com.vsnt.common_lib.dtos.events.live.LiveEvent;
+import com.vsnt.common_lib.dtos.events.media.MediaEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
@@ -50,18 +52,23 @@ public class KafkaProducerConfig {
         return new DefaultKafkaProducerFactory<>(config);
     }
     @Bean
-    public ProducerFactory<String, BlockMedia> blockProducerFactory() {
+    public ProducerFactory<String, MediaEvent> mediaEventProducerFactory() {
         return new DefaultKafkaProducerFactory<>(baseConfig());
     }
     @Bean
-    public ProducerFactory<String, Notification<?>> notificationProducerFactory() {
+    public ProducerFactory<String, LiveEvent> liveEventProducerFactory() {
         return new DefaultKafkaProducerFactory<>(baseConfig());
     }
-    @Bean KafkaTemplate<String,Notification<?>> notificationKafkaTemplate() {
-        return new KafkaTemplate<>(notificationProducerFactory());
+//    @Bean
+//    public ProducerFactory<String, MediaEvent> mediaEventProducerFactory() {
+//        return new DefaultKafkaProducerFactory<>(baseConfig());
+//    }
+    @Bean
+    public KafkaTemplate<String, MediaEvent> mediaEventKafkaTemplate() {
+        return new KafkaTemplate<>(mediaEventProducerFactory());
     }
     @Bean
-    public KafkaTemplate<String, BlockMedia> notifcationKafkaTemplate() {
-        return new KafkaTemplate<>(blockProducerFactory());
+    public KafkaTemplate<String, LiveEvent> liveEventKafkaTemplate() {
+        return new KafkaTemplate<>(liveEventProducerFactory());
     }
 }

@@ -14,6 +14,6 @@ public class MediaBlockedEventHandler implements MediaEventHandler<MediaBlockedP
 
     @Override
     public void handle(MediaEvent<MediaBlockedPayload> event) {
-
+        System.out.println("Media Blocked "+event.getMediaId());
     }
 }

@@ -13,10 +13,11 @@ import java.util.concurrent.CompletableFuture;
 public abstract class  AssetCreationStrategy<M> {
     private final KeyService keyService;
     private final boolean isSecuredAsset;
-
-    protected AssetCreationStrategy(KeyService keyService, boolean isSecuredAsset) {
+    private final MediaRepository mediaRepository;
+    protected AssetCreationStrategy(KeyService keyService, boolean isSecuredAsset, MediaRepository mediaRepository) {
         this.keyService = keyService;
         this.isSecuredAsset = isSecuredAsset;
+        this.mediaRepository = mediaRepository;
 
     }
 
@@ -32,7 +33,6 @@ public abstract class  AssetCreationStrategy<M> {
                 e.printStackTrace();
             }
         }
-        media.setVideoAsset(nAsset);
 
         return nAsset;
     }

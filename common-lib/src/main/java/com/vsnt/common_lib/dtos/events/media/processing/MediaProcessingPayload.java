@@ -1,11 +1,12 @@
 package com.vsnt.common_lib.dtos.events.media.processing;
 
 import com.vsnt.common_lib.enums.AssetType;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class MediaProcessingPayload {
 private String assetId;

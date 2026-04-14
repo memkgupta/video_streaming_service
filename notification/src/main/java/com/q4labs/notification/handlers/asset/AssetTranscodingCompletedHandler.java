@@ -14,6 +14,6 @@ public class AssetTranscodingCompletedHandler implements  AssetEventHandler<Asse
 
     @Override
     public void handle(AssetEvent<AssetTranscodingCompletedPayload> event) {
-
+        System.out.println("Asset transcoding completed "+ event.getAssetId());
     }
 }

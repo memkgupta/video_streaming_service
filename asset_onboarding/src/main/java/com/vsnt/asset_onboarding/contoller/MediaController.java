@@ -205,6 +205,7 @@ public class MediaController {
         Media media = mediaService.getMedia(id);
         isMediaActive(id, media);
         String[] tokens = deliverySecurityConfig.generateTokens(userId,media.getVideoAsset().getId().toString());
+        System.out.println("Generated tokens for "+media.getId()+" "+media.getVideoAsset().getId().toString());
         return ResponseEntity.ok(Map.of("access_token",tokens[0],"refresh_token",tokens[1]));
     }
 

@@ -1,10 +1,7 @@
 package com.vsnt.asset_onboarding.listeners.moderation;
 
-import com.vsnt.asset_onboarding.config.kafka.producers.BlockMediaProducer;
 import com.vsnt.asset_onboarding.config.kafka.producers.MediaUpdateProducer;
-import com.vsnt.asset_onboarding.dtos.media.notification.BlockMedia;
-import com.vsnt.asset_onboarding.dtos.media.notification.MediaStatusUpdate;
-import com.vsnt.asset_onboarding.dtos.notification.Notification;
+
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.entities.Media;
@@ -28,7 +25,7 @@ public class LiveModerationUpdateHandler implements ModerationUpdateHandler{
     private final MediaUpdateProducer mediaUpdateProducer;
     private final ModerationKVService moderationKVService;
 
-    public LiveModerationUpdateHandler(ModerationActionFactory moderationActionFactory, BlockMediaProducer blockMediaProducer, MediaService mediaService, MediaUpdateProducer mediaUpdateProducer, ModerationKVService moderationKVService) {
+    public LiveModerationUpdateHandler(ModerationActionFactory moderationActionFactory, MediaService mediaService, MediaUpdateProducer mediaUpdateProducer, ModerationKVService moderationKVService) {
 
         this.mediaService = mediaService;
         this.mediaUpdateProducer = mediaUpdateProducer;

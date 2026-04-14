@@ -110,6 +110,8 @@ public class App
 
 
                     if (transcoded) {
+                        watcher.stop();
+                       watcher.getCompletionFuture().join();
                         TranscodingFinishEventDTO dto = new TranscodingFinishEventDTO();
                         dto.setMediaType(MediaType.STATIC);
                         dto.setMediaId(mediaId);
@@ -126,9 +128,10 @@ public class App
                     else {
                         throw new RuntimeException("Transcoding failed");
                     }
-                    watcher.stop();
-                    //  ACK only after success
+
+
                 } catch (Exception e) {
+                    e.printStackTrace();
                     System.out.println("Failed: " + message + " | Retry: " + retryCount);
                     try {
                         if (retryCount >= MAX_RETRIES) {

@@ -8,6 +8,7 @@ import com.vsnt.asset_onboarding.entities.Media;
 import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.entities.enums.UploadStatus;
 import com.vsnt.asset_onboarding.repositories.AssetRepository;
+import com.vsnt.asset_onboarding.repositories.MediaRepository;
 import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.S3Service;
 import org.springframework.stereotype.Component;
@@ -19,10 +20,13 @@ import java.util.UUID;
 public class ThumbnailAssetCreation extends AssetCreationStrategy<FileMetaData> {
 //    private final S3Service s3Service;
     private final AssetRepository assetRepository;
-    protected ThumbnailAssetCreation(KeyService keyService, AssetRepository assetRepository) {
-        super(keyService, false);
+    private final MediaRepository mediaRepository;
+
+    protected ThumbnailAssetCreation(KeyService keyService, AssetRepository assetRepository, MediaRepository mediaRepository) {
+        super(keyService, false,mediaRepository);
 
         this.assetRepository = assetRepository;
+        this.mediaRepository = mediaRepository;
     }
 
     @Override

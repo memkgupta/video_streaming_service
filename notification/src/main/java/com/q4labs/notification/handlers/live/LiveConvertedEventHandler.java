@@ -12,6 +12,6 @@ public class LiveConvertedEventHandler implements LiveEventHandler<LiveConverted
 
     @Override
     public void handle(LiveEvent<LiveConvertedPayload> event) {
-
+        System.out.println("Live converted to vod "+event.getLiveAssetId());
     }
 }
