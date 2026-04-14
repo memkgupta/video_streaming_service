@@ -6,8 +6,17 @@ public class TranscodingJob  {
     private String jobId;
     private String key;
     private long size;
+    private long duration;
     private String encryptionKey;
     private String assetId;
+
+    public long getDuration() {
+        return duration;
+    }
+
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
 
     public String getJobId() {
         return jobId;

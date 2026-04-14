@@ -6,7 +6,7 @@ import com.vsnt.common_lib.dtos.events.live.LiveEventType;
 import java.time.Instant;
 
 public class LiveEndEvent extends LiveEvent<LiveEndPayload> {
-    protected LiveEndEvent( String liveAssetId, String mediaId, String orgId, Instant timestamp, LiveEndPayload data) {
+    public LiveEndEvent( String liveAssetId, String mediaId, String orgId, Instant timestamp, LiveEndPayload data) {
         super(LiveEventType.LIVE_ENDED, liveAssetId, mediaId, orgId, timestamp, data);
     }
 }

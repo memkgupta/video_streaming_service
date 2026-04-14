@@ -1,12 +1,10 @@
 package com.vsnt.asset_onboarding.listeners.moderation;
 
 import com.vsnt.asset_onboarding.config.kafka.producers.BlockMediaProducer;
-import com.vsnt.asset_onboarding.config.kafka.producers.NotificationMediaStatusUpdateProducer;
-import com.vsnt.asset_onboarding.dtos.ModerationStatus;
+import com.vsnt.asset_onboarding.config.kafka.producers.MediaUpdateProducer;
 import com.vsnt.asset_onboarding.dtos.media.notification.BlockMedia;
 import com.vsnt.asset_onboarding.dtos.media.notification.MediaStatusUpdate;
 import com.vsnt.asset_onboarding.dtos.notification.Notification;
-import com.vsnt.asset_onboarding.entities.enums.AssetType;
 import com.vsnt.asset_onboarding.entities.enums.MediaStatus;
 import com.vsnt.asset_onboarding.moderation.ModerationUpdateDTO;
 import com.vsnt.asset_onboarding.entities.Media;
@@ -14,6 +12,9 @@ import com.vsnt.asset_onboarding.entities.enums.MediaType;
 import com.vsnt.asset_onboarding.listeners.moderation.actions.ModerationActionFactory;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.services.ModerationKVService;
+import com.vsnt.common_lib.dtos.events.media.blocked.MediaBlockedEvent;
+import com.vsnt.common_lib.dtos.events.media.blocked.MediaBlockedPayload;
+import com.vsnt.common_lib.enums.AssetType;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -22,17 +23,15 @@ import java.util.UUID;
 
 @Component
 public class LiveModerationUpdateHandler implements ModerationUpdateHandler{
-    private final ModerationActionFactory moderationActionFactory;
-    private final BlockMediaProducer blockMediaProducer;
+
     private final MediaService mediaService;
-    private final NotificationMediaStatusUpdateProducer notificationMediaStatusUpdateProducer;
+    private final MediaUpdateProducer mediaUpdateProducer;
     private final ModerationKVService moderationKVService;
 
-    public LiveModerationUpdateHandler(ModerationActionFactory moderationActionFactory, BlockMediaProducer blockMediaProducer, MediaService mediaService, NotificationMediaStatusUpdateProducer notificationMediaStatusUpdateProducer, ModerationKVService moderationKVService) {
-        this.moderationActionFactory = moderationActionFactory;
-        this.blockMediaProducer = blockMediaProducer;
+    public LiveModerationUpdateHandler(ModerationActionFactory moderationActionFactory, BlockMediaProducer blockMediaProducer, MediaService mediaService, MediaUpdateProducer mediaUpdateProducer, ModerationKVService moderationKVService) {
+
         this.mediaService = mediaService;
-        this.notificationMediaStatusUpdateProducer = notificationMediaStatusUpdateProducer;
+        this.mediaUpdateProducer = mediaUpdateProducer;
         this.moderationKVService = moderationKVService;
     }
 
@@ -47,23 +46,14 @@ public class LiveModerationUpdateHandler implements ModerationUpdateHandler{
         if(media.getStatus().equals(MediaStatus.BLOCKED))
         {
 
-            blockMediaProducer.produceMessage(BlockMedia.builder()
-                    .mediaId(media.getId().toString())
-                    .timestamp(Instant.now())
-                    .build());
-            notificationMediaStatusUpdateProducer.produceMessage(
-                    Notification.<MediaStatusUpdate>builder()
-                            .orgId(media.getOrgId())
-                            .notificationId(UUID.randomUUID().toString())
-                            .message(MediaStatusUpdate.builder()
-                                    .mediaStatus(MediaStatus.BLOCKED)
-                                    .message(Map.of("message","Media blocked due to NSFW violation"))
-                                    .mediaType(MediaType.LIVE)
-                                    .createdAt(Instant.now())
-                                    .mediaId(media.getId().toString())
-
-                                    .build())
+            mediaUpdateProducer.produceMessage(
+                    new MediaBlockedEvent(
+                            media.getId().toString(), Instant.now(), media.getOrgId(), MediaBlockedPayload.builder()
+                            .assetId(update.getAssetId())
+                            .assetType(AssetType.LIVE_VIDEO)
+                            .details(update.getModerationResult())
                             .build()
+                    )
             );
             media.setActive(false);
             mediaService.save(media);

@@ -5,6 +5,10 @@ import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DeliverCallback;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedEvent;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedPayload;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingFailureEvent;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingFailurePayload;
 import com.vsnt.config.RabbitMQConfig;
 import com.vsnt.config.Secrets;
 import com.vsnt.dtos.MediaType;
@@ -19,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,6 +70,8 @@ public class App
                 TranscodingJob job = new Gson().fromJson(message, TranscodingJob.class);
                 String assetId = job.getAssetId();
                 String mediaId = job.getJobId();
+                long duration = job.getDuration();
+                int totalSegments = (int) Math.ceil((double) duration /4000);
                 try {
 
                     String url = s3Service.generatePresignedUrl(bucket_name, job.getKey());
@@ -88,9 +95,11 @@ public class App
                             segmentEventFactory,
                             producer,
                             assetId,
-                            mediaId
+                            mediaId,
+                            totalSegments
                     );
                     watcher.start();
+
                     boolean transcoded = videoTranscoder.startTranscodingAsync(
                             url,
                             outputPath,
@@ -99,12 +108,18 @@ public class App
                             publicKeyServerURL+"/"+mediaId+"/"+assetId
                     );
 
+
                     if (transcoded) {
                         TranscodingFinishEventDTO dto = new TranscodingFinishEventDTO();
                         dto.setMediaType(MediaType.STATIC);
                         dto.setMediaId(mediaId);
 
                         producer.sendFinishEvent(dto);
+
+                        AssetTranscodingCompletedEvent assetTranscodingCompletedEvent=new AssetTranscodingCompletedEvent(
+                                assetId,Instant.now(), AssetTranscodingCompletedPayload.builder().mediaId(mediaId).build()
+                        );
+                        producer.sendFinishEvent(assetTranscodingCompletedEvent);
                         channel.basicAck(deliveryTag, false);
                         System.out.println("Done: " + message);
                     }
@@ -125,6 +140,18 @@ public class App
                             failedDTO.setAssetId(assetId);
                             failedDTO.setMediaId(mediaId);
                             producer.sendFailedEvent(failedDTO);
+
+                            AssetTranscodingFailureEvent assetTranscodingFailureEvent = new AssetTranscodingFailureEvent(
+                                    assetId,
+                                    Instant.now(),
+                                    AssetTranscodingFailurePayload.builder()
+                                            .errorMessage("Max retries reached")
+                                            .failedStep("Transcoding")
+                                            .workerId("")
+                                            .mediaId(mediaId)//todo add worker id
+                                            .build()
+                            );
+                            producer.sendFailedEvent(assetTranscodingFailureEvent);
                             channel.basicAck(deliveryTag, false);
                         } else {
                             // Increment retry count

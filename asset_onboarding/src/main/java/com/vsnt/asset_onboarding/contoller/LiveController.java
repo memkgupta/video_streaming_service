@@ -1,6 +1,7 @@
 package com.vsnt.asset_onboarding.contoller;
 
 import com.vsnt.asset_onboarding.SecuredCDNService;
+import com.vsnt.asset_onboarding.config.kafka.producers.LiveEventProducer;
 import com.vsnt.asset_onboarding.dtos.live.LiveStartResponseDTO;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
@@ -16,12 +17,19 @@ import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.strategies.asset.LiveVideoAssetCreation;
 import com.vsnt.asset_onboarding.strategies.asset.LiveVideoAssetCreationRequestDTO;
+import com.vsnt.common_lib.dtos.events.live.converted.LiveConvertedEvent;
+import com.vsnt.common_lib.dtos.events.live.converted.LiveConvertedPayload;
+import com.vsnt.common_lib.dtos.events.live.end.LiveEndEvent;
+import com.vsnt.common_lib.dtos.events.live.end.LiveEndPayload;
+import com.vsnt.common_lib.dtos.events.live.start.LiveStartedEvent;
+import com.vsnt.common_lib.dtos.events.live.start.LiveStartedPayload;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -41,14 +49,16 @@ public class LiveController {
     private final KeyService keyService;
     private final SecuredCDNService securedCDNService;
     private final LiveMediaFinishHandler finishHandler;
+    private final LiveEventProducer liveEventProducer;
     private final AuthorisationService authorisationService;
-    public LiveController(MediaService mediaService, LiveVideoAssetCreation liveVideoAssetCreation, AssetService assetService, KeyService keyService, SecuredCDNService securedCDNService, LiveMediaFinishHandler finishHandler, AuthorisationService authorisationService) {
+    public LiveController(MediaService mediaService, LiveVideoAssetCreation liveVideoAssetCreation, AssetService assetService, KeyService keyService, SecuredCDNService securedCDNService, LiveMediaFinishHandler finishHandler, LiveEventProducer liveEventProducer, AuthorisationService authorisationService) {
         this.mediaService = mediaService;
         this.liveVideoAssetCreation = liveVideoAssetCreation;
         this.assetService = assetService;
         this.keyService = keyService;
         this.securedCDNService = securedCDNService;
         this.finishHandler = finishHandler;
+        this.liveEventProducer = liveEventProducer;
         this.authorisationService = authorisationService;
     }
 @PostMapping("/{mediaId}")
@@ -85,6 +95,15 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
     byte[] key = securedCDNService.fetchSecure(assetKey.getKeyURL());
     media.setStatus(MediaStatus.LIVE);
     mediaService.save(media);
+    liveEventProducer.produceMessage(new LiveStartedEvent(
+            asset.getId().toString(),
+            mediaId.toString(),
+            media.getOrgId(),
+            Instant.now(),
+            LiveStartedPayload.builder()
+                    .build()
+
+    ));
     LiveStartResponseDTO liveStartResponseDTO = LiveStartResponseDTO.builder()
             .encryptionKey(Base64.getEncoder().encodeToString(key))
             .assetId(asset.getId().toString())
@@ -116,7 +135,24 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
     {
         throw new ForbiddenException("Push content");
     }
+    liveEventProducer.produceMessage(new LiveEndEvent(
+            media.getVideoAsset().getId().toString(),
+            mediaId.toString(),
+            media.getOrgId(),
+            Instant.now(),
+            LiveEndPayload.builder()
+                    .durationSeconds(Instant.now().getEpochSecond() - media.getVideoAsset().getStartTime().toInstant().getEpochSecond() )
+                    .build()
+    ));
     finishHandler.handle(media);
+    liveEventProducer.produceMessage(new LiveConvertedEvent(
+            media.getVideoAsset().getId().toString(),
+            media.getId().toString(),
+            media.getOrgId(),
+
+            Instant.now(),
+            LiveConvertedPayload.builder().build()
+    ));
     return ResponseEntity.ok().build();
 }
 

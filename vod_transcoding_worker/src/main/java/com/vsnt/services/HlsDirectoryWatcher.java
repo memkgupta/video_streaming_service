@@ -3,6 +3,8 @@ package com.vsnt.services;
 
 import com.vsnt.SegmentEventFactory;
 import com.vsnt.SegmentEventProducer;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingProgressEvent;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingProgressPayload;
 import com.vsnt.dtos.MediaType;
 import com.vsnt.dtos.ModerationJob;
 import com.vsnt.dtos.ResolutionEnum;
@@ -10,9 +12,11 @@ import com.vsnt.dtos.TranscodingSegmentUpdateDTO;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
@@ -24,27 +28,24 @@ public class HlsDirectoryWatcher implements Runnable {
     private final SegmentEventProducer producer;
     private final String assetId ;
     private final String mediaId;
-
+    private final ConcurrentHashMap<String, AtomicInteger> segmentTracker = new ConcurrentHashMap<>();
+    private final AtomicInteger completedSegments = new AtomicInteger(0);
+    private final int totalSegments; // NOT total chunks
+    private final int totalVariants = 4;
     private final ExecutorService executor;
-
     private final CompletableFuture<Void> completionFuture = new CompletableFuture<>();
-
     private volatile boolean running = false;
     private Thread watcherThread;
-
-
     public HlsDirectoryWatcher(String basePath,
                                SegmentEventFactory segmentEventFactory,
-                               SegmentEventProducer producer, String assetId, String mediaId) throws IOException {
+                               SegmentEventProducer producer, String assetId, String mediaId, int totalSegments) throws IOException {
 
         this.segmentEventFactory = segmentEventFactory;
         this.producer = producer;
         this.assetId = assetId;
         this.mediaId = mediaId;
-
-
+        this.totalSegments = totalSegments;
         this.watchService = FileSystems.getDefault().newWatchService();
-
         //  Thread pool with backpressure
         this.executor = new ThreadPoolExecutor(
                 4, 8,
@@ -71,7 +72,9 @@ public class HlsDirectoryWatcher implements Runnable {
         keyDirectoryMap.put(key, dir);
         System.out.println("Watching directory: " + dir);
     }
-
+    private String getSegmentKey(Path fullPath) {
+        return fullPath.getFileName().toString();
+    }
     public synchronized void start() {
         if (running) return;
 
@@ -106,34 +109,50 @@ public class HlsDirectoryWatcher implements Runnable {
                 TranscodingSegmentUpdateDTO update =
                         segmentEventFactory.generate(fullPath,assetId,mediaId, MediaType.STATIC);
 
-                producer.sendEvent(update);
+                boolean eventSent =  producer.sendEvent(update);
+                if(eventSent)
+                {
+                    String segmentKey = getSegmentKey(fullPath);
 
-                Files.deleteIfExists(fullPath);
+                    segmentTracker.putIfAbsent(segmentKey, new AtomicInteger(0));
+
+                    int count = segmentTracker.get(segmentKey).incrementAndGet();
+
+                    if (count == totalVariants) {
+                        int done = completedSegments.incrementAndGet();
+
+                        double progress = ((double) done / totalSegments) * 100;
+
+                        System.out.println("Progress: " + progress + "% (" + done + "/" + totalSegments + ")");
+
+                        // send progress update
+                        producer.sendProgress(new AssetTranscodingProgressEvent(
+                                assetId, Instant.now(), new AssetTranscodingProgressPayload(progress)
+                        ));
+                        Files.deleteIfExists(fullPath);
+                    }
+
+                }
+
 
             } catch (Exception e) {
                 System.err.println("Failed: " + fullPath + " — " + e.getMessage());
             }
         });
     }
-
     private void drainRemainingFiles() {
-
         System.out.println("Draining remaining segments...");
-
         for (Path dir : keyDirectoryMap.values()) {
             try (DirectoryStream<Path> stream =
                          Files.newDirectoryStream(dir, "*.ts")) {
-
                 for (Path file : stream) {
                     processSegment(file);
                 }
-
             } catch (IOException e) {
                 System.err.println("Drain failed: " + dir);
             }
         }
     }
-
     @Override
     public void run() {
         System.out.println("Watcher started: " + Thread.currentThread().getName());

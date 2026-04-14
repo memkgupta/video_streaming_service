@@ -48,7 +48,9 @@ public class KafkaConsumers {
 
         MediaEventHandler handler =
                 mediaFactory.getHandler(validatedEvent.getEventType());
-
+    if(handler == null){
+        return;
+    }
 
         handler.handle(validatedEvent);
     }
@@ -64,7 +66,10 @@ public class KafkaConsumers {
 
         AssetEventHandler handler =
                 assetFactory.getHandler(validatedEvent.getEventType());
-
+        if(handler == null)
+        {
+            return;
+        }
         handler.handle(validatedEvent);
     }
 
@@ -78,7 +83,10 @@ public class KafkaConsumers {
 
         LiveEventHandler handler =
                 liveFactory.getHandler(validatedEvent.getEventType());
-
+        if(handler == null)
+        {
+            return;
+        }
         handler.handle(validatedEvent);
     }
 }

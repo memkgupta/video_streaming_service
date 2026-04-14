@@ -9,6 +9,9 @@ import com.vsnt.asset_onboarding.services.AssetService;
 import com.vsnt.asset_onboarding.services.KeyService;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+
 @Component
 public class LiveVideoAssetCreation extends AssetCreationStrategy<LiveVideoAssetCreationRequestDTO> {
 
@@ -25,6 +28,7 @@ public class LiveVideoAssetCreation extends AssetCreationStrategy<LiveVideoAsset
         asset.setMediaId(media.getId());
         asset.setChunksUploaded(0);
         asset.setAssetType(AssetType.LIVE_VIDEO);
+        asset.setStartTime(Timestamp.from(Instant.now()));
         return assetRepository.save(asset);
     }
 }

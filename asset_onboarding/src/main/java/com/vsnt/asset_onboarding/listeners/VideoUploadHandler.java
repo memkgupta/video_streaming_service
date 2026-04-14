@@ -4,6 +4,7 @@ import com.vsnt.asset_onboarding.SecuredCDNService;
 import com.vsnt.asset_onboarding.config.ModerationJobProducer;
 import com.vsnt.asset_onboarding.config.Secrets;
 import com.vsnt.asset_onboarding.config.TranscodingJobMessageProducer;
+import com.vsnt.asset_onboarding.config.kafka.producers.MediaUpdateProducer;
 import com.vsnt.asset_onboarding.dtos.TranscodingJob;
 import com.vsnt.asset_onboarding.entities.Asset;
 import com.vsnt.asset_onboarding.entities.AssetAESKey;
@@ -14,8 +15,11 @@ import com.vsnt.asset_onboarding.services.KeyService;
 import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.services.S3Service;
 import com.vsnt.common_lib.dtos.ModerationJob;
+import com.vsnt.common_lib.dtos.events.media.processing.MediaProcessingEvent;
+import com.vsnt.common_lib.dtos.events.media.publish.MediaPublishPayload;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Base64;
 
 @Component
@@ -26,20 +30,33 @@ public class VideoUploadHandler implements AssetUploadHandler{
     private final TranscodingJobMessageProducer transcodingJobMessageProducer;
     private final ModerationJobProducer  moderationJobProducer;
     private final S3Service s3Service;
-
-    public VideoUploadHandler(KeyService keyService, MediaService mediaService, SecuredCDNService securedCDNService, TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationJobProducer moderationJobProducer, S3Service s3Service) {
+    private final MediaUpdateProducer mediaUpdateProducer;
+    public VideoUploadHandler(KeyService keyService, MediaService mediaService, SecuredCDNService securedCDNService, TranscodingJobMessageProducer transcodingJobMessageProducer, ModerationJobProducer moderationJobProducer, S3Service s3Service, MediaUpdateProducer mediaUpdateProducer) {
         this.keyService = keyService;
         this.mediaService = mediaService;
         this.securedCDNService = securedCDNService;
         this.transcodingJobMessageProducer = transcodingJobMessageProducer;
         this.moderationJobProducer = moderationJobProducer;
         this.s3Service = s3Service;
+        this.mediaUpdateProducer = mediaUpdateProducer;
     }
 
     @Override
     public void handle(Asset asset) {
         Media media = mediaService.getMedia(asset.getMediaId());
         media.setStatus(MediaStatus.PROCESSING);
+        mediaService.save(media);
+        mediaUpdateProducer.produceMessage(
+                new MediaProcessingEvent(
+                        media.getId().toString(),
+                        Instant.now(),
+                        media.getOrgId(),
+                        MediaPublishPayload.builder()
+                                .assetId(asset.getId().toString())
+                                .assetType(com.vsnt.common_lib.enums.AssetType.VIDEO)
+                                .build()
+                )
+        );
         if(media.isModerationEnabled())
         {
             ModerationJob moderationJob = new ModerationJob();
@@ -50,7 +67,8 @@ public class VideoUploadHandler implements AssetUploadHandler{
             moderationJobProducer.sendMessage(moderationJob);
             System.out.println("Moderation Job Sent "+asset.getMediaId()+" "+moderationJob);
         }
-        else {
+        else
+        {
             AssetAESKey assetKey = null;
             try {
                 assetKey = keyService.getKey(asset.getId().toString());

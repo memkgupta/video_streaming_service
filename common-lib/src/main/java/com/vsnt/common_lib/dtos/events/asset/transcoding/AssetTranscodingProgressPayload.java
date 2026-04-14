@@ -6,5 +6,5 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class AssetTranscodingProgressPayload {
-    private int progressPercentage;
+    private double progressPercentage;
 }

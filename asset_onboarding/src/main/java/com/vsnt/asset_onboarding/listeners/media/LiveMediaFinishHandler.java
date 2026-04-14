@@ -11,6 +11,9 @@ import com.vsnt.asset_onboarding.services.MediaService;
 import com.vsnt.asset_onboarding.workers.PlaylistGeneratorWorker;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+
 @Component
 public class LiveMediaFinishHandler implements MediaFinishHandler {
     private final AssetService assetService;
@@ -30,7 +33,10 @@ public class LiveMediaFinishHandler implements MediaFinishHandler {
         asset.setAssetType(AssetType.VIDEO);
         asset.setCdnURL(playlist);
         media.setStatus(MediaStatus.ENDED);
+        asset.setEndTime(Timestamp.from(Instant.now()));
         assetService.save(asset);
+
+
         mediaService.save(media);
     }
 

@@ -1,6 +1,10 @@
 package com.vsnt;
 
 import com.google.gson.Gson;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedEvent;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedPayload;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingFailureEvent;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingProgressEvent;
 import com.vsnt.dtos.TranscodingFailedDTO;
 import com.vsnt.dtos.TranscodingFinishEventDTO;
 import com.vsnt.dtos.TranscodingSegmentUpdateDTO;
@@ -39,23 +43,49 @@ this.update_topic = update_topic;
         this.producer = new KafkaProducer<>(props);
     }
 
-    public void sendEvent(TranscodingSegmentUpdateDTO event) {
+    public boolean sendEvent(TranscodingSegmentUpdateDTO event) {
 
         String key = event.getAssetId(); // ensures ordering per asset
         String value = gson.toJson(event);
 
         ProducerRecord<String, String> record =
                 new ProducerRecord<>(update_topic, key, value);
-
+        boolean[] result = new boolean[1];
         producer.send(record, (metadata, exception) -> {
             if (exception != null) {
                 System.err.println("Failed to send event: " + exception.getMessage());
+           result[0] = false;
             } else {
                 System.out.println("Event sent to topic " + metadata.topic()
                         + " partition " + metadata.partition()
                         + " offset " + metadata.offset());
+                result[0] = true;
             }
+
         });
+        return result[0];
+    }
+    public boolean sendProgress(AssetTranscodingProgressEvent event)
+    {
+        String key = event.getAssetId(); // ensures ordering per asset
+        String value = gson.toJson(event);
+
+        ProducerRecord<String, String> record =
+                new ProducerRecord<>("asset-updates", key, value);
+        boolean[] result = new boolean[1];
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                System.err.println("Failed to send event: " + exception.getMessage());
+                result[0] = false;
+            } else {
+                System.out.println("Event sent to topic " + metadata.topic()
+                        + " partition " + metadata.partition()
+                        + " offset " + metadata.offset());
+                result[0] = true;
+            }
+
+        });
+        return result[0];
     }
     public void sendFinishEvent(TranscodingFinishEventDTO event)
     {
@@ -75,6 +105,24 @@ this.update_topic = update_topic;
             }
         });
     }
+    public void sendFinishEvent(AssetTranscodingCompletedEvent event)
+    {
+        String key = event.getAssetId();
+        String value = gson.toJson(event);
+
+        ProducerRecord<String, String> record =
+                new ProducerRecord<>("asset-updates", key, value);
+
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                System.err.println("Failed to send event: " + exception.getMessage());
+            } else {
+                System.out.println("Event sent to topic " + metadata.topic()
+                        + " partition " + metadata.partition()
+                        + " offset " + metadata.offset());
+            }
+        });
+    }
     public void sendFailedEvent(TranscodingFailedDTO event)
     {
         String key = event.getMediaId(); // ensures ordering per asset
@@ -82,6 +130,31 @@ this.update_topic = update_topic;
 
         ProducerRecord<String, String> record =
                 new ProducerRecord<>(finish_topic, key, value);
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                System.err.println("Failed to send event: " + exception.getMessage());
+            } else {
+                System.out.println("Event sent to topic " + metadata.topic()
+                        + " partition " + metadata.partition()
+                        + " offset " + metadata.offset());
+            }
+        });
+    }
+    public void sendFailedEvent(AssetTranscodingFailureEvent event)
+    {
+        String key = event.getAssetId();
+        String value = gson.toJson(event);
+        ProducerRecord<String,String> record =
+                new ProducerRecord<>("asset-updates", key, value);
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                System.err.println("Failed to send event: " + exception.getMessage());
+            } else {
+                System.out.println("Event sent to topic " + metadata.topic()
+                        + " partition " + metadata.partition()
+                        + " offset " + metadata.offset());
+            }
+        });
     }
     public void close() {
         producer.flush();
