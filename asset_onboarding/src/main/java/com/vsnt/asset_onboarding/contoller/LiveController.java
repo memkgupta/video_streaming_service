@@ -93,6 +93,7 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
 
    AssetAESKey assetKey = keyService.getKey(asset.getId().toString());
     byte[] key = securedCDNService.fetchSecure(assetKey.getKeyURL());
+    media.setVideoAsset(asset);
     media.setStatus(MediaStatus.LIVE);
     mediaService.save(media);
     liveEventProducer.produceMessage(new LiveStartedEvent(

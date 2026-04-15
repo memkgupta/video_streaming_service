@@ -272,9 +272,13 @@ services:
 
   rtmp_server:
    container_name: rtmp-server
+   ports:
+     - "1935:1935"
    build:
     context: ./rtmp_server
     dockerfile: ./Dockerfile
+   volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
    networks:
      - app-net
    environment:
