@@ -240,6 +240,21 @@ services:
       dockerfile: ./notification/Dockerfile
     networks:
       - app-net
+    environment:
+      DB_URL: jdbc:postgresql://postgres_q4:5432/vsnt_notifications
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      EUREKA_URL: http://service-discovery:8761/eureka
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+
+
   user:
     build:
       context: ./user
