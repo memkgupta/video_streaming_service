@@ -10,8 +10,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 
 public class RabbitMQConfig {
-    static final String QUEUE_NAME = "transcoding_jobs" ;
-    static final String MODERATION_JOBS = "moderation_queue" ;
+    static final String QUEUE_NAME = System.getenv("TRANSCODING_QUEUE_NAME") ;
+    static final String MODERATION_JOBS = System.getenv("MODERATION_QUEUE_NAME") ;
     @Bean
     public Queue transcodingQueue() {
         return new Queue(QUEUE_NAME, false);

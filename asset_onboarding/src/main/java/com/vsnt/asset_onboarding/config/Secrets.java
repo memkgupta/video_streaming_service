@@ -13,6 +13,6 @@ public class Secrets {
 
     public static final String AWS_SECURE_BUCKET =
     System.getenv("AWS_SECURE_BUCKET");
-    public static final String KAFKA_BOOTSTRAP_SERVERS ="localhost:29092";
+    public static final String KAFKA_BOOTSTRAP_SERVERS =System.getenv("KAFKA_BOOTSTRAP_SERVERS");
 //            System.getenv("KAFKA_URL");
 }
