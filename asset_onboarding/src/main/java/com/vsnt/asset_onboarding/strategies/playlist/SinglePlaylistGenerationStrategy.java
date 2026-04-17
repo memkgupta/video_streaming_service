@@ -46,7 +46,7 @@ public class SinglePlaylistGenerationStrategy implements PlaylistGenerationStrat
 
         sb.append("#EXT-X-MEDIA-SEQUENCE:0\n");
         sb.append("#EXT-X-PLAYLIST-TYPE:VOD\n\n");
-
+        sb.append(String.format("#EXT-X-KEY:METHOD=AES-128,URI=\"%s\",IV=0x00000000000000000000000000000000\n",String.format("http://localhost:8001/api/asset_onboarding/v1/key/%s/%d",media.getId().toString(),media.getVideoAsset().getId())));
         Stream<TranscodedSegment> segmentStream = transcodedSegmentRepository.findById_AssetIdAndId_ResolutionOrderById_SequenceNumber(
                 media.getVideoAsset().getId().toString(),bitrateConfig.getResolution()
         );

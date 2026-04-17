@@ -22,12 +22,9 @@ public class VideoTranscoder {
             String hexKey,
             MediaType mediaType,
             String publicKeyURL) throws IOException {
-//        String[] resolutions = {"360p", "480p", "720p", "1080p"};
+
         Path basePath = Paths.get(outputPath);
 
-//        for (String resolution : resolutions) {
-//            Files.createDirectories(basePath.resolve(resolution));
-//        }
 
         // Generate key file
         Path keyFilePath =
@@ -44,7 +41,6 @@ public class VideoTranscoder {
         try {
 
 
-
             FFMPEGCommand config = FFMPEGCommandFactory.getFFMPEGCommand(
                     mediaType,
                     url,
@@ -52,7 +48,6 @@ public class VideoTranscoder {
                     keyInfoPath.toAbsolutePath().toString()
             );
             List<String> commands = config.getFFMPEGCommands();
-
             // Run resolutions in parallel
             List<Future<Boolean>> results =
                     commands.stream()
@@ -65,7 +60,6 @@ public class VideoTranscoder {
                     return false;
                 }
             }
-
             System.out.println("Transcoding completed successfully.");
             return true;
 

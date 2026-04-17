@@ -22,13 +22,18 @@ public class CloudFrontService implements CDNService , SecuredCDNService {
     @Override
     public byte[] fetchSecure(String path) {
         String signedURL = generateSignedURL(path);
+        System.out.println("Signed URL: " + signedURL);
         return fetch(signedURL);
     }
 
     private final CDNSecurityConfig cdnSecurityConfig;
     private final HttpClient httpClient =
             HttpClient.newHttpClient();
-
+    public byte[] fetchFromCDN(String path) {
+        String signedURL = generateSignedURL(path);
+        System.out.println("Signed URL: " + signedURL);
+        return fetch(signedURL);
+    }
     public byte[] fetch(String url) {
 
         try {
@@ -48,6 +53,7 @@ public class CloudFrontService implements CDNService , SecuredCDNService {
             return response.body();
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

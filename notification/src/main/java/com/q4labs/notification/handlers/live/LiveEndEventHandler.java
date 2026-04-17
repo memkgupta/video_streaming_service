@@ -3,7 +3,9 @@ package com.q4labs.notification.handlers.live;
 import com.vsnt.common_lib.dtos.events.live.LiveEvent;
 import com.vsnt.common_lib.dtos.events.live.LiveEventType;
 import com.vsnt.common_lib.dtos.events.live.end.LiveEndPayload;
+import org.springframework.stereotype.Component;
 
+@Component
 public class LiveEndEventHandler implements LiveEventHandler<LiveEndPayload> {
     @Override
     public LiveEventType supports() {

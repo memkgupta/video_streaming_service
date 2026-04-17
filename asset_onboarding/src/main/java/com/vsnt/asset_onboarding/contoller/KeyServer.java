@@ -43,12 +43,12 @@ public class KeyServer {
     }
 
     @SecurityRequirement(name = "bearerAuth")
-    @GetMapping("/{assetId}")
+    @GetMapping("/{mediaId}/{assetId}")
     @Operation(
             summary = "Fetch the key"
     )
     public ResponseEntity<byte[]>
-        getKey(@PathVariable("assetId") String assetID , @RequestHeader("X-ASSET-ID") String assetHeader) throws Exception {
+        getKey(@PathVariable("mediaId") String mediaId,@PathVariable("assetId") String assetID , @RequestHeader("X-ASSET-ID") String assetHeader) throws Exception {
         Asset asset = assetService.getAssetById(Long.parseLong(assetID));
         if(asset==null){
             throw new EntityNotFoundException("Asset" , assetID);
@@ -62,7 +62,7 @@ public class KeyServer {
             throw new ForbiddenException("Fetch key");
         }
         AssetAESKey assetKey = keyService.getKey(assetID);
-       byte[] key =cdnService.fetch(assetKey.getKeyURL());
+       byte[] key  = cdnService.fetchFromCDN(assetKey.getKeyURL());
        return  ResponseEntity.ok()
                .contentType(MediaType.APPLICATION_OCTET_STREAM)
                .body(key);

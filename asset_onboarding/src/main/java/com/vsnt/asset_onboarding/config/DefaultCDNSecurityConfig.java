@@ -23,6 +23,6 @@ public class DefaultCDNSecurityConfig extends CDNSecurityConfig{
 
     @Override
     public String generateSignedURL(String path) {
-        return resourceURL + "/"+ path;
+        return resourceURL + path;
     }
 }

@@ -2,6 +2,7 @@ package com.vsnt;
 
 
 import com.vsnt.config.FFMPEGConfigVOD;
+import com.vsnt.config.FFMPEGConfigVODEncrypted;
 import com.vsnt.dtos.MediaType;
 import com.vsnt.services.HlsKeyUtil;
 
@@ -32,11 +33,15 @@ public class VideoTranscoder {
         Path keyInfoPath = basePath.resolve("key_info.txt");
         String keyInfoContent =
                 publicKeyURL + "\n" +
-                        keyFilePath.toAbsolutePath() + "\n" +
-                        hexKey;
+                        keyFilePath.toAbsolutePath();
         Files.writeString(keyInfoPath, keyInfoContent);
         try {
-            FFMPEGConfigVOD config = new FFMPEGConfigVOD (
+//            FFMPEGConfigVOD config = new FFMPEGConfigVOD (
+//                    url,
+//                    outputPath,
+//                    keyInfoPath.toAbsolutePath().toString()
+//            );
+            FFMPEGConfigVODEncrypted config = new FFMPEGConfigVODEncrypted(
                     url,
                     outputPath,
                     keyInfoPath.toAbsolutePath().toString()
@@ -73,7 +78,7 @@ public class VideoTranscoder {
 
             ProcessBuilder pb = new ProcessBuilder("sh", "-c", command);
             pb.redirectErrorStream(true);
-//            pb.inheritIO();
+            pb.inheritIO();
             Process process = pb.start();
             int exitCode = process.waitFor();
             return exitCode == 0;
