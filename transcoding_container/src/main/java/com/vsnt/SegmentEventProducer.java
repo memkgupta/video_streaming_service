@@ -20,7 +20,7 @@ public class SegmentEventProducer {
 this.update_topic = update_topic;
         Properties props = new Properties();
         System.out.println(bootstrapServers);
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka_q4:9092");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
                 "org.apache.kafka.common.serialization.StringSerializer");
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,

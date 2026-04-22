@@ -21,6 +21,7 @@
         <module>asset_onboarding</module>
         <module>user</module>
         <module>vod_transcoding_worker</module>
+        <module>live_stream_worker</module>
 
     </modules>
 

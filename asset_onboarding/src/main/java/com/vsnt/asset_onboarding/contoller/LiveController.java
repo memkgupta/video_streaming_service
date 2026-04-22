@@ -146,14 +146,14 @@ public ResponseEntity<LiveStartResponseDTO> startLive(@PathVariable UUID mediaId
                     .build()
     ));
     finishHandler.handle(media);
-    liveEventProducer.produceMessage(new LiveConvertedEvent(
-            media.getVideoAsset().getId().toString(),
-            media.getId().toString(),
-            media.getOrgId(),
-
-            Instant.now(),
-            LiveConvertedPayload.builder().build()
-    ));
+//    liveEventProducer.produceMessage(new LiveConvertedEvent(
+//            media.getVideoAsset().getId().toString(),
+//            media.getId().toString(),
+//            media.getOrgId(),
+//
+//            Instant.now(),
+//            LiveConvertedPayload.builder().build()
+//    ));
     return ResponseEntity.ok().build();
 }
 
