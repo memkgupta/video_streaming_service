@@ -15,8 +15,7 @@ public class S3Config {
     private String secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
     private AmazonS3 client;
     public AmazonS3 getS3Client() {
-        System.out.println(accessKey);
-        System.out.println(secretKey);
+
         if(client == null) {
             AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
             ClientConfiguration config = new ClientConfiguration();

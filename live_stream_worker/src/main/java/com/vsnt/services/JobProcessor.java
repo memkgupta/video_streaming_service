@@ -7,6 +7,8 @@ import com.vsnt.*;
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedEvent;
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedPayload;
 import com.vsnt.dtos.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class JobProcessor {
+
+    private static final Logger logger = LoggerFactory.getLogger(JobProcessor.class);
 
     private final VideoTranscoder transcoder;
     private final S3Service s3Service;
@@ -39,9 +43,12 @@ public class JobProcessor {
 
         String assetId = job.getAssetId();
         String mediaId = job.getJobId();
-        System.out.println("Asset ID: " + assetId+" "+mediaId);
+
         int retryCount = extractRetry(headers);
         final int MAX_RETRIES = 3;
+
+        logger.info("Processing job. mediaId={}, assetId={}, retryCount={}",
+                mediaId, assetId, retryCount);
 
         Path basePath = Paths.get(mediaId, assetId);
         String outputPath = basePath.toString();
@@ -51,20 +58,23 @@ public class JobProcessor {
         try {
             String[] resolutions = {"0", "1", "2", "3"};
 
-
             for (String resolution : resolutions) {
-                System.out.println("Creating directory");
                 Files.createDirectories(basePath.resolve(resolution));
             }
 
-            String url = String.format("rtmp://rtmp_server:1935/live/%s",mediaId);
-            System.out.println("URL: " + url);
-            watcher = createWatcher(assetId, mediaId, outputPath);
+            logger.info("Directories created for mediaId={}, path={}", mediaId, outputPath);
 
+            String url = String.format("rtmp://rtmp_server:1935/live/%s", mediaId);
+            logger.info("Starting stream consumption from URL={}", url);
+
+            watcher = createWatcher(assetId, mediaId, outputPath);
             watcher.start();
-            System.out.println("Watcher up and running");
+
+            logger.info("HLS watcher started for mediaId={}", mediaId);
+
             registryService.notifyRegistry(mediaId, assetId);
-            System.out.println("Registry Notified");
+            logger.info("Registry notified. mediaId={}, assetId={}", mediaId, assetId);
+
             TranscodeResult result = transcoder.startTranscodingAsync(
                     mediaId,
                     url,
@@ -73,12 +83,20 @@ public class JobProcessor {
                     MediaType.LIVE,
                     System.getenv("PUBLIC_KEY_SERVER_URL") + "/" + mediaId + "/" + assetId
             );
+
+            logger.info("Transcoding finished. status={}, mediaId={}", result.getStatus(), mediaId);
+
             handleResult(channel, deliveryTag, body, headers, result, retryCount, MAX_RETRIES, assetId, mediaId);
 
         } catch (Exception e) {
+            logger.error("Job failed. mediaId={}, assetId={}", mediaId, assetId, e);
             handleFailure(channel, deliveryTag, body, headers, retryCount, MAX_RETRIES, assetId, mediaId, e);
+
         } finally {
-            if (watcher != null) watcher.stop();
+            if (watcher != null) {
+                logger.info("Stopping watcher for mediaId={}", mediaId);
+                watcher.stop();
+            }
         }
     }
 
@@ -115,25 +133,32 @@ public class JobProcessor {
         switch (result.getStatus()) {
 
             case SUCCESS -> {
-                AssetTranscodingCompletedEvent assetTranscodingCompletedEvent=new AssetTranscodingCompletedEvent(
-                        assetId, Instant.now(), AssetTranscodingCompletedPayload.builder().mediaId(mediaId).build()
-                );
-                producer.sendFinishEvent(assetTranscodingCompletedEvent);
-                channel.basicAck(deliveryTag, false);
-                System.out.println("Done: " + result.getMessage());
+                logger.info("Transcoding SUCCESS. mediaId={}, assetId={}", mediaId, assetId);
 
+                AssetTranscodingCompletedEvent event =
+                        new AssetTranscodingCompletedEvent(
+                                assetId,
+                                Instant.now(),
+                                AssetTranscodingCompletedPayload.builder().mediaId(mediaId).build()
+                        );
+
+                producer.sendFinishEvent(event);
+
+                channel.basicAck(deliveryTag, false);
             }
 
             case STOPPED -> {
-
+                logger.warn("Transcoding STOPPED. mediaId={}", mediaId);
                 channel.basicReject(deliveryTag, false);
             }
 
             case FAILED, PARTIAL_FAILURE -> {
+                logger.warn("Transcoding FAILED. Retrying... mediaId={}, retry={}", mediaId, retryCount);
                 retry(channel, deliveryTag, body, headers, retryCount, maxRetries);
             }
 
             case INTERRUPTED -> {
+                logger.warn("Transcoding INTERRUPTED. Requeueing... mediaId={}", mediaId);
                 channel.basicNack(deliveryTag, false, true);
             }
         }
@@ -147,6 +172,7 @@ public class JobProcessor {
                        int maxRetries) throws Exception {
 
         if (retryCount >= maxRetries) {
+            logger.error("Max retries reached. Dropping message. retryCount={}", retryCount);
             channel.basicAck(deliveryTag, false);
             return;
         }
@@ -159,6 +185,8 @@ public class JobProcessor {
                 .build();
 
         channel.basicPublish("", "your-queue", props, body);
+
+        logger.info("Retrying job. newRetryCount={}", retryCount + 1);
 
         channel.basicAck(deliveryTag, false);
     }
@@ -173,10 +201,12 @@ public class JobProcessor {
                                String mediaId,
                                Exception e) {
 
+        logger.error("Handling failure. mediaId={}, retryCount={}", mediaId, retryCount, e);
+
         try {
             retry(channel, deliveryTag, body, headers, retryCount, maxRetries);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Retry also failed. mediaId={}", mediaId, ex);
         }
     }
 }

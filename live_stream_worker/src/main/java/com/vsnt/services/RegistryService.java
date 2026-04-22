@@ -24,12 +24,13 @@ public class RegistryService {
     public RegistryService(HttpClient httpClient, String serviceURL) {
         this.httpClient = Objects.requireNonNull(httpClient);
         this.serviceURL = Objects.requireNonNull(serviceURL);
-        System.out.println("RegistryService initialized with serviceURL={} "+ serviceURL );
+
+        log.info("RegistryService initialized. serviceURL={}", serviceURL);
     }
 
     // Call once when container starts
     public void getId() {
-        log.info("Attempting to register container...");
+        log.info("Registering container with registry...");
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -38,17 +39,23 @@ public class RegistryService {
                     .POST(HttpRequest.BodyPublishers.ofString("{}"))
                     .build();
 
-            log.debug("Sending register request to {}", serviceURL + "/register");
+            log.debug("Sending register request → {}", serviceURL + "/register");
+
+            long start = System.currentTimeMillis();
 
             HttpResponse<String> response = httpClient.send(
                     request,
                     HttpResponse.BodyHandlers.ofString()
             );
 
-            log.debug("Received response status={} body={}", response.statusCode(), response.body());
+            long duration = System.currentTimeMillis() - start;
+
+            log.debug("Register response received. status={}, duration={}ms",
+                    response.statusCode(), duration);
 
             if (response.statusCode() == 200) {
                 ObjectMapper objectMapper = new ObjectMapper();
+
                 Map<String, Object> responseMap = objectMapper.readValue(
                         response.body(),
                         new TypeReference<Map<String, Object>>() {}
@@ -56,30 +63,30 @@ public class RegistryService {
 
                 this.containerId = responseMap.get("workerId").toString();
 
-                log.info("Successfully registered container. containerId={}", containerId);
+                log.info("Container registered successfully. containerId={}", containerId);
+
             } else {
-                log.error("Failed to register container. status={} body={}",
+                log.error("Failed to register container. status={}, body={}",
                         response.statusCode(), response.body());
                 throw new RuntimeException("Failed to register container");
             }
 
         } catch (IOException e) {
-            log.error("IO error while registering container", e);
+            log.error("IO error during container registration", e);
             throw new RuntimeException("Error while registering container", e);
+
         } catch (InterruptedException e) {
-            log.error("Thread interrupted while registering container", e);
-            Thread.currentThread().interrupt(); // important
+            log.error("Thread interrupted during container registration", e);
+            Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted while registering container", e);
         }
     }
 
     public void notifyRegistry(String mediaId, String assetId) {
-      System.out.println(String.format("Notifying registry")
-                );
 
         if (containerId == null) {
-            System.out.println("Container ID is null. getId() was not called.");
-            throw new IllegalStateException("Container ID not initialized. Call getId() first.");
+            log.error("Container ID is null. getId() was not called");
+            throw new IllegalStateException("Container ID not initialized");
         }
 
         try {
@@ -88,7 +95,10 @@ public class RegistryService {
                     containerId, mediaId, assetId
             );
 
-            System.out.println("Notifying registry with this payload: " + payload);
+            log.info("Notifying registry. mediaId={}, assetId={}, containerId={}",
+                    mediaId, assetId, containerId);
+
+            log.debug("Payload → {}", payload);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(serviceURL + "/notify"))
@@ -96,23 +106,30 @@ public class RegistryService {
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
 
+            long start = System.currentTimeMillis();
+
             HttpResponse<String> response = httpClient.send(
                     request,
                     HttpResponse.BodyHandlers.ofString()
             );
 
-            System.out.println("Notifiying repsonse "+response.body());
+            long duration = System.currentTimeMillis() - start;
+
+            log.debug("Notify response. status={}, duration={}ms",
+                    response.statusCode(), duration);
 
             if (response.statusCode() != 200) {
-                System.out.println("Failed to notify registry with this payload: " + response.body());
+                log.error("Failed to notify registry. status={}, body={}",
+                        response.statusCode(), response.body());
                 throw new RuntimeException("Failed to notify registry");
             }
 
-            log.info("Successfully notified registry for mediaId={}", mediaId);
+            log.info("Registry notified successfully. mediaId={}", mediaId);
 
         } catch (IOException e) {
             log.error("IO error while notifying registry", e);
             throw new RuntimeException("Error while notifying registry", e);
+
         } catch (InterruptedException e) {
             log.error("Thread interrupted while notifying registry", e);
             Thread.currentThread().interrupt();

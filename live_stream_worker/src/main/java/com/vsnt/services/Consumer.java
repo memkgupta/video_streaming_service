@@ -3,12 +3,17 @@ package com.vsnt.services;
 import com.rabbitmq.client.*;
 import com.vsnt.config.RabbitMQConfig;
 import com.vsnt.config.Secrets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 public class Consumer {
+
+    private static final Logger logger = LoggerFactory.getLogger(Consumer.class);
+
     private final RabbitMQConfig config;
     private final JobProcessor processor;
     private final ExecutorService executor;
@@ -25,49 +30,60 @@ public class Consumer {
     }
 
     public void start() throws Exception {
-        System.out.println("Started consuming");
+        logger.info("Starting RabbitMQ consumer... queue={}", Secrets.RABBITMQ_QUEUE);
+
         Channel channel = config.getChannel();
 
-        // limit in-flight work per consumer
         channel.basicQos(1);
+        logger.info("QoS set to 1 (one job per worker)");
 
         DeliverCallback callback = (tag, delivery) -> {
+
+            long deliveryTag = delivery.getEnvelope().getDeliveryTag();
 
             Map<String, Object> headers =
                     delivery.getProperties().getHeaders() != null
                             ? delivery.getProperties().getHeaders()
                             : new HashMap<>();
 
-            long deliveryTag = delivery.getEnvelope().getDeliveryTag();
-
+            logger.debug("Received message. deliveryTag={}, headers={}", deliveryTag, headers);
 
             if (!streamManager.canConsume()) {
-                System.out.println("Worker STOPPING → skip & ACK");
+                logger.warn("Worker STOPPING → requeue message. deliveryTag={}", deliveryTag);
                 channel.basicNack(deliveryTag, false, true);
                 return;
             }
 
-            // 🔥 Process asynchronously
             executor.submit(() -> {
                 try {
+                    logger.info("Processing job. deliveryTag={}", deliveryTag);
+
                     processor.process(
                             channel,
                             deliveryTag,
                             delivery.getBody(),
                             headers
                     );
+
+                    logger.info("Job submitted to processor. deliveryTag={}", deliveryTag);
+
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("Error processing job. deliveryTag={}", deliveryTag, e);
+
                     try {
-                        // safety: retry
+                        logger.warn("Requeueing failed job. deliveryTag={}", deliveryTag);
                         channel.basicNack(deliveryTag, false, true);
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        logger.error("Failed to nack message. deliveryTag={}", deliveryTag, ex);
                     }
                 }
             });
         };
 
-        channel.basicConsume(Secrets.RABBITMQ_QUEUE, false, callback, tag -> {});
+        channel.basicConsume(Secrets.RABBITMQ_QUEUE, false, callback, tag -> {
+            logger.warn("Consumer cancelled. consumerTag={}", tag);
+        });
+
+        logger.info("Consumer successfully started and listening for messages");
     }
 }

@@ -2,166 +2,164 @@ package com.vsnt;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedEvent;
-import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingFailureEvent;
-import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingProgressEvent;
+import com.vsnt.common_lib.dtos.events.asset.transcoding.*;
 import com.vsnt.config.InstantAdapter;
 import com.vsnt.config.Secrets;
-import com.vsnt.dtos.TranscodingFailedDTO;
-import com.vsnt.dtos.TranscodingFinishEventDTO;
-import com.vsnt.dtos.TranscodingSegmentUpdateDTO;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import com.vsnt.dtos.*;
+import org.apache.kafka.clients.producer.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Properties;
+import java.util.concurrent.Future;
 
 public class SegmentEventProducer {
 
+    private static final Logger logger = LoggerFactory.getLogger(SegmentEventProducer.class);
+
     private final KafkaProducer<String, String> producer;
-    private final String update_topic;
-    private final String finish_topic;
-    private final String fail_topic;
+    private final String updateTopic;
+    private final String finishTopic;
+    private final String failTopic;
+
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(Instant.class, new InstantAdapter())
             .create();
 
-    public SegmentEventProducer(String bootstrapServers, String update_topic , String finish_topic, String failTopic)  {
+    public SegmentEventProducer(String bootstrapServers,
+                                String updateTopic,
+                                String finishTopic,
+                                String failTopic) {
 
-        this.finish_topic = finish_topic;
-this.update_topic = update_topic;
-        fail_topic = failTopic;
+        this.updateTopic = updateTopic;
+        this.finishTopic = finishTopic;
+        this.failTopic = failTopic;
+
         Properties props = new Properties();
-        System.out.println(bootstrapServers);
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, Secrets.KAFKA_BOOTSTRAP_SERVERS);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
                 "org.apache.kafka.common.serialization.StringSerializer");
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                 "org.apache.kafka.common.serialization.StringSerializer");
 
-        // Production-safe configs
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 3);
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
-        System.out.println(props);
+
         this.producer = new KafkaProducer<>(props);
+
+        logger.info("Kafka producer initialized. brokers={}, updateTopic={}",
+                Secrets.KAFKA_BOOTSTRAP_SERVERS, updateTopic);
     }
 
-    public boolean sendEvent(TranscodingSegmentUpdateDTO event) {
 
-        String key = event.getAssetId(); // ensures ordering per asset
-        String value = gson.toJson(event);
+    public void sendEvent(TranscodingSegmentUpdateDTO event) {
 
-        ProducerRecord<String, String> record =
-                new ProducerRecord<>(update_topic, key, value);
-        boolean[] result = new boolean[1];
-        producer.send(record, (metadata, exception) -> {
-            if (exception != null) {
-                System.err.println("Failed to send event: " + exception.getMessage());
-           result[0] = false;
-            } else {
-                System.out.println("Event sent to topic " + metadata.topic()
-                        + " partition " + metadata.partition()
-                        + " offset " + metadata.offset());
-                result[0] = true;
-            }
-
-        });
-        return result[0];
-    }
-    public boolean sendProgress(AssetTranscodingProgressEvent event)
-    {
-        String key = event.getAssetId(); // ensures ordering per asset
-        String value = gson.toJson(event);
-
-        ProducerRecord<String, String> record =
-                new ProducerRecord<>("asset-updates", key, value);
-        boolean[] result = new boolean[1];
-        producer.send(record, (metadata, exception) -> {
-            if (exception != null) {
-                System.err.println("Failed to send event: " + exception.getMessage());
-                result[0] = false;
-            } else {
-                System.out.println("Event sent to topic " + metadata.topic()
-                        + " partition " + metadata.partition()
-                        + " offset " + metadata.offset());
-                result[0] = true;
-            }
-
-        });
-        return result[0];
-    }
-    public void sendFinishEvent(TranscodingFinishEventDTO event)
-    {
-        String key = event.getMediaId(); // ensures ordering per asset
-        String value = gson.toJson(event);
-
-        ProducerRecord<String, String> record =
-                new ProducerRecord<>(finish_topic, key, value);
-
-        producer.send(record, (metadata, exception) -> {
-            if (exception != null) {
-                System.err.println("Failed to send event: " + exception.getMessage());
-            } else {
-                System.out.println("Event sent to topic " + metadata.topic()
-                        + " partition " + metadata.partition()
-                        + " offset " + metadata.offset());
-            }
-        });
-    }
-    public void sendFinishEvent(AssetTranscodingCompletedEvent event)
-    {
         String key = event.getAssetId();
         String value = gson.toJson(event);
 
         ProducerRecord<String, String> record =
-                new ProducerRecord<>("asset-updates", key, value);
+                new ProducerRecord<>(updateTopic, key, value);
 
         producer.send(record, (metadata, exception) -> {
             if (exception != null) {
-                System.err.println("Failed to send event: " + exception.getMessage());
+                logger.error("Failed to send segment event. assetId={}", key, exception);
             } else {
-                System.out.println("Event sent to topic " + metadata.topic()
-                        + " partition " + metadata.partition()
-                        + " offset " + metadata.offset());
+                logger.debug("Segment event sent. topic={}, partition={}, offset={}, assetId={}",
+                        metadata.topic(), metadata.partition(), metadata.offset(), key);
             }
         });
     }
-    public void sendFailedEvent(TranscodingFailedDTO event)
-    {
-        String key = event.getMediaId(); // ensures ordering per asset
+
+    public void sendProgress(AssetTranscodingProgressEvent event) {
+
+        String key = event.getAssetId();
         String value = gson.toJson(event);
 
         ProducerRecord<String, String> record =
-                new ProducerRecord<>(finish_topic, key, value);
+                new ProducerRecord<>(updateTopic, key, value);
+
         producer.send(record, (metadata, exception) -> {
             if (exception != null) {
-                System.err.println("Failed to send event: " + exception.getMessage());
+                logger.error("Failed to send progress event. assetId={}", key, exception);
             } else {
-                System.out.println("Event sent to topic " + metadata.topic()
-                        + " partition " + metadata.partition()
-                        + " offset " + metadata.offset());
+                logger.debug("Progress event sent. assetId={}, offset={}",
+                        key, metadata.offset());
             }
         });
     }
-    public void sendFailedEvent(AssetTranscodingFailureEvent event)
-    {
+
+    public void sendFinishEvent(TranscodingFinishEventDTO event) {
+
+        String key = event.getMediaId();
+        String value = gson.toJson(event);
+
+        ProducerRecord<String, String> record =
+                new ProducerRecord<>(finishTopic, key, value);
+
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                logger.error("Failed to send finish event. mediaId={}", key, exception);
+            } else {
+                logger.info("Finish event sent. mediaId={}, offset={}", key, metadata.offset());
+            }
+        });
+    }
+
+    public void sendFinishEvent(AssetTranscodingCompletedEvent event) {
+
         String key = event.getAssetId();
         String value = gson.toJson(event);
-        ProducerRecord<String,String> record =
-                new ProducerRecord<>("asset-updates", key, value);
+
+        ProducerRecord<String, String> record =
+                new ProducerRecord<>(updateTopic, key, value);
+
         producer.send(record, (metadata, exception) -> {
             if (exception != null) {
-                System.err.println("Failed to send event: " + exception.getMessage());
+                logger.error("Failed to send completed event. assetId={}", key, exception);
             } else {
-                System.out.println("Event sent to topic " + metadata.topic()
-                        + " partition " + metadata.partition()
-                        + " offset " + metadata.offset());
+                logger.info("Completed event sent. assetId={}, offset={}", key, metadata.offset());
             }
         });
     }
+
+    public void sendFailedEvent(TranscodingFailedDTO event) {
+
+        String key = event.getMediaId();
+        String value = gson.toJson(event);
+
+        ProducerRecord<String, String> record =
+                new ProducerRecord<>(failTopic, key, value);
+
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                logger.error("Failed to send failed event. mediaId={}", key, exception);
+            } else {
+                logger.warn("Failure event sent. mediaId={}, offset={}", key, metadata.offset());
+            }
+        });
+    }
+
+    public void sendFailedEvent(AssetTranscodingFailureEvent event) {
+
+        String key = event.getAssetId();
+        String value = gson.toJson(event);
+
+        ProducerRecord<String, String> record =
+                new ProducerRecord<>(updateTopic, key, value);
+
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                logger.error("Failed to send failure event. assetId={}", key, exception);
+            } else {
+                logger.warn("Failure event sent. assetId={}, offset={}", key, metadata.offset());
+            }
+        });
+    }
+
     public void close() {
+        logger.info("Closing Kafka producer...");
         producer.flush();
         producer.close();
     }

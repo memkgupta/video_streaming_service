@@ -1,95 +1,105 @@
 package com.vsnt;
 
-
-import com.vsnt.config.FFMPEGConfigVOD;
 import com.vsnt.config.FFMPEGConfigVODEncrypted;
 import com.vsnt.dtos.MediaType;
 import com.vsnt.services.HlsKeyUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class VideoTranscoder {
-  private final ExecutorService executor;
+
+    private static final Logger logger = LoggerFactory.getLogger(VideoTranscoder.class);
+
+    private final ExecutorService executor;
+
     public VideoTranscoder(ExecutorService executor) {
         this.executor = executor;
     }
+
     public boolean startTranscodingAsync(
             String url,
             String outputPath,
             String hexKey,
             MediaType mediaType,
-            String publicKeyURL)throws IOException {
+            String publicKeyURL) throws IOException {
+
+        logger.info("Starting VOD transcoding. url={}, outputPath={}", url, outputPath);
 
         Path basePath = Paths.get(outputPath);
-        // Generate key file
-        Path keyFilePath =
-                HlsKeyUtil.createKeyFile(hexKey, outputPath );
+
+        // key setup
+        Path keyFilePath = HlsKeyUtil.createKeyFile(hexKey, outputPath);
         Path keyInfoPath = basePath.resolve("key_info.txt");
+
         String keyInfoContent =
-                publicKeyURL + "\n" +
-                        keyFilePath.toAbsolutePath();
+                publicKeyURL + "\n" + keyFilePath.toAbsolutePath();
+
         Files.writeString(keyInfoPath, keyInfoContent);
+
         try {
-//            FFMPEGConfigVOD config = new FFMPEGConfigVOD (
-//                    url,
-//                    outputPath,
-//                    keyInfoPath.toAbsolutePath().toString()
-//            );
             FFMPEGConfigVODEncrypted config = new FFMPEGConfigVODEncrypted(
                     url,
                     outputPath,
                     keyInfoPath.toAbsolutePath().toString()
             );
+
             List<String> commands = config.getFFMPEGCommands();
-            // Run resolutions in parallel
+            logger.info("Generated {} FFmpeg commands", commands.size());
+
             List<Future<Boolean>> results =
                     commands.stream()
-                            .map(cmd -> executor.submit(() -> executeffmpeg(cmd)))
+                            .map(cmd -> executor.submit(() -> executeFFmpeg(cmd)))
                             .toList();
-
-            // Wait for all to complete
 
             for (Future<Boolean> future : results) {
                 if (!future.get()) {
+                    logger.warn("One of the FFmpeg tasks failed");
                     return false;
                 }
             }
 
-            System.out.println("Transcoding completed successfully.");
+            logger.info("Transcoding completed successfully");
             return true;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Transcoding failed", e);
             return false;
         }
     }
 
-    private boolean executeffmpeg(String command) {
-
+    private boolean executeFFmpeg(String command) {
         try {
-
-            System.out.println("Executing: " + command);
+            logger.debug("Executing FFmpeg command: {}", command);
 
             ProcessBuilder pb = new ProcessBuilder("sh", "-c", command);
             pb.redirectErrorStream(true);
             pb.inheritIO();
+
             Process process = pb.start();
             int exitCode = process.waitFor();
-            return exitCode == 0;
+
+            if (exitCode == 0) {
+                logger.debug("FFmpeg command completed successfully");
+                return true;
+            } else {
+                logger.warn("FFmpeg command failed with exitCode={}", exitCode);
+                return false;
+            }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error executing FFmpeg command", e);
             return false;
         }
     }
 
     public void shutdown() {
+        logger.info("Shutting down transcoder executor");
         executor.shutdown();
     }
 }
