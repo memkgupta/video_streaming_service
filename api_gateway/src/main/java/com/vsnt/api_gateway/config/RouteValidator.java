@@ -20,9 +20,11 @@ public class RouteValidator {
 
             "/api/user/v1/auth/register",
             "/api/user/v1/auth/login",
-            "/api/user/v1/token/refresh-token"
+            "/api/user/v1/token/refresh-token",
+"/api/ai/v1/query"
 //            "/api/asset_onboarding/v1/watch"
     );
+
 /*all the secured routes need a api key in there request */
     public Predicate<ServerHttpRequest> isSecured =
             request -> openApiEndpoints

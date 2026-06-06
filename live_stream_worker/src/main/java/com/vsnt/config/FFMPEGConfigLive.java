@@ -64,8 +64,8 @@ public class FFMPEGConfigLive {
                         "-reset_timestamps 1 " +
                         "-segment_format mp4 " +
                         "-segment_format_options movflags=+faststart " +
-                        "-strftime 1 " +                        // 🔥 timestamp-based naming
-                        "-segment_list \"%s/segments.txt\" " +  // optional index file
+                        "-strftime 1 " +
+                        "-segment_list \"%s/segments.txt\" " +
                         "\"%s/segment_%%Y%%m%%d_%%H%%M%%S.mp4\"",
 
                 url,

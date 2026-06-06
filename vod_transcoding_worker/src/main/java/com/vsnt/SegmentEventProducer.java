@@ -112,7 +112,7 @@ public class SegmentEventProducer {
         String value = gson.toJson(event);
 
         ProducerRecord<String, String> record =
-                new ProducerRecord<>(updateTopic, key, value);
+                new ProducerRecord<>("asset-updates", key, value);
 
         producer.send(record, (metadata, exception) -> {
             if (exception != null) {

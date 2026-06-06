@@ -1,5 +1,6 @@
 package com.vsnt;
 
+import com.vsnt.common_lib.dtos.jobs.transcription.TranscriptionJob;
 import com.vsnt.dtos.MediaType;
 import com.vsnt.dtos.ResolutionEnum;
 import com.vsnt.dtos.TranscodingSegmentUpdateDTO;
@@ -35,6 +36,7 @@ public class SegmentEventFactory {
         this.segmentDuration = segmentDuration;
         this.s3Service = s3Service;
         this.transcodedBucketName = transcodedBucketName;
+
 
         logger.info("SegmentEventFactory initialized. bucket={}, cdn={}",
                 transcodedBucketName, cdnBaseUrl);
@@ -77,7 +79,7 @@ public class SegmentEventFactory {
                     mediaId, sequenceNumber, duration);
 
             String url = cdnBaseUrl + "/" + s3Key;
-
+            logger.info("Segment for resolution {}", resolution);
             return new TranscodingSegmentUpdateDTO(
                     assetId,
                     url,
@@ -105,5 +107,8 @@ public class SegmentEventFactory {
             logger.error("Failed to extract sequence number. file={}", fileName, e);
             throw e;
         }
+    }
+    private double extractStartTime(long sequenceNumber) {
+      return sequenceNumber * segmentDuration;
     }
 }

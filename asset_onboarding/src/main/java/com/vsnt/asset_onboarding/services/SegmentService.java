@@ -141,7 +141,7 @@ public class SegmentService {
                     .append("\n");
 
             // URL to variant playlist endpoint
-            sb.append("http://localhost:8001/api/asset_onboarding/v1/watch/live/")
+            sb.append("https://localhost:8001/api/asset_onboarding/v1/watch/live/")
                     .append(media.getId())
                     .append("/")
                     .append(resolution)
@@ -153,10 +153,8 @@ public class SegmentService {
     public String getLiveMasterPlaylist(Media media,Long start) {
 
         StringBuilder sb = new StringBuilder();
-
         sb.append("#EXTM3U\n");
         sb.append("#EXT-X-VERSION:3\n\n");
-
         // bitrate + resolution mapping
         Map<String, String[]> streamInfo = Map.of(
                 "360p", new String[]{"800000", "640x360"},
@@ -164,7 +162,6 @@ public class SegmentService {
                 "720p", new String[]{"2800000", "1280x720"},
                 "1080p", new String[]{"5000000", "1920x1080"}
         );
-
         for (String resolution : resolutions) {
 
             String[] info = streamInfo.getOrDefault(

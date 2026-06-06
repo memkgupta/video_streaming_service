@@ -15,7 +15,7 @@ public class UpdateRequestDTO {
     @Override
     public String toString() {
         return "UpdateRequestDTO{" +
-                "videoId='" + videoId  + '\'' +
+                "mediaId='" + videoId  + '\'' +
                 ", url='" + url + '\'' +
                 ", timestamp=" + timestamp +
                 ", status='" + status + '\'' +

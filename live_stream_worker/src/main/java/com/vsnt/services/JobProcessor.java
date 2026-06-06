@@ -64,7 +64,7 @@ public class JobProcessor {
 
             logger.info("Directories created for mediaId={}, path={}", mediaId, outputPath);
 
-            String url = String.format("rtmp://rtmp_server:1935/live/%s", mediaId);
+            String url = String.format("rtmp://"+System.getenv("RTMP_URL")+"/live/%s", mediaId);
             logger.info("Starting stream consumption from URL={}", url);
 
             watcher = createWatcher(assetId, mediaId, outputPath);

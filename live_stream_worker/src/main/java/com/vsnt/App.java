@@ -22,7 +22,7 @@ public class App {
             S3Service s3Service = new S3Service();
 
             String bucketName = System.getenv("AWS_RAW_BUCKET");
-
+            String rtmpUrl = System.getenv("RTMP_URL");
             String kafkaBrokers = System.getenv("KAFKA_BOOTSTRAP_SERVERS");
             String kafkaTopicSegmentUpdate = System.getenv("TRANSCODING_UPDATE_TOPIC");
             String kafkaTopicFinish = System.getenv("TRANSCODING_FINISH_TOPIC");

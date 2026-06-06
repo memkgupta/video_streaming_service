@@ -93,7 +93,7 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.vsnt.App</mainClass> <!-- replace with your actual main class -->
+                                    <mainClass>com.vsnt.App</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

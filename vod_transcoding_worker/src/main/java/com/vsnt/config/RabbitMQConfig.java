@@ -54,7 +54,7 @@ public class RabbitMQConfig {
                 channel.basicQos(MAX_CONCURRENT_JOBS);
 
                 channel.queueDeclare("transcoding_jobs", true, false, false, null);
-
+                channel.queueDeclare("transcription-jobs",true , false , false , null);
                 logger.info("RabbitMQ connected successfully. queue=transcoding_jobs");
 
                 return channel;

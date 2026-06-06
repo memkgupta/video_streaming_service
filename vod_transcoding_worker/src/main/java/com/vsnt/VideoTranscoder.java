@@ -6,98 +6,119 @@ import com.vsnt.services.HlsKeyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class VideoTranscoder {
 
     private static final Logger logger = LoggerFactory.getLogger(VideoTranscoder.class);
+
+    private static final long FFMPEG_TIMEOUT_MINUTES = 30L;
 
     private final ExecutorService executor;
 
     public VideoTranscoder(ExecutorService executor) {
         this.executor = executor;
     }
-
-    public boolean startTranscodingAsync(
+    public CompletableFuture<Boolean> transcode(
             String url,
             String outputPath,
             String hexKey,
             MediaType mediaType,
-            String publicKeyURL) throws IOException {
+            String publicKeyURL
+    ) {
+        logger.info("Submitting transcoding job. url={}, outputPath={}", url, outputPath);
 
-        logger.info("Starting VOD transcoding. url={}, outputPath={}", url, outputPath);
+        return CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        return setupEncryptionKeys(hexKey, outputPath, publicKeyURL);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }, executor)
+                .thenApplyAsync(keyInfoPath -> buildCommands(url, outputPath, keyInfoPath), executor)
+                .thenComposeAsync(this::runAllAsync, executor)
+                .whenComplete((success, ex) -> {
+                    if (ex != null) logger.error("Transcoding pipeline failed. url={}", url, ex);
+                    else if (success)  logger.info("Transcoding completed. outputPath={}", outputPath);
+                    else               logger.warn("One or more FFmpeg tasks failed. outputPath={}", outputPath);
+                });
+    }
 
-        Path basePath = Paths.get(outputPath);
-
-        // key setup
+    private Path setupEncryptionKeys(String hexKey, String outputPath, String publicKeyURL) throws IOException {
+        Path basePath    = Paths.get(outputPath);
         Path keyFilePath = HlsKeyUtil.createKeyFile(hexKey, outputPath);
         Path keyInfoPath = basePath.resolve("key_info.txt");
 
-        String keyInfoContent =
-                publicKeyURL + "\n" + keyFilePath.toAbsolutePath();
+        Files.writeString(keyInfoPath, publicKeyURL + "\n" + keyFilePath.toAbsolutePath());
 
-        Files.writeString(keyInfoPath, keyInfoContent);
+        logger.debug("Encryption keys written. keyInfo={}", keyInfoPath);
+        return keyInfoPath;
+    }
 
-        try {
-            FFMPEGConfigVODEncrypted config = new FFMPEGConfigVODEncrypted(
-                    url,
-                    outputPath,
-                    keyInfoPath.toAbsolutePath().toString()
-            );
+    private List<String> buildCommands(String url, String outputPath, Path keyInfoPath) {
+        List<String> commands = new FFMPEGConfigVODEncrypted(
+                url,
+                outputPath,
+                keyInfoPath.toAbsolutePath().toString()
+        ).getFFMPEGCommands();
 
-            List<String> commands = config.getFFMPEGCommands();
-            logger.info("Generated {} FFmpeg commands", commands.size());
+        logger.info("Generated {} FFmpeg commands", commands.size());
+        return commands;
+    }
 
-            List<Future<Boolean>> results =
-                    commands.stream()
-                            .map(cmd -> executor.submit(() -> executeFFmpeg(cmd)))
-                            .toList();
 
-            for (Future<Boolean> future : results) {
-                if (!future.get()) {
-                    logger.warn("One of the FFmpeg tasks failed");
-                    return false;
-                }
-            }
-
-            logger.info("Transcoding completed successfully");
-            return true;
-
-        } catch (Exception e) {
-            logger.error("Transcoding failed", e);
-            return false;
-        }
+    private CompletableFuture<Boolean> runAllAsync(List<String> commands) {
+        List<CompletableFuture<Boolean>> futures = commands.stream()
+                .map(cmd -> CompletableFuture
+                        .supplyAsync(() -> executeFFmpeg(cmd), executor)
+                        .exceptionally(ex -> {
+                            logger.error("FFmpeg task threw exception. cmd={}", cmd, ex);
+                            return false;
+                        }))
+                .toList();
+        return CompletableFuture
+                .allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> futures.stream()
+                        .anyMatch(sf->sf.getNow(false))
+                );
     }
 
     private boolean executeFFmpeg(String command) {
         try {
-            logger.debug("Executing FFmpeg command: {}", command);
+            logger.info("Executing FFmpeg command: {}", command);
 
-            ProcessBuilder pb = new ProcessBuilder("sh", "-c", command);
-            pb.redirectErrorStream(true);
-            pb.inheritIO();
+            Process process = new ProcessBuilder("sh", "-c", command)
+                    .redirectErrorStream(true)
+                    .start();
 
-            Process process = pb.start();
-            int exitCode = process.waitFor();
+            try (BufferedReader reader =
+                         new BufferedReader(
+                                 new InputStreamReader(process.getInputStream()))) {
 
-            if (exitCode == 0) {
-                logger.debug("FFmpeg command completed successfully");
-                return true;
-            } else {
-                logger.warn("FFmpeg command failed with exitCode={}", exitCode);
-                return false;
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    logger.debug("[FFMPEG] {}", line);
+                }
             }
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                logger.info("FFmpeg command succeeded");
+                return true;
+            }
+            logger.warn("FFmpeg command failed. exitCode={}", exitCode);
+            return false;
 
         } catch (Exception e) {
             logger.error("Error executing FFmpeg command", e);
             return false;
         }
     }
-
     public void shutdown() {
         logger.info("Shutting down transcoder executor");
         executor.shutdown();

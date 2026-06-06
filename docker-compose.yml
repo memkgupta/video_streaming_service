@@ -1,351 +1,483 @@
 version: "3.9"
-name: "q4-video"
 
+name: q4-video
 services:
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    container_name: zookeeper_q4
-    networks:
-      - app-net
+    image: confluentinc/cp-zookeeper:7.2.1
+    container_name: zookeeper
+    restart: unless-stopped
     ports:
       - "2181:2181"
     environment:
-      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
-      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     healthcheck:
-      test: echo srvr | nc zookeeper 2181 || exit 1
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  kafka:
-    image: confluentinc/cp-kafka:7.2.1
-    container_name: kafka_q4
     networks:
       - app-net
+  kafka:
+    image: confluentinc/cp-kafka:7.2.1
+    container_name: kafka
+    restart: unless-stopped
+
+    depends_on:
+      zookeeper:
+        condition: service_healthy
     ports:
       - "9092:9092"
       - "29092:29092"
     environment:
-      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
-      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
-      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
-      KAFKA_LISTENERS: ${KAFKA_LISTENERS}
-      KAFKA_INTER_BROKER_LISTENER_NAME: ${KAFKA_INTER_BROKER_LISTENER_NAME}
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
-    depends_on:
-      zookeeper:
-        condition: service_healthy
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     healthcheck:
-      test: kafka-topics --bootstrap-server ${KAFKA_BOOTSTRAP_SERVERS} --list || exit 1
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"
+        ]
       interval: 10s
       timeout: 10s
-      retries: 5
-      start_period: 20s
-
-  redis:
-    image: redis:7
-    container_name: redis_q4
-    ports:
-      - "6379:6379"
+      retries: 10
     networks:
       - app-net
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-
+    networks:
+      - app-net
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq_q4
+    container_name: rabbitmq
+    restart: unless-stopped
     ports:
       - "5672:5672"
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-    networks:
-      - app-net
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app-net
 
   postgres:
     image: postgres:15
-    container_name: postgres_q4
+    container_name: postgres
+    restart: unless-stopped
+
+    ports:
+      - "5431:5432"
+
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5431:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - app-net
+     - postgres_data:/var/lib/postgresql/data
+     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: pg_isready -U ${POSTGRES_USER} || exit 1
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app-net
+  pgvector:
+    image: pgvector/pgvector:pg16          # official pgvector image (pg15 / pg16 / pg17)
+    container_name: postgres_pgvector
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: vectordb
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+
+    volumes:
+     - pgvector_data:/var/lib/postgresql/data
+     - ./init:/docker-entrypoint-initdb.d              # auto-run SQL on first start
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d vectordb" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - app-net
 
   kafka-ui:
     image: provectuslabs/kafka-ui
-    container_name: kafka-ui_q4
+    container_name: kafka-ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+
     ports:
       - "9909:8080"
+
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       DYNAMIC_CONFIG_ENABLED: "true"
-    networks:
-      - app-net
-    depends_on:
-      - kafka
 
-  moderation_worker:
-    build:
-      context: ./moderation_worker
-      dockerfile: Dockerfile
-    deploy:
-      replicas: 2
-    restart: unless-stopped
-    depends_on:
-      - kafka
-      - rabbitmq
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-      RABBITMQ_HOST: ${RABBITMQ_HOST}
-      RABBITMQ_PORT: ${RABBITMQ_PORT}
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     networks:
       - app-net
 
-  vod_transcoding_worker:
-    build:
-      context: ./vod_transcoding_worker
-      dockerfile: Dockerfile
-    deploy:
-      replicas: 2
-    restart: unless-stopped
-    depends_on:
-      - kafka
-      - rabbitmq
-    networks:
-      - app-net
-    environment:
-      # Kafka
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-
-      # Topics
-      TRANSCODING_UPDATE_TOPIC: ${TRANSCODING_UPDATE_TOPIC}
-      TRANSCODING_FINISH_TOPIC: ${TRANSCODING_FINISH_TOPIC}
-      TRANSCODING_FAIL_TOPIC: ${TRANSCODING_FAIL_TOPIC}
-
-      # AWS
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_REGION: ${AWS_REGION}
-      AWS_RAW_BUCKET: ${AWS_RAW_BUCKET}
-      AWS_TRANSCODED_BUCKET: ${AWS_TRANSCODED_BUCKET}
-
-      # CDN
-      CDN_BASE_URL: ${CDN_BASE_URL}
-
-      # Key service
-      PUBLIC_KEY_SERVER_URL: ${PUBLIC_KEY_SERVER_URL}
-
-      # RabbitMQ
-      RABBITMQ_HOST: ${RABBITMQ_HOST}
-      RABBITMQ_PORT: ${RABBITMQ_PORT}
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-      RABBITMQ_QUEUE: transcoding_jobs
-      # Worker tuning
-      MAX_CONCURRENT_JOBS: ${MAX_CONCURRENT_JOBS}
-
-  live_stream_worker:
-    build:
-      context: ./live_stream_worker
-      dockerfile: Dockerfile
-    deploy:
-      replicas: 1
-    restart: unless-stopped
-    depends_on:
-      - kafka
-      - rabbitmq
-      - rtmp_server
-    networks:
-      - app-net
-    environment:
-      # Kafka
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-
-      # Topics
-      TRANSCODING_UPDATE_TOPIC: ${TRANSCODING_UPDATE_TOPIC}
-      TRANSCODING_FINISH_TOPIC: ${TRANSCODING_FINISH_TOPIC}
-      TRANSCODING_FAIL_TOPIC: ${TRANSCODING_FAIL_TOPIC}
-
-      # AWS
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_REGION: ${AWS_REGION}
-      AWS_RAW_BUCKET: ${AWS_RAW_BUCKET}
-      AWS_TRANSCODED_BUCKET: ${AWS_TRANSCODED_BUCKET}
-
-      # CDN
-      CDN_BASE_URL: ${CDN_BASE_URL}
-
-      # Key service
-      PUBLIC_KEY_SERVER_URL: ${PUBLIC_KEY_SERVER_URL}
-
-      # RabbitMQ
-      RABBITMQ_HOST: ${RABBITMQ_HOST}
-      RABBITMQ_PORT: ${RABBITMQ_PORT}
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-      RABBITMQ_QUEUE: live_transcoding_jobs
-      REGISTRY_SERVER_URL: http://rtmp-server:7001
-      # Worker tuning
-      MAX_CONCURRENT_JOBS: ${MAX_CONCURRENT_JOBS}
-
-  service_discovery:
+  service-discovery:
     container_name: service-discovery
+    restart: unless-stopped
+
     build:
       context: ./ServiceDiscovery
-      dockerfile: ./Dockerfile
+      dockerfile: Dockerfile
+
     depends_on:
-      - kafka
-      - rabbitmq
-      - redis
-      - postgres
+      kafka:
+        condition: service_healthy
+
+      rabbitmq:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+      postgres:
+        condition: service_healthy
+
+    ports:
+      - "8761:8761"
+
     networks:
       - app-net
 
-  api_gateway:
+  api-gateway:
     container_name: api-gateway
-    ports:
-      - "8001:8001"
+    restart: unless-stopped
+
     build:
       context: ./api_gateway
-      dockerfile: ./Dockerfile
-    deploy:
-      replicas: 1
+      dockerfile: Dockerfile
+
     depends_on:
-      - service_discovery
-    networks:
-      - app-net
+      service-discovery:
+        condition: service_started
+
+    ports:
+      - "8001:8001"
+
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka
 
-  asset_onboarding:
+    networks:
+      - app-net
+
+  asset-onboarding:
+    container_name: asset-onboarding
+    restart: unless-stopped
+
     build:
       context: ./
       dockerfile: ./asset_onboarding/Dockerfile
-    deploy:
-      replicas: 2
+
     depends_on:
-      - service_discovery
-      - api_gateway
+      postgres:
+        condition: service_healthy
+
+      rabbitmq:
+        condition: service_healthy
+
+      kafka:
+        condition: service_healthy
+
+      service-discovery:
+        condition: service_started
+
     environment:
-      DB_URL : jdbc:postgresql://postgres_q4:5432/vsnt_assets
-      DB_USERNAME : postgres
-      DB_PASSWORD: password
-      EUREKA_URL:  http://service-discovery:8761/eureka
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      RABBITMQ_HOST: ${RABBITMQ_HOST}
-      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      DB_URL: jdbc:postgresql://postgres:5432/vsnt_assets
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_URL: http://service-discovery:8761/eureka
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       TRANSCODING_QUEUE_NAME: transcoding_jobs
       MODERATION_QUEUE_NAME: moderation_jobs
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${AWS_REGION}
       AWS_BUCKET_NAME: ${AWS_RAW_BUCKET}
       AWS_SECURE_BUCKET: ${AWS_TRANSCODED_BUCKET}
-      KAFKA_BOOTSTRAP_SERVERS : ${KAFKA_BOOTSTRAP_SERVERS}
-      CDN_RESOURCE_URL : ${CDN_BASE_URL}/
-
+      CDN_RESOURCE_URL: ${CDN_BASE_URL}/
     networks:
       - app-net
-  notification_service:
-    container_name: notification-service
+  event-service:
+    container_name: event-service
+    restart: unless-stopped
+
     build:
       context: ./
-      dockerfile: ./notification/Dockerfile
-    networks:
-      - app-net
+      dockerfile: ./event_service/Dockerfile
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
     environment:
-      DB_URL: jdbc:postgresql://postgres_q4:5432/vsnt_notifications
-      DB_USERNAME: postgres
-      DB_PASSWORD: password
+      DB_URL: jdbc:postgresql://postgres:5432/vsnt_notifications
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+
       EUREKA_URL: http://service-discovery:8761/eureka
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      RABBITMQ_HOST: ${RABBITMQ_HOST}
-      RABBITMQ_PORT: ${RABBITMQ_PORT}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
 
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
-  user:
-    build:
-      context: ./user
-      dockerfile: ./Dockerfile
     networks:
       - app-net
-    depends_on:
-      - api_gateway
-      - service_discovery
-      - rtmp_server
-    environment:
-      DB_URL: jdbc:postgresql://postgres_q4:5432/vsnt_users
-      DB_USERNAME: postgres
-      DB_PASSWORD: password
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:  http://service-discovery:8761/eureka
 
-  rtmp_server:
-   container_name: rtmp-server
-   ports:
-     - "1935:1935"
-   build:
-    context: ./rtmp_server
-    dockerfile: ./Dockerfile
-   volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-   networks:
-     - app-net
-   environment:
-     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-     AWS_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
-     AWS_REGION: ${AWS_REGION}
-     AWS_BUCKET_NAME: ${AWS_RAW_BUCKET}
-     AWS_TRANSCODED_BUCKET_NAME: ${AWS_TRANSCODED_BUCKET}
-     RABBITMQ_HOST: ${RABBITMQ_HOST}
-     RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
-     RABBITMQ_PORT: ${RABBITMQ_PORT}
-     RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-     KAKFA_BROKERS: ${KAFKA_BOOTSTRAP_SERVERS}
-     CLOUD_FRONT_URL: ${CDN_BASE_URL}
-     SERVER_URL: rtmp://rtmp-server:1935
-     KEY_SERVER_URL: http://api-gateway:8081/api/v1/key
-     LIVE_SERVER_URL: http://api-gateway:8001/api/asset_onboarding/v1/live
+  user:
+    container_name: user
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    build:
+      context: ./
+      dockerfile: ./user/Dockerfile
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/vsnt_users
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka
+      WEBHOOK_MASTER_KEY: e50587e29a354989ed0567c6cf196918
+    networks:
+      - app-net
+
+#  moderation-worker:
+#    container_name: moderation-worker
+#    restart: unless-stopped
+#
+#    build:
+#      context: ./moderation_worker
+#      dockerfile: Dockerfile
+#
+#    depends_on:
+#      kafka:
+#        condition: service_healthy
+#
+#      rabbitmq:
+#        condition: service_healthy
+#
+#    environment:
+#      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+#
+#      RABBITMQ_HOST: rabbitmq
+#      RABBITMQ_PORT: 5672
+#      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+#      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+#
+#    networks:
+#      - app-net
+
+  vod-transcoding-worker:
+    container_name: vod-transcoding-worker
+    restart: unless-stopped
+
+    build:
+      context: ./vod_transcoding_worker
+      dockerfile: Dockerfile
+
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+      rabbitmq:
+        condition: service_healthy
+
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+      TRANSCODING_UPDATE_TOPIC: ${TRANSCODING_UPDATE_TOPIC}
+      TRANSCODING_FINISH_TOPIC: ${TRANSCODING_FINISH_TOPIC}
+      TRANSCODING_FAIL_TOPIC: ${TRANSCODING_FAIL_TOPIC}
+      TRANSCRIPTION_QUEUE: transcription-jobs
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+
+      AWS_REGION: ${AWS_REGION}
+      AWS_RAW_BUCKET: ${AWS_RAW_BUCKET}
+      AWS_TRANSCODED_BUCKET: ${AWS_TRANSCODED_BUCKET}
+
+      CDN_BASE_URL: ${CDN_BASE_URL}
+
+      PUBLIC_KEY_SERVER_URL: ${PUBLIC_KEY_SERVER_URL}
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+
+      RABBITMQ_QUEUE: transcoding_jobs
+
+      MAX_CONCURRENT_JOBS: ${MAX_CONCURRENT_JOBS}
+
+    networks:
+      - app-net
+  transcription-worker:
+    container_name: transcription-worker
+    networks:
+      - app-net
+    build:
+      context: /transcriber_worker
+      dockerfile: Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TRANSCRIPT_TOPIC: transcript-event
+      QUEUE_JOB_NAME: transcription-jobs
+      QUEUE_SERVER: rabbitmq
+      QUEUE_PORT: 5672
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ap-south-1
+      CDN_URL: ${CDN_BASE_URL}
+      BUCKET_NAME: ${AWS_TRANSCODED_BUCKET}
+  ai-service:
+    container_name: ai-service
+    build:
+      context: ./
+      dockerfile: ai_service/Dockerfile
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      DB_URL: jdbc:postgresql://postgres_pgvector:5432/vectordb
+      DB_USERNAME: admin
+      DB_PASSWORD: secret
+      GEMINI_AI_KEY: ${GEMINI_AI_KEY}
+      EUREKA_URL: http://service-discovery:8761/eureka
+    depends_on:
+      - kafka
+      - pgvector
+    networks:
+      - app-net
+
+  rtmp-server:
+    container_name: rtmp-server
+    restart: unless-stopped
+    build:
+      context: ./rtmp_server
+      dockerfile: Dockerfile
+    ports:
+      - "1935:1935"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_BUCKET_NAME: ${AWS_RAW_BUCKET}
+      AWS_TRANSCODED_BUCKET_NAME: ${AWS_TRANSCODED_BUCKET}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      KAFKA_BROKERS: kafka:29092
+      CLOUD_FRONT_URL: ${CDN_BASE_URL}
+      SERVER_URL: rtmp://rtmp-server:1935
+      KEY_SERVER_URL: http://api-gateway:8001/api/v1/key
+      LIVE_SERVER_URL: http://api-gateway:8001/api/asset_onboarding/v1/live
+    networks:
+      - app-net
+  live-stream-worker:
+    container_name: live-stream-worker
+    restart: unless-stopped
+    build:
+      context: ./live_stream_worker
+      dockerfile: Dockerfile
+
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+      rabbitmq:
+        condition: service_healthy
+
+      rtmp-server:
+        condition: service_started
+
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+      TRANSCODING_UPDATE_TOPIC: ${TRANSCODING_UPDATE_TOPIC}
+      TRANSCODING_FINISH_TOPIC: ${TRANSCODING_FINISH_TOPIC}
+      TRANSCODING_FAIL_TOPIC: ${TRANSCODING_FAIL_TOPIC}
+
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+
+      AWS_REGION: ${AWS_REGION}
+      AWS_RAW_BUCKET: ${AWS_RAW_BUCKET}
+      AWS_TRANSCODED_BUCKET: ${AWS_TRANSCODED_BUCKET}
+
+      CDN_BASE_URL: ${CDN_BASE_URL}
+
+      PUBLIC_KEY_SERVER_URL: ${PUBLIC_KEY_SERVER_URL}
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+
+      RABBITMQ_QUEUE: live_transcoding_jobs
+
+      REGISTRY_SERVER_URL: http://rtmp-server:7001
+
+      MAX_CONCURRENT_JOBS: ${MAX_CONCURRENT_JOBS}
+
+    networks:
+      - app-net
 
 networks:
   app-net:
     driver: bridge
 
 volumes:
-  pg_data: {}
+  postgres_data:
+  pgvector_data:

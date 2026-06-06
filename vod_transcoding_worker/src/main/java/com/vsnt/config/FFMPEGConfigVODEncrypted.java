@@ -7,13 +7,15 @@ public class FFMPEGConfigVODEncrypted {
     private String filePath;
     private String outputPath;
     private String keyInfoFilePath;
+
     public FFMPEGConfigVODEncrypted(String filePath, String outputPath, String keyInfoFilePath) {
         this.filePath = filePath;
         this.outputPath = outputPath;
         this.keyInfoFilePath = keyInfoFilePath;
     }
     public List<String> getFFMPEGCommands() {
-        String command = String.format(
+        String audioOutputPath = this.outputPath+"/audio";
+        String transcodingCommand = String.format(
                 "ffmpeg -i \"%s\" " +
                         "-filter_complex \"" +
                         "[0:v]split=4[v1][v2][v3][v4];" +
@@ -51,7 +53,11 @@ public class FFMPEGConfigVODEncrypted {
                 outputPath,
                 outputPath
         );
-
-        return List.of(command);
+        String audioChunkingCommand = String.format(
+                "ffmpeg -i \"%s\" -f segment -segment_time %d -vn -acodec mp3 " +
+                        "-segment_list %s/seg_list.txt %s/chunk_%%03d.mp3",
+                filePath, 15, audioOutputPath, audioOutputPath
+        );
+        return List.of(transcodingCommand,audioChunkingCommand);
     }
 }

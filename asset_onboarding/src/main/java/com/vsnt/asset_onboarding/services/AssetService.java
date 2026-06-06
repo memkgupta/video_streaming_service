@@ -36,8 +36,8 @@ public class AssetService {
 //        return assetRepository.save(asset);
 //    }
 //
-//    public Asset getAssetByVideoId(String videoId) {
-//        return assetRepository.findByVideoId(videoId);
+//    public Asset getAssetByVideoId(String mediaId) {
+//        return assetRepository.findByVideoId(mediaId);
 //    }
 //    public boolean removeAssetById(long id) {
 //        try{

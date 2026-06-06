@@ -1,6 +1,6 @@
 package com.vsnt.user.controllers;
 
-import com.vsnt.user.dtos.APIKeyResponseDTO;
+import com.vsnt.user.dtos.responses.APIKeyResponseDTO;
 import com.vsnt.user.dtos.organisation.OrganisationDTO;
 import com.vsnt.user.entities.APIKey;
 import com.vsnt.user.entities.Organisation;
@@ -31,7 +31,7 @@ public class OrganisationController {
     )
     @PostMapping("/api-key")
     public ResponseEntity<APIKeyResponseDTO> generateAPIKey(@RequestHeader("X-USER-ID") String userId) {
-
+        System.out.println(userId);
         Organisation organisation = organisationService.findByAdmin(userId);
         if(organisation == null)
         {

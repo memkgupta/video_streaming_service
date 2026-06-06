@@ -20,16 +20,7 @@ import java.util.regex.MatchResult;
 public class ApplicationSecurityConfig {
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, ApiKeyAuthenticationFilter apiKeyAuthenticationFilter , JWTFilter jwtFilter , AccessTokenFilter accessTokenFilter, RouteValidator routeValidator) {
-//        return http
-//                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-//                .authorizeExchange(exchange -> exchange
-//                        .pathMatchers("/api/public/**", "/api/user/auth/**").permitAll()
-//                        .anyExchange().authenticated()
-//                )
-//                .addFilterAt(apiKeyAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
-//                .addFilterAfter(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
-//                .addFilterAfter(accessTokenFilter,SecurityWebFiltersOrder.AUTHENTICATION)
-//                .build();
+
         return http
 
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -45,6 +36,7 @@ public class ApplicationSecurityConfig {
                         return ServerWebExchangeMatcher.MatchResult.notMatch();
                     }).permitAll().anyExchange().authenticated();
                 }    )
+
                 .addFilterAt(apiKeyAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .addFilterAfter(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
 

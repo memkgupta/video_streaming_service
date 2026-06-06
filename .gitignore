@@ -4,6 +4,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+/config.env
+/secret.env
 ### STS ###
 .apt_generated
 .classpath
@@ -31,7 +33,7 @@ build/
 
 ### VS Code ###
 .vscode/
-.env
+.env.*
 /rtmp_server/.env
 /rtmp_server/node_modules
 /sdk-js-server/node_modules

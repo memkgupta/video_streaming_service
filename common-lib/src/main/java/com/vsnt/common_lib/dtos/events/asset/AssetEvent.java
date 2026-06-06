@@ -27,6 +27,7 @@ import java.time.Instant;
 })
 public abstract class AssetEvent<T> {
     private  AssetEventType eventType;
+    private String orgId;
     protected  String assetId;
     protected  Instant timestamp;
     protected  T data;

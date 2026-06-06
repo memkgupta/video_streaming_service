@@ -11,6 +11,7 @@ public class UserDetailsImpl implements UserDetails {
 
     public UserDetailsImpl(String username) {
         this.username = username;
+
     }
 
     @Override

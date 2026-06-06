@@ -11,7 +11,7 @@ public class Serializer extends JsonSerializer<TranscodingJob> {
     @Override
     public void serialize(TranscodingJob transcodingJob, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartObject();
-        jsonGenerator.writeStringField("jobId", transcodingJob.getJobId());
+        jsonGenerator.writeStringField("assetId", transcodingJob.getJobId());
         jsonGenerator.writeStringField("key", transcodingJob.getKey());
         jsonGenerator.writeNumberField("size", transcodingJob.getSize());
         jsonGenerator.writeEndObject();

@@ -59,7 +59,7 @@ public class TranscodingJob  {
     @Override
     public String toString() {
         return "TranscodingJob{" +
-                "jobId='" + jobId + '\'' +
+                "assetId='" + jobId + '\'' +
                 ", key='" + key + '\'' +
                 ", size=" + size +
                 ", encryptionKey=" + new String(encryptionKey) +

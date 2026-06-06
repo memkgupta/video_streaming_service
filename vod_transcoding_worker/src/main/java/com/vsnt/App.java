@@ -9,12 +9,14 @@ import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingComplet
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingCompletedPayload;
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingFailureEvent;
 import com.vsnt.common_lib.dtos.events.asset.transcoding.AssetTranscodingFailurePayload;
+import com.vsnt.common_lib.dtos.jobs.transcription.TranscriptionJob;
 import com.vsnt.config.RabbitMQConfig;
 import com.vsnt.config.Secrets;
 import com.vsnt.dtos.MediaType;
 import com.vsnt.dtos.TranscodingFailedDTO;
 import com.vsnt.dtos.TranscodingFinishEventDTO;
 import com.vsnt.dtos.TranscodingJob;
+import com.vsnt.services.AudioChunksWatcher;
 import com.vsnt.services.HlsDirectoryWatcher;
 import com.vsnt.services.S3Service;
 import java.io.IOException;
@@ -22,9 +24,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
@@ -43,6 +45,7 @@ public class App
         String kafka_topic_fail = System.getenv("TRANSCODING_FAIL_TOPIC");
         String publicKeyServerURL = System.getenv("PUBLIC_KEY_SERVER_URL");
         String cloudFrontURL = System.getenv("CDN_BASE_URL");
+        String transcriptionQueueName = System.getenv("TRANSCRIPTION_QUEUE");
         if( bucket_name == null){
             System.out.println("Missing environment variables");
             System.exit(1);
@@ -51,7 +54,18 @@ public class App
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         VideoTranscoder videoTranscoder = new VideoTranscoder(executorService);
         SegmentEventProducer producer = new SegmentEventProducer(kafka_brokers,kafka_topic_segment_update,kafka_topic_finish,kafka_topic_fail);
+
         try {
+            TranscriptionJobProducer transcriptionJobProducer = new TranscriptionJobProducer(
+                    config.getChannel() ,transcriptionQueueName
+            );
+            SegmentEventFactory segmentEventFactory = new SegmentEventFactory(
+                    cloudFrontURL,
+                    15000,
+                    s3Service,
+                    transcoded_bucket_name
+            );
+
             Channel channel = config.getChannel();
             DeliverCallback callback = (consumerTag, delivery) -> {
                 // ===== Extract headers safely =====
@@ -80,16 +94,8 @@ public class App
                     for (String resolution : resolutions) {
                         Files.createDirectories(basePath.resolve(resolution));
                     }
-
+                    Files.createDirectories(basePath.resolve("audio"));
                     String outputPath = basePath.toString();
-
-                    SegmentEventFactory segmentEventFactory = new SegmentEventFactory(
-                            cloudFrontURL,
-                            4000,
-                            s3Service,
-                            transcoded_bucket_name
-                    );
-
                     HlsDirectoryWatcher watcher = new HlsDirectoryWatcher(
                             outputPath,
                             segmentEventFactory,
@@ -98,38 +104,55 @@ public class App
                             mediaId,
                             totalSegments
                     );
+                    AudioChunkEventFactory chunkEventFactory = new AudioChunkEventFactory(cloudFrontURL,
+                    15,
+                    s3Service,
+                    transcoded_bucket_name);
+                    AudioChunksWatcher audioChunksWatcher = new AudioChunksWatcher(
+                            outputPath,
+                            chunkEventFactory
+                            ,
+                            transcriptionJobProducer,
+                            assetId,
+                           mediaId,
+                   15
+                    );
                     watcher.start();
-
-                    boolean transcoded = videoTranscoder.startTranscodingAsync(
+                    audioChunksWatcher.start();
+                    CompletableFuture<Boolean> transcoded = videoTranscoder.transcode(
                             url,
                             outputPath,
                             job.getEncryptionKey(),
                             MediaType.STATIC,
                             publicKeyServerURL+"/"+mediaId+"/"+assetId
                     );
+                    transcoded.thenAccept(result -> {
+                        if(result) {
+                            watcher.stop();
 
+                            watcher.getCompletionFuture().join();
+                            TranscodingFinishEventDTO dto = new TranscodingFinishEventDTO();
+                            dto.setMediaType(MediaType.STATIC);
+                            dto.setMediaId(mediaId);
+                            producer.sendFinishEvent(dto);
+                            AssetTranscodingCompletedEvent assetTranscodingCompletedEvent=new AssetTranscodingCompletedEvent(
+                                    assetId,Instant.now(), AssetTranscodingCompletedPayload.builder().mediaId(mediaId).build()
+                            );
+                            producer.sendFinishEvent(assetTranscodingCompletedEvent);
 
-                    if (transcoded) {
-                        watcher.stop();
-                       watcher.getCompletionFuture().join();
-                        TranscodingFinishEventDTO dto = new TranscodingFinishEventDTO();
-                        dto.setMediaType(MediaType.STATIC);
-                        dto.setMediaId(mediaId);
+                            audioChunksWatcher.stop();
+                            try {
+                                channel.basicAck(deliveryTag, false);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
 
-                        producer.sendFinishEvent(dto);
-
-                        AssetTranscodingCompletedEvent assetTranscodingCompletedEvent=new AssetTranscodingCompletedEvent(
-                                assetId,Instant.now(), AssetTranscodingCompletedPayload.builder().mediaId(mediaId).build()
-                        );
-                        producer.sendFinishEvent(assetTranscodingCompletedEvent);
-                        channel.basicAck(deliveryTag, false);
-                        System.out.println("Done: " + message);
-                    }
-                    else {
-                        throw new RuntimeException("Transcoding failed");
-                    }
-
-
+                            System.out.println("Done: " + message);
+                        }
+                        else {
+                            throw new RuntimeException("Transcoding failed for "+assetId);
+                        }
+                    });
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("Failed: " + message + " | Retry: " + retryCount);
