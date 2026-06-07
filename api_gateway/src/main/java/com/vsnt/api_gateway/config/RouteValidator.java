@@ -20,8 +20,7 @@ public class RouteValidator {
 
             "/api/user/v1/auth/register",
             "/api/user/v1/auth/login",
-            "/api/user/v1/token/refresh-token",
-"/api/ai/v1/query"
+            "/api/user/v1/token/refresh-token"
 //            "/api/asset_onboarding/v1/watch"
     );
 

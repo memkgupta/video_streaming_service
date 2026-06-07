@@ -11,7 +11,6 @@ import java.util.Map;
 @RequestMapping("/v1/query")
 public class QueryController {
     private final QueryService queryService;
-
     public QueryController(QueryService queryService) {
         this.queryService = queryService;
     }
@@ -19,6 +18,6 @@ public class QueryController {
     public ResponseEntity<Map<String, Object>> query(@RequestBody QueryRequestDTO query)
     {
         String res = queryService.query(query.query() , query.mediaId());
-        return ResponseEntity.ok(Map.of("result", res));
+        return ResponseEntity.ok(Map.of("response",res));
     }
 }
